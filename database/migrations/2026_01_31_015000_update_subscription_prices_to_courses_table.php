@@ -12,15 +12,26 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('courses', function (Blueprint $table) {
-            // Remove old fields
-            $table->dropColumn(['subscription_type', 'subscription_price']);
+            // Remove old fields if they exist (add_subscription_type may not have run yet)
+            if (Schema::hasColumn('courses', 'subscription_type')) {
+                $table->dropColumn('subscription_type');
+            }
+            if (Schema::hasColumn('courses', 'subscription_price')) {
+                $table->dropColumn('subscription_price');
+            }
         });
 
         Schema::table('courses', function (Blueprint $table) {
-            // Add separate prices for each subscription type
-            $table->decimal('price_once', 10, 2)->nullable()->after('offer_price');
-            $table->decimal('price_monthly', 10, 2)->nullable()->after('price_once');
-            $table->decimal('price_daily', 10, 2)->nullable()->after('price_monthly');
+            // Add separate prices for each subscription type (skip if already exist)
+            if (!Schema::hasColumn('courses', 'price_once')) {
+                $table->decimal('price_once', 10, 2)->nullable()->after('offer_price');
+            }
+            if (!Schema::hasColumn('courses', 'price_monthly')) {
+                $table->decimal('price_monthly', 10, 2)->nullable()->after('price_once');
+            }
+            if (!Schema::hasColumn('courses', 'price_daily')) {
+                $table->decimal('price_daily', 10, 2)->nullable()->after('price_monthly');
+            }
         });
     }
 
