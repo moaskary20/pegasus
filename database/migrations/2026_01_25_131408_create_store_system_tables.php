@@ -9,6 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         // Product Categories (Main & Sub)
+        if (!Schema::hasTable('product_categories')) {
         Schema::create('product_categories', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -22,8 +23,10 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
         });
+        }
         
         // Products
+        if (!Schema::hasTable('products')) {
         Schema::create('products', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -54,8 +57,10 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
         });
+        }
         
         // Product Images (Multiple images per product)
+        if (!Schema::hasTable('product_images')) {
         Schema::create('product_images', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
@@ -65,8 +70,10 @@ return new class extends Migration
             $table->boolean('is_primary')->default(false);
             $table->timestamps();
         });
+        }
         
         // Product Variants (Size, Color, etc.)
+        if (!Schema::hasTable('product_variants')) {
         Schema::create('product_variants', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
@@ -79,8 +86,10 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
+        }
         
         // Store Orders (must be before product_reviews - product_reviews references store_orders)
+        if (!Schema::hasTable('store_orders')) {
         Schema::create('store_orders', function (Blueprint $table) {
             $table->id();
             $table->string('order_number')->unique();
@@ -127,8 +136,10 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
         });
+        }
         
         // Store Order Items
+        if (!Schema::hasTable('store_order_items')) {
         Schema::create('store_order_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('store_order_id')->constrained()->cascadeOnDelete();
@@ -143,8 +154,10 @@ return new class extends Migration
             $table->json('options')->nullable();
             $table->timestamps();
         });
+        }
         
         // Product Reviews (after store_orders - references store_order_id)
+        if (!Schema::hasTable('product_reviews')) {
         Schema::create('product_reviews', function (Blueprint $table) {
             $table->id();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
@@ -160,8 +173,10 @@ return new class extends Migration
             $table->integer('helpful_count')->default(0);
             $table->timestamps();
         });
+        }
         
         // Shopping Cart
+        if (!Schema::hasTable('store_carts')) {
         Schema::create('store_carts', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->cascadeOnDelete();
@@ -173,8 +188,10 @@ return new class extends Migration
             
             $table->index(['user_id', 'session_id']);
         });
+        }
         
         // Wishlist
+        if (!Schema::hasTable('wishlists')) {
         Schema::create('wishlists', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
@@ -183,8 +200,10 @@ return new class extends Migration
             
             $table->unique(['user_id', 'product_id']);
         });
+        }
         
         // Store Coupons
+        if (!Schema::hasTable('store_coupons')) {
         Schema::create('store_coupons', function (Blueprint $table) {
             $table->id();
             $table->string('code')->unique();
@@ -204,8 +223,10 @@ return new class extends Migration
             $table->json('applicable_products')->nullable();
             $table->timestamps();
         });
+        }
         
         // Store Settings
+        if (!Schema::hasTable('store_settings')) {
         Schema::create('store_settings', function (Blueprint $table) {
             $table->id();
             $table->string('key')->unique();
@@ -216,8 +237,10 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->timestamps();
         });
+        }
         
         // Shipping Zones
+        if (!Schema::hasTable('shipping_zones')) {
         Schema::create('shipping_zones', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -225,8 +248,10 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
+        }
         
         // Shipping Methods
+        if (!Schema::hasTable('shipping_methods')) {
         Schema::create('shipping_methods', function (Blueprint $table) {
             $table->id();
             $table->foreignId('zone_id')->nullable()->constrained('shipping_zones')->cascadeOnDelete();
@@ -241,9 +266,12 @@ return new class extends Migration
             $table->integer('sort_order')->default(0);
             $table->timestamps();
         });
+        }
         
-        // Insert default store settings
-        $this->insertDefaultSettings();
+        // Insert default store settings (only if store_settings was just created or is empty)
+        if (Schema::hasTable('store_settings') && \DB::table('store_settings')->count() === 0) {
+            $this->insertDefaultSettings();
+        }
     }
     
     protected function insertDefaultSettings(): void
