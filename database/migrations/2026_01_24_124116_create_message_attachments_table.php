@@ -11,6 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (Schema::hasTable('message_attachments')) {
+            return;
+        }
+
         Schema::create('message_attachments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('message_id')->constrained()->cascadeOnDelete();
