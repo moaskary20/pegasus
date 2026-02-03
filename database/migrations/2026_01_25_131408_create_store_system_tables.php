@@ -80,24 +80,7 @@ return new class extends Migration
             $table->timestamps();
         });
         
-        // Product Reviews
-        Schema::create('product_reviews', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('product_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('store_order_id')->nullable()->constrained()->nullOnDelete();
-            $table->tinyInteger('rating'); // 1-5
-            $table->string('title')->nullable();
-            $table->text('comment')->nullable();
-            $table->json('pros')->nullable(); // Advantages
-            $table->json('cons')->nullable(); // Disadvantages
-            $table->boolean('is_verified_purchase')->default(false);
-            $table->boolean('is_approved')->default(false);
-            $table->integer('helpful_count')->default(0);
-            $table->timestamps();
-        });
-        
-        // Store Orders
+        // Store Orders (must be before product_reviews - product_reviews references store_orders)
         Schema::create('store_orders', function (Blueprint $table) {
             $table->id();
             $table->string('order_number')->unique();
@@ -158,6 +141,23 @@ return new class extends Migration
             $table->integer('quantity');
             $table->decimal('total', 10, 2);
             $table->json('options')->nullable();
+            $table->timestamps();
+        });
+        
+        // Product Reviews (after store_orders - references store_order_id)
+        Schema::create('product_reviews', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('product_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('store_order_id')->nullable()->constrained()->nullOnDelete();
+            $table->tinyInteger('rating'); // 1-5
+            $table->string('title')->nullable();
+            $table->text('comment')->nullable();
+            $table->json('pros')->nullable(); // Advantages
+            $table->json('cons')->nullable(); // Disadvantages
+            $table->boolean('is_verified_purchase')->default(false);
+            $table->boolean('is_approved')->default(false);
+            $table->integer('helpful_count')->default(0);
             $table->timestamps();
         });
         
