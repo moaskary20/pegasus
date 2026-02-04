@@ -18,6 +18,7 @@ class Course extends Model
         'title',
         'slug',
         'description',
+        'announcement',
         'objectives',
         'hours',
         'lectures_count',

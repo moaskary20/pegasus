@@ -11,6 +11,22 @@ use Illuminate\Support\Facades\Auth;
 class MessagesController extends Controller
 {
     /**
+     * Get unread messages count for header badge
+     */
+    public function unreadCount(): JsonResponse
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json(['count' => 0]);
+        }
+
+        return response()->json([
+            'count' => $user->unread_messages_count ?? 0,
+        ]);
+    }
+
+    /**
      * Get recent conversations for the header dropdown
      */
     public function recent(Request $request): JsonResponse

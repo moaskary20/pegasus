@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'Pegasus Academy') }}</title>
+    <title>@yield('title', config('app.name', 'Pegasus Academy'))</title>
+    @stack('head')
 
     {{-- Fonts --}}
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -38,7 +39,11 @@
     <x-site.header />
 
     <main class="min-h-[60vh]">
-        @yield('content')
+        @hasSection('content')
+            @yield('content')
+        @else
+            {{ $slot ?? '' }}
+        @endif
     </main>
 
     <x-site.footer />

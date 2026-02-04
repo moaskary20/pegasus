@@ -1,5 +1,32 @@
 @extends('layouts.site')
 
+@section('title', $course->title . ' - ' . config('app.name'))
+
+@push('head')
+<meta name="description" content="{{ Str::limit(strip_tags($course->description ?? ''), 160) }}">
+<meta property="og:title" content="{{ $course->title }}">
+<meta property="og:description" content="{{ Str::limit(strip_tags($course->description ?? ''), 200) }}">
+<meta property="og:image" content="{{ $course->cover_image ?? asset('images/og-default.png') }}">
+<meta property="og:url" content="{{ url()->current() }}">
+<meta property="og:type" content="website">
+<script type="application/ld+json">
+@php
+    $schema = [
+        '@context' => 'https://schema.org',
+        '@type' => 'Course',
+        'name' => $course->title,
+        'description' => Str::limit(strip_tags($course->description ?? ''), 500),
+        'provider' => ['@type' => 'Organization', 'name' => config('app.name')],
+        'offers' => ['@type' => 'Offer', 'price' => (float) ($course->offer_price ?? $course->price ?? 0), 'priceCurrency' => 'EGP'],
+    ];
+    if ($course->instructor) {
+        $schema['instructor'] = ['@type' => 'Person', 'name' => $course->instructor->name];
+    }
+@endphp
+{!! json_encode($schema, JSON_UNESCAPED_UNICODE) !!}
+</script>
+@endpush
+
 @section('content')
     @if(session('notice'))
         <div class="max-w-7xl mx-auto px-4 pt-6" style="direction: rtl;">
@@ -39,13 +66,19 @@
 
         $description = trim((string) ($course->description ?? ''));
         $level = trim((string) ($course->level ?? ''));
+        $lessonProgressMap = $lessonProgressMap ?? [];
+        $lastWatchedLesson = $lastWatchedLesson ?? null;
+        $recentlyCompletedLessons = $recentlyCompletedLessons ?? [];
+        $userCertificate = $userCertificate ?? null;
+        $nextSuggestedCourse = $nextSuggestedCourse ?? null;
+        $courseUrl = url()->current();
     @endphp
 
     {{-- عمود الصورة ثابت | تفاصيل الدورة تتمرر أسفله --}}
     <div class="max-w-7xl mx-auto px-4 py-10" style="direction: rtl;">
         <div class="grid lg:grid-cols-12 gap-8 items-start">
             {{-- عمود الصورة والسعر (ثابت عند التمرير) - فوق وأولاً على اليمين --}}
-            <aside class="lg:col-span-4 lg:order-1 order-2 lg:sticky lg:top-4 self-start">
+            <aside id="aside-price" class="lg:col-span-4 lg:order-1 order-2 lg:sticky lg:top-4 self-start">
                     <div class="rounded-3xl overflow-hidden border border-white/10 bg-white text-slate-900 shadow-2xl">
                         {{-- صورة الغلاف / فيديو المعاينة (يوتيوب أو ملف أو درس) --}}
                         <div class="relative aspect-video bg-slate-900 overflow-hidden group" x-data="{ showVideo: false }">
@@ -112,10 +145,65 @@
                                 @endif
                             </div>
 
+                            @if($isEnrolled && $enrollment)
+                                @php
+                                    $progress = (float) ($enrollment->progress_percentage ?? 0);
+                                    $isCompleted = $enrollment->completed_at !== null;
+                                @endphp
+                                <div class="mt-5 p-4 rounded-2xl bg-[#3d195c]/5 border border-[#3d195c]/10">
+                                    <div class="flex items-center justify-between gap-2 mb-2">
+                                        <span class="text-sm font-bold text-slate-700">تقدمك في الدورة</span>
+                                        <span class="text-sm font-extrabold text-[#3d195c]">{{ number_format($progress, 0) }}%</span>
+                                    </div>
+                                    <div class="h-2.5 rounded-full bg-slate-200 overflow-hidden">
+                                        <div
+                                            class="h-full rounded-full {{ $isCompleted ? 'bg-emerald-500' : 'bg-[#3d195c]' }} transition-all duration-500"
+                                            style="width: {{ min(100, $progress) }}%"
+                                        ></div>
+                                    </div>
+                                    @if($isCompleted)
+                                        <p class="mt-2 text-xs font-bold text-emerald-600 flex items-center gap-1">
+                                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                            مكتملة
+                                        </p>
+                                    @endif
+                                </div>
+                            @endif
+
+                            @if($isEnrolled && $userCertificate)
+                                <a href="{{ route('site.course.certificate', $course) }}" class="mt-5 w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl border-2 border-emerald-500 text-emerald-700 font-extrabold hover:bg-emerald-50 transition">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                    تحميل الشهادة
+                                </a>
+                            @endif
+
+                            @if($isEnrolled)
+                                <a href="{{ route('site.course.chat', $course) }}" class="mt-3 w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl border border-slate-200 text-slate-700 font-bold hover:bg-slate-50 transition">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                    محادثة الدورة
+                                </a>
+                            @endif
+
+                            @if($isEnrolled && ($lastWatchedLesson || count($recentlyCompletedLessons) > 0))
+                                <div class="mt-5 p-4 rounded-2xl bg-slate-50 border border-slate-200">
+                                    <div class="text-xs font-extrabold text-slate-600 mb-3">روابط سريعة</div>
+                                    @if($lastWatchedLesson)
+                                        <a href="{{ route('site.course.lesson.show', [$course, $lastWatchedLesson]) }}" class="block text-sm font-bold text-[#3d195c] hover:underline mb-2">
+                                            استمر من حيث توقفت: {{ Str::limit($lastWatchedLesson->title, 25) }}
+                                        </a>
+                                    @endif
+                                    @foreach($recentlyCompletedLessons as $rcl)
+                                        <a href="{{ route('site.course.lesson.show', [$course, $rcl]) }}" class="block text-xs text-slate-600 hover:text-[#3d195c] mb-1 truncate">
+                                            ✓ {{ Str::limit($rcl->title, 30) }}
+                                        </a>
+                                    @endforeach
+                                </div>
+                            @endif
+
                             <div class="mt-5 grid gap-2">
                                 @if($isEnrolled)
                                     <a href="{{ $firstLesson ? route('site.course.lesson.show', [$course, $firstLesson]) : url('/admin/my-courses') }}" class="w-full inline-flex items-center justify-center px-5 py-3.5 rounded-2xl bg-[#3d195c] text-white font-extrabold hover:bg-[#3d195c]/95 transition text-base">
-                                        ابدأ التعلّم الآن
+                                        {{ ($enrollment && $enrollment->completed_at) ? 'مراجعة الدورة' : 'ابدأ التعلّم الآن' }}
                                     </a>
                                 @else
                                     @if($inCart)
@@ -290,6 +378,22 @@
                         <span class="text-white/40">•</span>
                         <div class="text-white/85">آخر تحديث: <span class="font-extrabold text-white">{{ optional($course->updated_at)->format('Y-m-d') }}</span></div>
                     </div>
+                    <div class="mt-5 flex flex-wrap items-center gap-2" x-data="{ copied: false }">
+                        <span class="text-xs text-white/80">مشاركة:</span>
+                        <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode($courseUrl) }}" target="_blank" rel="noopener" class="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition" aria-label="فيسبوك">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                        </a>
+                        <a href="https://twitter.com/intent/tweet?url={{ urlencode($courseUrl) }}&text={{ urlencode($course->title) }}" target="_blank" rel="noopener" class="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition" aria-label="تويتر">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                        </a>
+                        <a href="https://wa.me/?text={{ urlencode($course->title . ' ' . $courseUrl) }}" target="_blank" rel="noopener" class="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition" aria-label="واتساب">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                        </a>
+                        <button @click="navigator.clipboard.writeText('{{ addslashes($courseUrl) }}'); copied=true; setTimeout(()=>copied=false, 2000)" class="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition" aria-label="نسخ الرابط">
+                            <span x-show="!copied" x-cloak><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg></span>
+                            <span x-show="copied" x-cloak class="text-xs font-bold">تم!</span>
+                        </button>
+                    </div>
                 </div>
 
                 {{-- تفاصيل الدورة (ماذا ستتعلم، المحتوى، إلخ) --}}
@@ -310,14 +414,24 @@
                     @endif
                 </div>
 
+                @if($isEnrolled && trim((string) ($course->announcement ?? '')))
+                    <div class="mt-6 rounded-3xl border-2 border-amber-200 bg-amber-50 p-6">
+                        <h3 class="text-sm font-extrabold text-amber-800 mb-2">إعلان من المدرس</h3>
+                        <p class="text-sm text-amber-900 leading-relaxed whitespace-pre-line">{{ $course->announcement }}</p>
+                    </div>
+                @endif
+
                 {{-- Curriculum - روابط للدروس (صفحة الدرس تعرض الفيديو والمحتوى) --}}
-                <div id="curriculum" class="mt-6 rounded-3xl border bg-white overflow-hidden" x-data="{ open: 0 }">
-                    <div class="px-6 py-5 border-b bg-slate-50 flex items-center justify-between gap-3">
+                <div id="curriculum" class="mt-6 rounded-3xl border bg-white overflow-hidden" x-data="{ open: 0, search: '' }">
+                    <div class="px-6 py-5 border-b bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                         <div>
                             <div class="text-lg font-extrabold text-slate-900">محتوى الكورس</div>
                             <div class="text-xs text-slate-600 mt-1">{{ number_format((int) $course->sections->count()) }} قسم • {{ number_format($lessonsCount) }} درس</div>
                         </div>
-                        <a href="#reviews" class="text-xs font-extrabold text-[#3d195c] hover:underline">التقييمات</a>
+                        <div class="flex items-center gap-3">
+                            <input type="text" x-model="search" placeholder="ابحث في الدروس..." class="flex-1 min-w-0 px-3 py-2 text-sm rounded-xl border border-slate-200 focus:border-[#3d195c] focus:ring-1 focus:ring-[#3d195c]/20">
+                            <a href="#reviews" class="text-xs font-extrabold text-[#3d195c] hover:underline shrink-0">التقييمات</a>
+                        </div>
                     </div>
 
                     <div class="divide-y">
@@ -344,10 +458,17 @@
                                             @php 
                                                 $isPreview = (bool) ($lesson->is_free ?? false) || (bool) ($lesson->is_free_preview ?? false);
                                                 $canWatch = $isEnrolled || $isPreview;
+                                                $isCompleted = ($lessonProgressMap[$lesson->id] ?? [])['completed'] ?? false;
+                                                $hasVideo = !empty($lesson->video_url);
+                                                $hasQuiz = $lesson->quiz !== null;
+                                                $hasFiles = $lesson->relationLoaded('files') ? $lesson->files->count() > 0 : false;
                                             @endphp
+                                            <div x-show="!search || '{{ addslashes($lesson->title) }}'.toLowerCase().includes(search.toLowerCase())"
+                                                 x-transition
+                                                 class="{{ $isCompleted ? 'rounded-2xl border border-emerald-200 bg-emerald-50/50' : '' }}">
                                             @if($canWatch)
                                             <a href="{{ route('site.course.lesson.show', [$course, $lesson]) }}"
-                                               class="block w-full text-right flex items-center justify-between gap-3 rounded-2xl border bg-white px-4 py-3 hover:bg-slate-50 hover:border-[#3d195c]/30 transition">
+                                               class="block w-full text-right flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 hover:bg-slate-50 hover:border-[#3d195c]/30 transition {{ $isCompleted ? 'bg-white/80 border-emerald-200' : 'bg-white' }}">
                                                 <div class="min-w-0">
                                                     <div class="text-sm font-bold text-slate-800 line-clamp-1">{{ $lesson->title }}</div>
                                                     <div class="text-xs text-slate-500 mt-1">
@@ -356,14 +477,26 @@
                                                         @else
                                                             —
                                                         @endif
+                                                        @if($isCompleted)
+                                                            <span class="text-emerald-600 font-bold"> • مكتمل</span>
+                                                        @endif
                                                     </div>
                                                 </div>
                                                 <div class="shrink-0 flex items-center gap-2">
+                                                    @if($isCompleted)
+                                                        <span class="text-emerald-600">✓</span>
+                                                    @endif
                                                     <span class="text-xs font-extrabold {{ $isPreview ? 'text-emerald-700' : 'text-slate-500' }}">
                                                         {{ $isPreview ? 'معاينة' : '' }}
                                                     </span>
-                                                    @if($lesson->video_url)
+                                                    @if($hasVideo)
                                                     <svg class="w-4 h-4 text-slate-400" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                                    @endif
+                                                    @if($hasQuiz)
+                                                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-600">اختبار</span>
+                                                    @endif
+                                                    @if($hasFiles)
+                                                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-600">ملفات</span>
                                                     @endif
                                                 </div>
                                             </a>
@@ -376,6 +509,7 @@
                                                 <div class="shrink-0 text-xs font-extrabold text-slate-500">مقفل</div>
                                             </div>
                                             @endif
+                                            </div>
                                         @endforeach
                                     </div>
                                 </div>
@@ -522,8 +656,25 @@
                     </div>
                 </div>
 
-                {{-- دورات مشابهة --}}
+                {{-- الدورة التالية المقترحة + دورات مشابهة --}}
                 <div class="mt-6 rounded-3xl border bg-white p-6">
+                    @if($nextSuggestedCourse && $nextSuggestedCourse->id !== $course->id)
+                        <div class="mb-6 p-4 rounded-2xl bg-[#3d195c]/5 border border-[#3d195c]/20">
+                            <div class="text-xs font-bold text-[#3d195c] mb-2">الدورة التالية المقترحة</div>
+                            <a href="{{ route('site.course.show', $nextSuggestedCourse) }}" class="flex items-center gap-4 group">
+                                <div class="w-24 h-16 rounded-xl bg-slate-100 overflow-hidden shrink-0">
+                                    @if($nextSuggestedCourse->cover_image)
+                                        <img src="{{ $nextSuggestedCourse->cover_image }}" alt="" class="w-full h-full object-cover" loading="lazy">
+                                    @endif
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="font-extrabold text-slate-900 line-clamp-2 group-hover:text-[#3d195c]">{{ $nextSuggestedCourse->title }}</div>
+                                    <div class="text-xs text-slate-600 mt-1">{{ $nextSuggestedCourse->instructor?->name }}</div>
+                                    <div class="text-xs font-bold text-[#3d195c] mt-2">عرض الدورة ←</div>
+                                </div>
+                            </a>
+                        </div>
+                    @endif
                     <div class="text-sm font-extrabold text-slate-900">دورات مشابهة</div>
                     <div class="mt-4 space-y-3">
                         @forelse($relatedCourses as $rc)
@@ -553,5 +704,29 @@
             </div>
         </div>
     </div>
+
+    {{-- Sticky CTA للجوال (غير المسجلين) --}}
+    @if(!$isEnrolled)
+    <div class="lg:hidden fixed bottom-0 left-0 right-0 z-40 p-4 bg-white/95 backdrop-blur border-t shadow-[0_-4px_20px_rgba(0,0,0,0.1)]" style="direction: rtl;">
+        <div class="max-w-7xl mx-auto flex items-center gap-4">
+            <div class="flex-1 min-w-0">
+                <div class="font-extrabold text-slate-900 truncate">{{ $course->title }}</div>
+                <div class="text-sm font-bold text-[#3d195c]">
+                    {{ $price > 0 ? number_format($price, 2) . ' ج.م' : 'مجاني' }}
+                </div>
+            </div>
+            @if($inCart)
+                <a href="{{ route('site.cart') }}" class="shrink-0 px-6 py-3 rounded-2xl bg-[#3d195c] text-white font-extrabold">
+                    افتح السلة
+                </a>
+            @else
+                <a href="#aside-price" class="shrink-0 px-6 py-3 rounded-2xl bg-[#3d195c] text-white font-extrabold">
+                    اشترك الآن
+                </a>
+            @endif
+        </div>
+    </div>
+    <div class="lg:hidden h-20"></div>
+    @endif
 @endsection
 

@@ -328,7 +328,7 @@ Route::get('/courses/{course:slug}', function (Course $course) {
         'subCategory:id,name',
         'previewLesson',
         'sections' => fn ($q) => $q->orderBy('sort_order')->with([
-            'lessons' => fn ($q) => $q->orderBy('sort_order')->with('video'),
+            'lessons' => fn ($q) => $q->orderBy('sort_order')->with(['video', 'quiz', 'files']),
         ]),
         'ratings' => fn ($q) => $q->latest()->with('user:id,name,avatar'),
     ]);
@@ -349,12 +349,14 @@ Route::get('/courses/{course:slug}', function (Course $course) {
     $avgRating = (float) ($course->rating ?? 0);
 
     $isEnrolled = false;
+    $enrollment = null;
     $userRating = null;
     if (auth()->check()) {
-        $isEnrolled = Enrollment::query()
+        $enrollment = Enrollment::query()
             ->where('user_id', auth()->id())
             ->where('course_id', $course->id)
-            ->exists();
+            ->first();
+        $isEnrolled = $enrollment !== null;
         if ($isEnrolled) {
             $userRating = CourseRating::query()
                 ->where('course_id', $course->id)
@@ -373,6 +375,12 @@ Route::get('/courses/{course:slug}', function (Course $course) {
         ->get();
 
     $firstLesson = null;
+    $lessonProgressMap = [];
+    $lastWatchedLesson = null;
+    $recentlyCompletedLessons = [];
+    $userCertificate = null;
+    $nextSuggestedCourse = null;
+
     if ($isEnrolled && auth()->check() && $lessons->count() > 0) {
         $accessService = app(\App\Services\LessonAccessService::class);
         foreach ($lessons as $l) {
@@ -382,11 +390,51 @@ Route::get('/courses/{course:slug}', function (Course $course) {
             }
         }
         $firstLesson = $firstLesson ?? $lessons->first();
+
+        $lessonIds = $lessons->pluck('id')->all();
+        $progresses = \App\Models\VideoProgress::where('user_id', auth()->id())
+            ->whereIn('lesson_id', $lessonIds)
+            ->get()
+            ->keyBy('lesson_id');
+        foreach ($progresses as $lessonId => $vp) {
+            $lessonProgressMap[$lessonId] = ['completed' => (bool) $vp->completed, 'last_position' => (int) $vp->last_position_seconds];
+        }
+
+        $lastWatched = \App\Models\VideoProgress::where('user_id', auth()->id())
+            ->whereIn('lesson_id', $lessonIds)
+            ->where('completed', false)
+            ->orderByDesc('updated_at')
+            ->first();
+        if ($lastWatched) {
+            $lastWatchedLesson = $lessons->firstWhere('id', $lastWatched->lesson_id);
+        }
+
+        $completedIds = \App\Models\VideoProgress::where('user_id', auth()->id())
+            ->whereIn('lesson_id', $lessonIds)
+            ->where('completed', true)
+            ->orderByDesc('updated_at')
+            ->limit(5)
+            ->pluck('lesson_id');
+        $recentlyCompletedLessons = $lessons->whereIn('id', $completedIds)->values()->take(5)->all();
+    }
+
+    if ($enrollment && $enrollment->completed_at) {
+        $userCertificate = \App\Models\Certificate::where('user_id', auth()->id())
+            ->where('course_id', $course->id)
+            ->first();
+    }
+
+    $nextSuggestedCourse = $relatedCourses->first();
+    if ($isEnrolled && auth()->check()) {
+        $enrolledIds = \App\Models\Enrollment::where('user_id', auth()->id())->pluck('course_id');
+        $nextSuggestedCourse = $relatedCourses->first(fn ($c) => !$enrolledIds->contains($c->id));
+        $nextSuggestedCourse = $nextSuggestedCourse ?? $relatedCourses->first();
     }
 
     return view('courses.show', [
         'course' => $course,
         'isEnrolled' => $isEnrolled,
+        'enrollment' => $enrollment,
         'userRating' => $userRating,
         'firstLesson' => $firstLesson,
         'lessonsCount' => $lessonsCount,
@@ -396,8 +444,33 @@ Route::get('/courses/{course:slug}', function (Course $course) {
         'totalReviews' => $totalReviews,
         'avgRating' => $avgRating,
         'relatedCourses' => $relatedCourses,
+        'lessonProgressMap' => $lessonProgressMap,
+        'lastWatchedLesson' => $lastWatchedLesson,
+        'recentlyCompletedLessons' => $recentlyCompletedLessons,
+        'userCertificate' => $userCertificate,
+        'nextSuggestedCourse' => $nextSuggestedCourse,
     ]);
 })->name('site.course.show');
+
+Route::get('/courses/{course:slug}/certificate', function (Course $course) {
+    abort_unless(auth()->check(), 403);
+    $cert = \App\Models\Certificate::where('user_id', auth()->id())
+        ->where('course_id', $course->id)
+        ->firstOrFail();
+    if (!$cert->pdf_path || !\Illuminate\Support\Facades\Storage::disk('public')->exists($cert->pdf_path)) {
+        $service = app(\App\Services\CertificateService::class);
+        $path = $service->saveCertificatePdf($cert);
+        $cert->update(['pdf_path' => $path]);
+    }
+    return \Illuminate\Support\Facades\Storage::disk('public')->download(
+        $cert->pdf_path,
+        'شهادة_' . \Illuminate\Support\Str::slug($course->title) . '.pdf'
+    );
+})->name('site.course.certificate')->middleware('auth');
+
+Route::get('/courses/{course:slug}/chat', \App\Livewire\CourseChat::class)
+    ->name('site.course.chat')
+    ->middleware('auth');
 
 Route::post('/courses/{course:slug}/rate', [\App\Http\Controllers\Site\CourseRatingController::class, 'store'])
     ->name('site.course.rate')
@@ -942,7 +1015,10 @@ Route::middleware(['web', 'auth'])->group(function () {
     });
     
     // Messages API (recent conversations for header)
-    Route::get('/api/messages/recent', [\App\Http\Controllers\Api\MessagesController::class, 'recent'])->name('api.messages.recent');
+    Route::prefix('api/messages')->group(function () {
+        Route::get('/unread-count', [\App\Http\Controllers\Api\MessagesController::class, 'unreadCount'])->name('api.messages.unread-count');
+        Route::get('/recent', [\App\Http\Controllers\Api\MessagesController::class, 'recent'])->name('api.messages.recent');
+    });
 
     // Reminders API
     Route::prefix('api/reminders')->group(function () {

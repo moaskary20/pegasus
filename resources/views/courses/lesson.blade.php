@@ -98,8 +98,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         <iframe id="lesson-video-player" class="w-full h-full" src="{{ $lesson->youtube_embed_url }}?autoplay=1" title="{{ $lesson->title }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
                     </div>
                 @elseif($lesson->video_url)
-                    <div class="aspect-video bg-slate-900">
-                        <video id="lesson-video-player" class="w-full h-full object-contain" controls autoplay>
+                    <div class="aspect-video bg-slate-900 relative" x-data="{ speed: 1, open: false }">
+                        <video id="lesson-video-player" class="w-full h-full object-contain" controls autoplay x-ref="video">
                             @if($lesson->video && $lesson->video->hls_path)
                                 <source src="{{ $lesson->video->hls_path }}" type="application/x-mpegURL">
                             @else
@@ -107,6 +107,16 @@ document.addEventListener('DOMContentLoaded', function() {
                             @endif
                             متصفحك لا يدعم تشغيل الفيديو.
                         </video>
+                        <div class="absolute bottom-14 left-2 right-2 flex justify-end gap-1 opacity-90">
+                            <button type="button" @click="open = !open" class="px-3 py-1.5 rounded-lg bg-black/70 text-white text-sm font-bold hover:bg-black/90">
+                                سرعة: <span x-text="speed + 'x'"></span>
+                            </button>
+                            <div x-show="open" x-cloak @click.away="open = false" class="absolute bottom-full right-0 mb-1 py-2 rounded-lg bg-black/90 shadow-xl min-w-[100px]">
+                                <template x-for="s in [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]" :key="s">
+                                    <button type="button" @click="speed = s; $refs.video.playbackRate = s; open = false" class="block w-full px-4 py-2 text-right text-sm text-white hover:bg-white/20" :class="speed === s ? 'bg-[#3d195c]' : ''" x-text="s + 'x'"></button>
+                                </template>
+                            </div>
+                        </div>
                     </div>
                 @endif
 

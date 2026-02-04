@@ -487,13 +487,27 @@
                     <div
                         x-data="{
                             open: false,
+                            count: {{ $unreadMessagesCount }},
                             conversations: [],
+                            init() {
+                                this.fetchCount();
+                                setInterval(() => this.fetchCount(), 30000);
+                            },
+                            async fetchCount() {
+                                try {
+                                    const res = await fetch('/api/messages/unread-count', { headers: { 'Accept': 'application/json' } });
+                                    if (!res.ok) return;
+                                    const data = await res.json();
+                                    this.count = data.count || 0;
+                                } catch (e) {}
+                            },
                             async fetchMessages() {
                                 try {
                                     const res = await fetch('/api/messages/recent?limit=6', { headers: { 'Accept': 'application/json' } });
                                     if (!res.ok) return;
                                     const data = await res.json();
                                     this.conversations = data.conversations || [];
+                                    this.count = data.unread_count ?? this.count;
                                 } catch (e) {}
                             }
                         }"
@@ -505,11 +519,13 @@
                             <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
                             </svg>
-                            @if($unreadMessagesCount > 0)
-                                <span class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-bold text-white bg-rose-500 rounded-full">
-                                    {{ $unreadMessagesCount > 99 ? '99+' : $unreadMessagesCount }}
-                                </span>
-                            @endif
+                            <span
+                                x-show="count > 0"
+                                x-text="count > 99 ? '99+' : count"
+                                x-cloak
+                                x-transition
+                                class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-bold text-white bg-rose-500 rounded-full"
+                            ></span>
                         </a>
 
                         @if($user)

@@ -23,5 +23,8 @@ class DatabaseSeeder extends Seeder
         
         // إضافة صور للدورات
         $this->call(CourseImagesSeeder::class);
+
+        // بيانات المتجر (أقسام ومنتجات)
+        $this->call(StoreSeeder::class);
     }
 }

@@ -68,6 +68,11 @@ class CourseForm
                     ->label('الوصف')
                     ->columnSpanFull()
                     ->rows(4),
+                Textarea::make('announcement')
+                    ->label('إعلان المدرس')
+                    ->columnSpanFull()
+                    ->rows(2)
+                    ->helperText('إعلان يظهر للمسجلين في الدورة (اختياري)'),
                 Textarea::make('objectives')
                     ->label('الأهداف')
                     ->columnSpanFull()
