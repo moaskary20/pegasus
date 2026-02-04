@@ -18,7 +18,7 @@ class MessagesController extends Controller
     {
         if (!auth()->check()) {
             session(['url.intended' => route('site.messages')]);
-            return redirect(url('/admin/login'));
+            return redirect(route('site.auth'));
         }
 
         $filter = $request->query('filter', 'all');
@@ -54,7 +54,7 @@ class MessagesController extends Controller
     {
         if (!auth()->check()) {
             session(['url.intended' => route('site.messages.show', $id)]);
-            return redirect(url('/admin/login'));
+            return redirect(route('site.auth'));
         }
 
         $conversation = Conversation::with(['users', 'participants'])->findOrFail($id);
@@ -79,7 +79,7 @@ class MessagesController extends Controller
     public function send(Request $request, int $id): RedirectResponse
     {
         if (!auth()->check()) {
-            return redirect(url('/admin/login'));
+            return redirect(route('site.auth'));
         }
 
         $conversation = Conversation::findOrFail($id);
@@ -140,7 +140,7 @@ class MessagesController extends Controller
     {
         if (!auth()->check()) {
             session(['url.intended' => route('site.messages.new')]);
-            return redirect(url('/admin/login'));
+            return redirect(route('site.auth'));
         }
 
         $search = trim((string) $request->query('q', ''));
@@ -162,7 +162,7 @@ class MessagesController extends Controller
     public function startConversation(Request $request): RedirectResponse
     {
         if (!auth()->check()) {
-            return redirect(url('/admin/login'));
+            return redirect(route('site.auth'));
         }
 
         $userId = (int) $request->input('user_id');

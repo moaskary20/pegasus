@@ -44,7 +44,7 @@ Route::get('/search', function () {
 Route::get('/notifications', function () {
     if (!auth()->check()) {
         session(['url.intended' => route('site.notifications')]);
-        return redirect(url('/admin/login'));
+        return redirect(route('site.auth'));
     }
     $notifications = auth()->user()
         ->notifications()
@@ -59,7 +59,7 @@ Route::get('/notifications', function () {
 
 Route::post('/notifications/read-all', function () {
     if (!auth()->check()) {
-        return redirect(url('/admin/login'));
+        return redirect(route('site.auth'));
     }
     auth()->user()->unreadNotifications->markAsRead();
     return redirect()->route('site.notifications')->with('notice', ['type' => 'success', 'message' => 'تم تعليم كل الإشعارات كمقروءة.']);
@@ -67,7 +67,7 @@ Route::post('/notifications/read-all', function () {
 
 Route::post('/notifications/{id}/read', function (string $id) {
     if (!auth()->check()) {
-        return redirect(url('/admin/login'));
+        return redirect(route('site.auth'));
     }
     $notification = auth()->user()->notifications()->find($id);
     if ($notification) {
@@ -79,14 +79,14 @@ Route::post('/notifications/{id}/read', function (string $id) {
 Route::get('/account', function () {
     if (!auth()->check()) {
         session(['url.intended' => route('site.account')]);
-        return redirect(url('/admin/login'));
+        return redirect(route('site.auth'));
     }
     return view('pages.account');
 })->name('site.account')->middleware('web');
 
 Route::put('/account/update', function (Request $request) {
     if (!auth()->check()) {
-        return redirect(url('/admin/login'));
+        return redirect(route('site.auth'));
     }
     
     $user = auth()->user();
@@ -121,7 +121,7 @@ Route::put('/account/update', function (Request $request) {
 
 Route::put('/account/password', function (Request $request) {
     if (!auth()->check()) {
-        return redirect(url('/admin/login'));
+        return redirect(route('site.auth'));
     }
     
     $user = auth()->user();
@@ -194,7 +194,7 @@ Route::post('/wishlist/courses/{course}/remove', function (Request $request, Cou
 Route::get('/my-courses', function () {
     if (!auth()->check()) {
         session(['url.intended' => route('site.my-courses')]);
-        return redirect(url('/admin/login'));
+        return redirect(route('site.auth'));
     }
     $enrollments = Enrollment::query()
         ->where('user_id', auth()->id())
@@ -222,6 +222,10 @@ Route::get('/my-courses', function () {
 Route::view('/support', 'pages.support')->name('site.support');
 Route::view('/contact', 'pages.contact')->name('site.contact');
 Route::view('/about', 'pages.about')->name('site.about');
+
+Route::get('/auth', [\App\Http\Controllers\Site\AuthController::class, 'show'])->name('site.auth');
+Route::post('/auth/login', [\App\Http\Controllers\Site\AuthController::class, 'login'])->name('site.auth.login');
+Route::post('/auth/register', [\App\Http\Controllers\Site\AuthController::class, 'register'])->name('site.auth.register');
 
 Route::get('/messages', [\App\Http\Controllers\Site\MessagesController::class, 'index'])->name('site.messages');
 Route::get('/messages/new', [\App\Http\Controllers\Site\MessagesController::class, 'newConversation'])->name('site.messages.new');
@@ -661,7 +665,7 @@ Route::post('/cart/coupon/clear', function () {
 Route::get('/checkout', function () {
     if (!auth()->check()) {
         session(['url.intended' => route('site.checkout')]);
-        return redirect(url('/admin/login'));
+        return redirect(route('site.auth'));
     }
 
     $courseCartIds = session('cart', []);
@@ -712,7 +716,7 @@ Route::get('/checkout', function () {
 Route::post('/checkout', function (Request $request) {
     if (!auth()->check()) {
         session(['url.intended' => route('site.checkout')]);
-        return redirect(url('/admin/login'));
+        return redirect(route('site.auth'));
     }
 
     $gateway = (string) $request->input('payment_gateway', '');
@@ -843,7 +847,7 @@ Route::post('/checkout', function (Request $request) {
 Route::get('/checkout/success/{order}', function (Order $order) {
     if (!auth()->check()) {
         session(['url.intended' => route('site.checkout.success', ['order' => $order->id])]);
-        return redirect(url('/admin/login'));
+        return redirect(route('site.auth'));
     }
 
     abort_unless((int) $order->user_id === (int) auth()->id(), 403);
@@ -889,7 +893,7 @@ Route::post('/store/{product}/add-to-cart', [\App\Http\Controllers\Site\StoreCon
 Route::post('/wishlist/products/{product}', function (Request $request, \App\Models\Product $product) {
     if (!auth()->check()) {
         session(['url.intended' => url()->current()]);
-        return redirect(url('/admin/login'));
+        return redirect(route('site.auth'));
     }
     \App\Models\Wishlist::firstOrCreate(['user_id' => auth()->id(), 'product_id' => $product->id]);
     return redirect()->back()->with('notice', ['type' => 'success', 'message' => 'تمت إضافة المنتج إلى قائمة الرغبات.']);

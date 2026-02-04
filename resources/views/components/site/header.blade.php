@@ -168,7 +168,7 @@
                 <div class="flex items-center gap-1 sm:gap-2 shrink-0">
                     {{-- User menu (moved to wishlist position) --}}
                     <div x-data="{ open:false }" @mouseenter="open=true" @mouseleave="open=false" class="relative">
-                        <a href="{{ $user ? url('/account') : url('/admin/login') }}" class="flex items-center gap-2 p-1.5 rounded-xl hover:bg-slate-100 transition-colors" style="direction: rtl;">
+                        <a href="{{ $user ? url('/account') : route('site.auth') }}" class="flex items-center gap-2 p-1.5 rounded-xl hover:bg-slate-100 transition-colors" style="direction: rtl;">
                             <div class="w-9 h-9 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center">
                                 @if($user && $user->avatar)
                                     <img src="{{ $user->avatar }}" alt="{{ $user->name }}" class="w-full h-full object-cover" />
@@ -262,7 +262,7 @@
                                         </button>
                                     </form>
                                 @else
-                                    <a href="{{ url('/admin/login') }}" class="block px-4 py-2 text-sm hover:bg-slate-50 text-[#2c004d] font-semibold">
+                                    <a href="{{ route('site.auth') }}" class="block px-4 py-2 text-sm hover:bg-slate-50 text-[#2c004d] font-semibold">
                                         تسجيل الدخول
                                     </a>
                                 @endif
@@ -373,7 +373,7 @@
                         @mouseleave="open=false"
                         class="relative"
                     >
-                        <a href="{{ $user ? route('site.notifications') : url('/admin/login') }}" class="relative inline-flex p-2 rounded-xl hover:bg-slate-100 transition-colors" aria-label="الإشعارات">
+                        <a href="{{ $user ? route('site.notifications') : route('site.auth') }}" class="relative inline-flex p-2 rounded-xl hover:bg-slate-100 transition-colors" aria-label="الإشعارات">
                             <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
                             </svg>
@@ -392,7 +392,7 @@
                                 @if($user)
                                     <a href="{{ route('site.notifications') }}" class="text-xs text-[#2c004d] hover:underline font-bold">عرض كل الإشعارات</a>
                                 @else
-                                    <a href="{{ url('/admin/login') }}" class="text-xs text-[#2c004d] hover:underline">تسجيل الدخول</a>
+                                    <a href="{{ route('site.auth') }}" class="text-xs text-[#2c004d] hover:underline">تسجيل الدخول</a>
                                 @endif
                             </div>
 

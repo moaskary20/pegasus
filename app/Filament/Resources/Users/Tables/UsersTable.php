@@ -51,10 +51,11 @@ class UsersTable
                     }),
                     
                 TextColumn::make('phone')
-                    ->label('الهاتف')
+                    ->label('رقم الهاتف')
                     ->searchable()
                     ->icon('heroicon-o-phone')
-                    ->placeholder('—'),
+                    ->placeholder('—')
+                    ->copyable(),
                     
                 TextColumn::make('city')
                     ->label('المدينة')

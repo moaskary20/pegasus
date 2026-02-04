@@ -90,6 +90,14 @@
         }
     </style>
 
+    @if(session('notice'))
+        <div class="max-w-7xl mx-auto px-4 pt-4">
+            <div class="rounded-2xl border px-4 py-3 text-sm font-semibold {{ (session('notice')['type'] ?? '') === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800' }}">
+                {{ session('notice')['message'] ?? '' }}
+            </div>
+        </div>
+    @endif
+
     {{-- Hero (Slider removed as requested) --}}
     <section class="bg-gradient-to-l from-[#2c004d] to-[#2c004d]/85 text-white">
         <div class="max-w-7xl mx-auto px-4 py-12 md:py-16">

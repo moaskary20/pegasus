@@ -29,8 +29,10 @@ class UserForm
                     ->required(fn ($livewire) => $livewire instanceof \App\Filament\Resources\Users\Pages\CreateUser)
                     ->dehydrated(fn ($state) => filled($state)),
                 TextInput::make('phone')
-                    ->label('الهاتف')
-                    ->tel(),
+                    ->label('رقم الهاتف')
+                    ->tel()
+                    ->maxLength(20)
+                    ->placeholder('01xxxxxxxxx'),
                 FileUpload::make('avatar')
                     ->label('الصورة الشخصية')
                     ->image()
