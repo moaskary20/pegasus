@@ -120,7 +120,7 @@
 
         <section class="bg-white">
             <div class="max-w-7xl mx-auto px-4 py-6">
-                <div class="relative rounded-3xl overflow-hidden border bg-slate-900 shadow-xl h-[240px] sm:h-[320px] md:h-[676px]" id="home-slider">
+                <div class="relative rounded-3xl overflow-hidden border bg-slate-900 shadow-xl h-[190px] sm:h-[270px] md:h-[370px]" id="home-slider">
                     @if($firstImage)
                         <img id="home-slider-image" src="{{ $firstImage }}" alt="" class="absolute inset-0 w-full h-full object-cover opacity-95 transition-opacity duration-300" />
                     @endif
@@ -432,7 +432,7 @@
             <div class="grid lg:grid-cols-2 gap-10 items-center">
                 <div class="lg:order-2 relative pro-reveal" data-reveal>
                     <div class="rounded-[22px] overflow-hidden shadow-xl">
-                        <img src="{{ asset('assets/site/images/10.png') }}" alt="طالبة عربية تتعلم باستخدام الحاسوب" class="w-full h-[360px] md:h-[676px] object-cover" loading="lazy" />
+                        <img src="{{ asset('assets/site/images/10.png') }}" alt="طالبة عربية تتعلم باستخدام الحاسوب" class="w-full h-[360px] md:h-[420px] object-cover" loading="lazy" />
                     </div>
                 </div>
                 <div class="lg:order-1 pro-reveal" data-reveal>

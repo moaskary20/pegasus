@@ -202,7 +202,7 @@
     }
 @endphp
 
-<header class="md:sticky md:top-0 z-50">
+<header class="sticky top-0 z-50">
     {{-- Top strip --}}
     <div class="bg-[#2c004d] text-white">
         <div class="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between gap-3">
@@ -641,96 +641,14 @@
                 </a>
             </div>
 
-            {{-- Mobile search bar + hamburger menu (below header) --}}
-            <div class="md:hidden mt-3 pb-1" x-data="{ mobileMenuOpen: false }">
-                <div class="flex items-center gap-3">
-                    <form action="{{ route('site.search') }}" method="GET" class="flex-1 min-w-0">
-                        <x-search-autocomplete
-                            placeholder="ابحث عن الدورات أو الدروس أو المدرسين..."
-                            class="w-full rounded-2xl border-slate-200 bg-slate-50 py-3 focus:bg-white focus:border-[#2c004d] focus:ring-2 focus:ring-[#2c004d]/20"
-                        />
-                    </form>
-                    <button
-                        type="button"
-                        @click="mobileMenuOpen = true"
-                        class="shrink-0 w-12 h-12 rounded-2xl border-2 border-slate-200 bg-white hover:bg-slate-50 hover:border-[#2c004d]/30 flex flex-col items-center justify-center gap-1.5 transition-colors order-first"
-                        aria-label="فتح القائمة"
-                    >
-                        <span class="w-6 h-0.5 bg-slate-700 rounded-full"></span>
-                        <span class="w-6 h-0.5 bg-slate-700 rounded-full"></span>
-                        <span class="w-6 h-0.5 bg-slate-700 rounded-full"></span>
-                    </button>
-                </div>
-
-                {{-- Side drawer overlay --}}
-                <div
-                    x-show="mobileMenuOpen"
-                    x-cloak
-                    x-transition:enter="transition ease-out duration-200"
-                    x-transition:enter-start="opacity-0"
-                    x-transition:enter-end="opacity-100"
-                    x-transition:leave="transition ease-in duration-150"
-                    x-transition:leave-start="opacity-100"
-                    x-transition:leave-end="opacity-0"
-                    @click="mobileMenuOpen = false"
-                    class="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm"
-                    style="display: none;"
-                ></div>
-
-                {{-- Side drawer panel (من الجانب) --}}
-                <div
-                    x-show="mobileMenuOpen"
-                    x-cloak
-                    x-transition:enter="transition ease-out duration-250"
-                    x-transition:enter-start="transform translate-x-full"
-                    x-transition:enter-end="transform translate-x-0"
-                    x-transition:leave="transition ease-in duration-200"
-                    x-transition:leave-start="transform translate-x-0"
-                    x-transition:leave-end="transform translate-x-full"
-                    class="fixed top-0 right-0 bottom-0 z-[70] w-[280px] max-w-[85vw] bg-white shadow-2xl border-l flex flex-col"
-                    style="display: none; direction: rtl;"
-                >
-                    <div class="flex items-center justify-between px-4 py-4 border-b bg-[#2c004d] text-white">
-                        <span class="font-extrabold text-lg">القائمة</span>
-                        <button type="button" @click="mobileMenuOpen = false" class="p-2 rounded-xl hover:bg-white/10 transition" aria-label="إغلاق">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
-                        </button>
-                    </div>
-                    <nav class="flex-1 overflow-y-auto py-4">
-                        <a href="{{ url('/') }}" class="flex items-center gap-3 px-4 py-3.5 text-slate-700 hover:bg-[#2c004d]/5 hover:text-[#2c004d] transition font-semibold" @click="mobileMenuOpen = false">
-                            <svg class="w-5 h-5 text-[#2c004d]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                            </svg>
-                            الرئيسية
-                        </a>
-                        <a href="{{ route('site.about') }}" class="flex items-center gap-3 px-4 py-3.5 text-slate-700 hover:bg-[#2c004d]/5 hover:text-[#2c004d] transition font-semibold" @click="mobileMenuOpen = false">
-                            <svg class="w-5 h-5 text-[#2c004d]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            من نحن
-                        </a>
-                        <a href="{{ url('/courses') }}" class="flex items-center gap-3 px-4 py-3.5 text-slate-700 hover:bg-[#2c004d]/5 hover:text-[#2c004d] transition font-semibold" @click="mobileMenuOpen = false">
-                            <svg class="w-5 h-5 text-[#2c004d]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
-                            </svg>
-                            الدورات
-                        </a>
-                        <a href="{{ route('site.store') }}" class="flex items-center gap-3 px-4 py-3.5 text-slate-700 hover:bg-[#2c004d]/5 hover:text-[#2c004d] transition font-semibold" @click="mobileMenuOpen = false">
-                            <svg class="w-5 h-5 text-[#2c004d]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                            </svg>
-                            المتجر
-                        </a>
-                        <a href="{{ route('site.contact') }}" class="flex items-center gap-3 px-4 py-3.5 text-slate-700 hover:bg-[#2c004d]/5 hover:text-[#2c004d] transition font-semibold" @click="mobileMenuOpen = false">
-                            <svg class="w-5 h-5 text-[#2c004d]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                            </svg>
-                            الاتصال بنا
-                        </a>
-                    </nav>
-                </div>
+            {{-- Mobile search bar (below header) --}}
+            <div class="md:hidden mt-3 pb-1">
+                <form action="{{ route('site.search') }}" method="GET">
+                    <x-search-autocomplete
+                        placeholder="ابحث عن الدورات أو الدروس أو المدرسين..."
+                        class="w-full rounded-2xl border-slate-200 bg-slate-50 py-3 focus:bg-white focus:border-[#2c004d] focus:ring-2 focus:ring-[#2c004d]/20"
+                    />
+                </form>
             </div>
 
             {{-- Row 2: Menu under search --}}
