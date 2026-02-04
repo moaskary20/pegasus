@@ -91,10 +91,9 @@ class SalesReports extends Page
         
         $query = $this->getBaseOrderQuery();
         
-        // Use strftime for SQLite compatibility
-        $groupBy = $this->period === 'week' ? '%Y-%m-%d' : ($this->period === 'year' ? '%Y-%m' : '%Y-%m-%d');
-        
-        $data = $query->selectRaw("strftime('{$groupBy}', created_at) as date, SUM(total) as revenue")
+        // Database-agnostic date format (SQLite & MySQL)
+        $format = $this->period === 'year' ? \App\Support\DatabaseDateHelper::yearMonth() : \App\Support\DatabaseDateHelper::date();
+        $data = $query->selectRaw("{$format} as date, SUM(total) as revenue")
             ->groupBy('date')
             ->orderBy('date')
             ->when(!$startDate, fn($q) => $q->limit(12))

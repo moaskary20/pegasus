@@ -84,7 +84,7 @@ class AdminDashboard extends Page
     {
         $user = auth()->user();
         
-        $query = Enrollment::selectRaw("strftime('%Y-%m', created_at) as month, COUNT(*) as count")
+        $query = Enrollment::selectRaw(\App\Support\DatabaseDateHelper::yearMonth() . " as month, COUNT(*) as count")
             ->where('created_at', '>=', now()->subMonths(6));
         
         if (!$user->hasRole('admin')) {

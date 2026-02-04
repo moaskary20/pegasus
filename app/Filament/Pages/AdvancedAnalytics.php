@@ -50,7 +50,7 @@ class AdvancedAnalytics extends Page
     
     public function getUserGrowthProperty(): array
     {
-        $data = User::selectRaw("strftime('%Y-%m', created_at) as month, COUNT(*) as count")
+        $data = User::selectRaw(\App\Support\DatabaseDateHelper::yearMonth() . " as month, COUNT(*) as count")
             ->where('created_at', '>=', now()->subMonths(12))
             ->groupBy('month')
             ->orderBy('month')
@@ -65,7 +65,7 @@ class AdvancedAnalytics extends Page
     
     public function getRevenueGrowthProperty(): array
     {
-        $data = Order::selectRaw("strftime('%Y-%m', created_at) as month, SUM(total) as revenue")
+        $data = Order::selectRaw(\App\Support\DatabaseDateHelper::yearMonth() . " as month, SUM(total) as revenue")
             ->where('status', 'paid')
             ->where('created_at', '>=', now()->subMonths(12))
             ->groupBy('month')
@@ -81,7 +81,7 @@ class AdvancedAnalytics extends Page
     
     public function getEnrollmentGrowthProperty(): array
     {
-        $data = Enrollment::selectRaw("strftime('%Y-%m', created_at) as month, COUNT(*) as count")
+        $data = Enrollment::selectRaw(\App\Support\DatabaseDateHelper::yearMonth() . " as month, COUNT(*) as count")
             ->where('created_at', '>=', now()->subMonths(12))
             ->groupBy('month')
             ->orderBy('month')
@@ -162,7 +162,7 @@ class AdvancedAnalytics extends Page
     
     public function getHourlyActivityProperty(): array
     {
-        $data = Enrollment::selectRaw("CAST(strftime('%H', created_at) AS INTEGER) as hour, COUNT(*) as count")
+        $data = Enrollment::selectRaw(\App\Support\DatabaseDateHelper::hour() . " as hour, COUNT(*) as count")
             ->where('created_at', '>=', now()->subDays(30))
             ->groupBy('hour')
             ->orderBy('hour')
@@ -180,8 +180,8 @@ class AdvancedAnalytics extends Page
     
     public function getDayOfWeekActivityProperty(): array
     {
-        // SQLite strftime %w returns 0=Sunday, 1=Monday, etc.
-        $data = Enrollment::selectRaw("CAST(strftime('%w', created_at) AS INTEGER) as day, COUNT(*) as count")
+        // 0=Sunday, 1=Monday, ... 6=Saturday
+        $data = Enrollment::selectRaw(\App\Support\DatabaseDateHelper::dayOfWeek() . " as day, COUNT(*) as count")
             ->where('created_at', '>=', now()->subDays(90))
             ->groupBy('day')
             ->orderBy('day')

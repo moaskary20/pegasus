@@ -103,7 +103,7 @@ class StoreReports extends Page
         return StoreOrder::whereBetween('created_at', [$start, $end])
             ->where('payment_status', 'paid')
             ->select(
-                DB::raw("strftime('%Y-%m-%d', created_at) as date"),
+                DB::raw(\App\Support\DatabaseDateHelper::date() . " as date"),
                 DB::raw('COUNT(*) as orders_count'),
                 DB::raw('SUM(total) as total_sales')
             )
