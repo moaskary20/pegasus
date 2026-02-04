@@ -641,14 +641,188 @@
                 </a>
             </div>
 
-            {{-- Mobile search bar (below header) --}}
-            <div class="md:hidden mt-3 pb-1">
-                <form action="{{ route('site.search') }}" method="GET">
-                    <x-search-autocomplete
-                        placeholder="ابحث عن الدورات أو الدروس أو المدرسين..."
-                        class="w-full rounded-2xl border-slate-200 bg-slate-50 py-3 focus:bg-white focus:border-[#2c004d] focus:ring-2 focus:ring-[#2c004d]/20"
-                    />
-                </form>
+            {{-- Mobile search bar + hamburger menu (below header) --}}
+            <div class="md:hidden mt-3 pb-1" x-data="{ mobileMenuOpen: false, mobileMenuTab: 'nav' }">
+                <div class="flex items-center gap-3">
+                    <form action="{{ route('site.search') }}" method="GET" class="flex-1 min-w-0">
+                        <x-search-autocomplete
+                            placeholder="ابحث عن الدورات أو الدروس أو المدرسين..."
+                            class="w-full rounded-2xl border-slate-200 bg-slate-50 py-3 focus:bg-white focus:border-[#2c004d] focus:ring-2 focus:ring-[#2c004d]/20"
+                        />
+                    </form>
+                    <button
+                        type="button"
+                        @click="mobileMenuOpen = true"
+                        class="shrink-0 w-12 h-12 rounded-2xl border-2 border-slate-200 bg-white hover:bg-slate-50 hover:border-[#2c004d]/30 flex flex-col items-center justify-center gap-1.5 transition-colors order-first"
+                        aria-label="فتح القائمة"
+                    >
+                        <span class="w-6 h-0.5 bg-slate-700 rounded-full"></span>
+                        <span class="w-6 h-0.5 bg-slate-700 rounded-full"></span>
+                        <span class="w-6 h-0.5 bg-slate-700 rounded-full"></span>
+                    </button>
+                </div>
+
+                {{-- Side drawer overlay --}}
+                <div
+                    x-show="mobileMenuOpen"
+                    x-cloak
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0"
+                    x-transition:enter-end="opacity-100"
+                    x-transition:leave="transition ease-in duration-150"
+                    x-transition:leave-start="opacity-100"
+                    x-transition:leave-end="opacity-0"
+                    @click="mobileMenuOpen = false"
+                    class="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm"
+                    style="display: none;"
+                ></div>
+
+                {{-- Side drawer panel --}}
+                <div
+                    x-show="mobileMenuOpen"
+                    x-cloak
+                    x-transition:enter="transition ease-out duration-250"
+                    x-transition:enter-start="transform translate-x-full"
+                    x-transition:enter-end="transform translate-x-0"
+                    x-transition:leave="transition ease-in duration-200"
+                    x-transition:leave-start="transform translate-x-0"
+                    x-transition:leave-end="transform translate-x-full"
+                    class="fixed top-0 right-0 bottom-0 z-[70] w-[300px] max-w-[85vw] bg-white shadow-2xl border-l flex flex-col overflow-hidden"
+                    style="display: none; direction: rtl;"
+                >
+                    <div class="flex items-center justify-between px-4 py-3 border-b bg-[#2c004d] text-white shrink-0">
+                        <div class="flex rounded-xl bg-white/10 p-1 gap-1">
+                            <button type="button" @click="mobileMenuTab = 'nav'" class="px-4 py-2 rounded-lg text-sm font-bold transition" :class="mobileMenuTab === 'nav' ? 'bg-white text-[#2c004d]' : 'text-white/80 hover:text-white'">
+                                التنقل
+                            </button>
+                            <button type="button" @click="mobileMenuTab = 'account'" class="px-4 py-2 rounded-lg text-sm font-bold transition" :class="mobileMenuTab === 'account' ? 'bg-white text-[#2c004d]' : 'text-white/80 hover:text-white'">
+                                حسابي والخدمات
+                            </button>
+                        </div>
+                        <button type="button" @click="mobileMenuOpen = false" class="p-2 rounded-xl hover:bg-white/10 transition" aria-label="إغلاق">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="flex-1 overflow-y-auto py-4">
+                        {{-- تبويب التنقل --}}
+                        <div x-show="mobileMenuTab === 'nav'" x-cloak class="px-4" style="display: none;">
+                            <nav class="space-y-0.5">
+                                <a href="{{ url('/') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-700 hover:bg-[#2c004d]/5 hover:text-[#2c004d] transition font-semibold" @click="mobileMenuOpen = false">
+                                    <svg class="w-5 h-5 text-[#2c004d]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                                    الرئيسية
+                                </a>
+                                <a href="{{ route('site.about') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-700 hover:bg-[#2c004d]/5 hover:text-[#2c004d] transition font-semibold" @click="mobileMenuOpen = false">
+                                    <svg class="w-5 h-5 text-[#2c004d]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    من نحن
+                                </a>
+                                <a href="{{ url('/courses') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-700 hover:bg-[#2c004d]/5 hover:text-[#2c004d] transition font-semibold" @click="mobileMenuOpen = false">
+                                    <svg class="w-5 h-5 text-[#2c004d]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                                    الدورات
+                                </a>
+                                <a href="{{ route('site.store') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-700 hover:bg-[#2c004d]/5 hover:text-[#2c004d] transition font-semibold" @click="mobileMenuOpen = false">
+                                    <svg class="w-5 h-5 text-[#2c004d]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                                    المتجر
+                                </a>
+                                <a href="{{ route('site.contact') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-700 hover:bg-[#2c004d]/5 hover:text-[#2c004d] transition font-semibold" @click="mobileMenuOpen = false">
+                                    <svg class="w-5 h-5 text-[#2c004d]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                    الاتصال بنا
+                                </a>
+                            </nav>
+                        </div>
+
+                        {{-- تبويب حسابي والخدمات --}}
+                        <div x-show="mobileMenuTab === 'account'" x-cloak class="px-4" style="display: none;">
+                            <div class="space-y-0.5">
+                                @if($user)
+                                    <div class="px-4 py-3 flex items-center gap-3 border-b border-slate-100 mb-2">
+                                        <div class="w-10 h-10 rounded-full bg-[#2c004d]/10 overflow-hidden flex items-center justify-center shrink-0">
+                                            @if($user->avatar)
+                                                <img src="{{ $user->avatar }}" alt="{{ $user->name }}" class="w-full h-full object-cover" />
+                                            @else
+                                                <svg class="w-5 h-5 text-[#2c004d]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                                            @endif
+                                        </div>
+                                        <div class="min-w-0">
+                                            <div class="font-bold text-slate-900 truncate text-sm">{{ $user->name }}</div>
+                                            <div class="text-xs text-slate-500 truncate">{{ $user->email }}</div>
+                                        </div>
+                                    </div>
+                                @endif
+                                <a href="{{ route('site.my-courses') }}" class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-[#2c004d]/5 hover:text-[#2c004d] transition font-semibold" @click="mobileMenuOpen = false">
+                                    <span>تعلّمي / دوراتي</span>
+                                    <span class="text-slate-400">›</span>
+                                </a>
+                                @if($user)
+                                <a href="{{ route('site.my-assignments') }}" class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-[#2c004d]/5 hover:text-[#2c004d] transition font-semibold" @click="mobileMenuOpen = false">
+                                    <span>واجباتي</span>
+                                    <span class="text-slate-400">›</span>
+                                </a>
+                                @endif
+                                <a href="{{ route('site.cart') }}" class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-[#2c004d]/5 hover:text-[#2c004d] transition font-semibold" @click="mobileMenuOpen = false">
+                                    <span>سلة المشتريات</span>
+                                    @if($cartCount > 0)
+                                        <span class="min-w-[20px] h-5 px-1.5 flex items-center justify-center text-[11px] font-bold text-white bg-emerald-500 rounded-full">{{ $cartCount > 99 ? '99+' : $cartCount }}</span>
+                                    @else
+                                        <span class="text-slate-400">›</span>
+                                    @endif
+                                </a>
+                                <a href="{{ route('site.wishlist') }}" class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-[#2c004d]/5 hover:text-[#2c004d] transition font-semibold" @click="mobileMenuOpen = false">
+                                    <span>قائمة الرغبات</span>
+                                    <span class="text-slate-400">›</span>
+                                </a>
+                                @php $unreadNotif = $user ? $user->unreadNotifications()->count() : 0; @endphp
+                                <a href="{{ route('site.notifications') }}" class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-[#2c004d]/5 hover:text-[#2c004d] transition font-semibold" @click="mobileMenuOpen = false">
+                                    <span>الإشعارات</span>
+                                    @if($unreadNotif > 0)
+                                        <span class="min-w-[20px] h-5 px-1.5 flex items-center justify-center text-[11px] font-bold text-white bg-red-500 rounded-full">{{ $unreadNotif > 99 ? '99+' : $unreadNotif }}</span>
+                                    @else
+                                        <span class="text-slate-400">›</span>
+                                    @endif
+                                </a>
+                                <a href="{{ route('site.messages') }}" class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-[#2c004d]/5 hover:text-[#2c004d] transition font-semibold" @click="mobileMenuOpen = false">
+                                    <span>الرسائل</span>
+                                    @if($unreadMessagesCount > 0)
+                                        <span class="min-w-[20px] h-5 px-1.5 flex items-center justify-center text-[11px] font-bold text-white bg-rose-500 rounded-full">{{ $unreadMessagesCount > 99 ? '99+' : $unreadMessagesCount }}</span>
+                                    @else
+                                        <span class="text-slate-400">›</span>
+                                    @endif
+                                </a>
+                                <div class="h-px bg-slate-100 my-2"></div>
+                                <a href="{{ route('site.account') }}" class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-[#2c004d]/5 hover:text-[#2c004d] transition font-semibold" @click="mobileMenuOpen = false">
+                                    <span>إعدادات الحساب</span>
+                                    <span class="text-slate-400">›</span>
+                                </a>
+                                <a href="{{ route('site.subscriptions') }}" class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-[#2c004d]/5 hover:text-[#2c004d] transition font-semibold" @click="mobileMenuOpen = false">
+                                    <span>الاشتراكات</span>
+                                    <span class="text-slate-400">›</span>
+                                </a>
+                                <a href="{{ route('site.purchase-history') }}" class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-[#2c004d]/5 hover:text-[#2c004d] transition font-semibold" @click="mobileMenuOpen = false">
+                                    <span>سجل المشتريات</span>
+                                    <span class="text-slate-400">›</span>
+                                </a>
+                                <a href="{{ route('site.support') }}" class="flex items-center justify-between px-4 py-3 rounded-xl text-slate-700 hover:bg-[#2c004d]/5 hover:text-[#2c004d] transition font-semibold" @click="mobileMenuOpen = false">
+                                    <span>المساعدة والدعم</span>
+                                    <span class="text-slate-400">›</span>
+                                </a>
+                                @if($user)
+                                    <form method="POST" action="{{ url('/admin/logout') }}" class="mt-2" @submit="mobileMenuOpen = false">
+                                        @csrf
+                                        <button type="submit" class="w-full text-right px-4 py-3 rounded-xl text-sm hover:bg-rose-50 text-rose-600 font-semibold">
+                                            تسجيل الخروج
+                                        </button>
+                                    </form>
+                                @else
+                                    <a href="{{ route('site.auth') }}" class="block px-4 py-3 rounded-xl text-sm hover:bg-[#2c004d]/5 text-[#2c004d] font-bold mt-2" @click="mobileMenuOpen = false">
+                                        تسجيل الدخول
+                                    </a>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {{-- Row 2: Menu under search --}}
