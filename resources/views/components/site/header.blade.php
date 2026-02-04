@@ -131,6 +131,75 @@
             }
         }
     }
+
+    // Store mega menu data
+    $navStoreCategories = \App\Models\ProductCategory::query()
+        ->active()
+        ->whereNull('parent_id')
+        ->with([
+            'children' => fn ($q) => $q->active()->orderBy('sort_order')->orderBy('name'),
+        ])
+        ->orderBy('sort_order')
+        ->orderBy('name')
+        ->get();
+
+    $navStoreTopIds = $navStoreCategories->pluck('id')->values();
+    $navStoreChildIds = $navStoreCategories->flatMap(fn ($c) => $c->children->pluck('id'))->values();
+    $navStoreChildToParent = [];
+    foreach ($navStoreCategories as $p) {
+        foreach ($p->children as $ch) {
+            $navStoreChildToParent[(int) $ch->id] = (int) $p->id;
+        }
+    }
+
+    $navStoreTree = [];
+    foreach ($navStoreCategories as $p) {
+        $navStoreTree[(int) $p->id] = [
+            'total' => 0,
+            'direct' => [],
+            'children' => [],
+        ];
+    }
+
+    $navStoreCategoryIds = $navStoreTopIds->merge($navStoreChildIds)->unique()->values();
+
+    if ($navStoreCategoryIds->count() > 0) {
+        $navProducts = \App\Models\Product::query()
+            ->select(['id', 'name', 'slug', 'price', 'average_rating', 'category_id'])
+            ->active()
+            ->inStock()
+            ->whereIn('category_id', $navStoreCategoryIds)
+            ->orderByDesc('average_rating')
+            ->orderByDesc('sales_count')
+            ->get();
+
+        foreach ($navProducts as $prod) {
+            $parentId = null;
+            $childId = null;
+
+            if (!empty($prod->category_id) && isset($navStoreChildToParent[(int) $prod->category_id])) {
+                $childId = (int) $prod->category_id;
+                $parentId = (int) $navStoreChildToParent[$childId];
+            } elseif (!empty($prod->category_id) && $navStoreTopIds->contains((int) $prod->category_id)) {
+                $parentId = (int) $prod->category_id;
+            }
+
+            if (!$parentId || !isset($navStoreTree[$parentId])) {
+                continue;
+            }
+
+            $navStoreTree[$parentId]['total']++;
+
+            if ($childId) {
+                if (!isset($navStoreTree[$parentId]['children'][$childId])) {
+                    $navStoreTree[$parentId]['children'][$childId] = [];
+                }
+                $navStoreTree[$parentId]['children'][$childId][] = $prod;
+            } else {
+                $navStoreTree[$parentId]['direct'][] = $prod;
+            }
+        }
+    }
 @endphp
 
 <header class="sticky top-0 z-50">
@@ -415,16 +484,63 @@
                     </div>
 
                     {{-- Messages --}}
-                    <a href="{{ route('site.messages') }}" class="relative p-2 rounded-xl hover:bg-slate-100 transition-colors" aria-label="الرسائل">
-                        <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-                        </svg>
-                        @if($unreadMessagesCount > 0)
-                            <span class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-bold text-white bg-rose-500 rounded-full">
-                                {{ $unreadMessagesCount > 99 ? '99+' : $unreadMessagesCount }}
-                            </span>
+                    <div
+                        x-data="{
+                            open: false,
+                            conversations: [],
+                            async fetchMessages() {
+                                try {
+                                    const res = await fetch('/api/messages/recent?limit=6', { headers: { 'Accept': 'application/json' } });
+                                    if (!res.ok) return;
+                                    const data = await res.json();
+                                    this.conversations = data.conversations || [];
+                                } catch (e) {}
+                            }
+                        }"
+                        @mouseenter="open=true; {{ $user ? 'fetchMessages()' : '' }}"
+                        @mouseleave="open=false"
+                        class="relative"
+                    >
+                        <a href="{{ $user ? route('site.messages') : route('site.auth') }}" class="relative inline-flex p-2 rounded-xl hover:bg-slate-100 transition-colors" aria-label="الرسائل">
+                            <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                            </svg>
+                            @if($unreadMessagesCount > 0)
+                                <span class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-bold text-white bg-rose-500 rounded-full">
+                                    {{ $unreadMessagesCount > 99 ? '99+' : $unreadMessagesCount }}
+                                </span>
+                            @endif
+                        </a>
+
+                        @if($user)
+                        <div x-show="open" x-cloak class="absolute right-0 mt-2 w-[360px] rounded-2xl border bg-white shadow-xl overflow-hidden z-50" style="direction: rtl;">
+                            <div class="px-4 py-3 bg-slate-50 border-b flex items-center justify-between">
+                                <div class="font-semibold text-sm">الرسائل</div>
+                                <a href="{{ route('site.messages') }}" class="text-xs text-[#2c004d] hover:underline font-bold">عرض كل الرسائل</a>
+                            </div>
+
+                            <div class="max-h-80 overflow-y-auto">
+                                <template x-if="conversations.length === 0">
+                                    <div class="px-4 py-8 text-center text-sm text-slate-500">لا توجد رسائل</div>
+                                </template>
+                                <template x-for="c in conversations" :key="c.id">
+                                    <a :href="c.url" class="block px-4 py-3 border-b hover:bg-slate-50 transition">
+                                        <div class="flex items-center justify-between gap-2">
+                                            <div class="text-sm font-semibold text-slate-900 truncate" x-text="c.name"></div>
+                                            <span x-show="c.unread > 0" x-cloak class="min-w-[18px] h-[18px] px-1 flex items-center justify-center text-[10px] font-bold text-white bg-rose-500 rounded-full" x-text="c.unread > 99 ? '99+' : c.unread"></span>
+                                        </div>
+                                        <div class="text-xs text-slate-500 mt-1 line-clamp-1" x-text="c.last_preview"></div>
+                                        <div class="text-[11px] text-slate-400 mt-0.5" x-text="c.last_at"></div>
+                                    </a>
+                                </template>
+                            </div>
+
+                            <div class="px-4 py-3 bg-slate-50 border-t">
+                                <a href="{{ route('site.messages') }}" class="block text-center text-sm font-semibold text-[#2c004d] hover:underline">عرض كل الرسائل</a>
+                            </div>
+                        </div>
                         @endif
-                    </a>
+                    </div>
 
                     {{-- Wishlist (moved to user menu position) --}}
                     <div x-data="{ open:false }" @mouseenter="open=true" @mouseleave="open=false" class="relative">
@@ -658,7 +774,165 @@
                         </div>
                     </div>
                 </div>
-                <a href="{{ route('site.store') }}" class="hover:text-[#2c004d] transition-colors">المتجر</a>
+                <div
+                    x-data="{
+                        storeOpen: false,
+                        storeActiveId: {{ (int) ($navStoreCategories->first()?->id ?? 0) }},
+                        storeSetActive(id){ this.storeActiveId = id; },
+                        storeIsActive(id){ return Number(id) === Number(this.storeActiveId); }
+                    }"
+                    @mouseenter="storeOpen = true"
+                    @mouseleave="storeOpen = false"
+                    class="relative"
+                >
+                    <button type="button" class="inline-flex items-center gap-1 hover:text-[#2c004d] transition-colors">
+                        <span>المتجر</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+
+                    {{-- Store Mega menu --}}
+                    <div
+                        x-show="storeOpen"
+                        x-cloak
+                        x-transition.opacity.duration.150ms
+                        class="absolute right-1/2 translate-x-1/2 mt-3 w-[860px] rounded-2xl border bg-white shadow-2xl overflow-hidden z-50"
+                        style="direction: rtl;"
+                    >
+                        <div class="grid grid-cols-12">
+                            {{-- Store Categories column --}}
+                            <div class="col-span-4 bg-slate-50 border-l p-3">
+                                <div class="text-xs font-bold text-slate-500 px-2 py-2">أقسام المتجر</div>
+                                <div class="space-y-1 max-h-[420px] overflow-auto">
+                                    @forelse($navStoreCategories as $cat)
+                                        @php
+                                            $storeCatTotal = (int) ($navStoreTree[(int) $cat->id]['total'] ?? 0);
+                                        @endphp
+                                        <button
+                                            type="button"
+                                            @mouseenter="storeSetActive({{ (int) $cat->id }})"
+                                            @click="window.location.href='{{ route('site.store', ['category' => $cat->id]) }}'"
+                                            class="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-sm transition-colors cursor-pointer"
+                                            :class="storeIsActive({{ (int) $cat->id }}) ? 'bg-[#2c004d]/10 text-[#2c004d]' : 'hover:bg-white text-slate-700'"
+                                        >
+                                            <span class="font-semibold truncate">{{ $cat->name }}</span>
+                                            <span class="flex items-center gap-2 shrink-0">
+                                                <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-white/70 text-slate-600 border border-slate-200">
+                                                    {{ $storeCatTotal }}
+                                                </span>
+                                                <span class="text-slate-400">‹</span>
+                                            </span>
+                                        </button>
+                                    @empty
+                                        <div class="px-3 py-6 text-center text-sm text-slate-500">
+                                            لا توجد تصنيفات للمتجر حالياً.
+                                        </div>
+                                    @endforelse
+                                </div>
+                            </div>
+
+                            {{-- Products column --}}
+                            <div class="col-span-8 p-4">
+                                <div class="flex items-center justify-between gap-3">
+                                    <div class="text-sm font-extrabold text-slate-900">المنتجات حسب القسم</div>
+                                    <a href="{{ route('site.store') }}" class="text-xs font-bold text-[#2c004d] hover:underline">عرض كل المتجر</a>
+                                </div>
+
+                                <div class="mt-3 max-h-[420px] overflow-auto pr-1">
+                                    @forelse($navStoreCategories as $cat)
+                                        @php
+                                            $storeTree = $navStoreTree[(int) $cat->id] ?? ['total' => 0, 'direct' => [], 'children' => []];
+                                            $storeDirectProducts = $storeTree['direct'] ?? [];
+                                            $storeChildProductsMap = $storeTree['children'] ?? [];
+                                            $storeTotalProducts = (int) ($storeTree['total'] ?? 0);
+                                        @endphp
+
+                                        <div x-show="storeIsActive({{ (int) $cat->id }})" x-cloak>
+                                            <div class="flex items-center justify-between">
+                                                <div class="text-base font-extrabold text-slate-900">{{ $cat->name }}</div>
+                                                <div class="text-xs text-slate-500">{{ $storeTotalProducts }} منتج</div>
+                                            </div>
+
+                                            {{-- Direct products under parent category --}}
+                                            @if(!empty($storeDirectProducts))
+                                                <div class="mt-3 rounded-2xl border bg-white overflow-hidden">
+                                                    <div class="px-3 py-2 bg-slate-50 border-b text-xs font-bold text-slate-600">
+                                                        منتجات القسم
+                                                    </div>
+                                                    <div class="p-3 grid grid-cols-2 gap-2">
+                                                        @foreach(array_slice($storeDirectProducts, 0, 8) as $p)
+                                                            <a
+                                                                href="{{ route('site.store.product', $p->slug) }}"
+                                                                class="rounded-xl border hover:border-[#2c004d]/30 hover:shadow-sm transition p-3"
+                                                            >
+                                                                <div class="text-sm font-bold text-slate-900 line-clamp-1">{{ $p->name }}</div>
+                                                                <div class="text-xs text-slate-500 mt-1">
+                                                                    @if((float) ($p->average_rating ?? 0) > 0)
+                                                                        ⭐ {{ number_format((float) $p->average_rating, 1) }}
+                                                                        <span class="opacity-60">•</span>
+                                                                    @endif
+                                                                    {{ number_format((float) ($p->price ?? 0), 2) }} ج.م
+                                                                </div>
+                                                            </a>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                            @endif
+
+                                            {{-- Sub-categories + their products --}}
+                                            @if($cat->children->count())
+                                                <div class="mt-3 grid grid-cols-2 gap-3">
+                                                    @foreach($cat->children as $child)
+                                                        @php
+                                                            $childProducts = $storeChildProductsMap[(int) $child->id] ?? [];
+                                                        @endphp
+                                                        <div class="rounded-2xl border bg-white overflow-hidden">
+                                                            <a href="{{ route('site.store', ['sub' => $child->id]) }}" class="block">
+                                                                <div class="px-3 py-2 bg-slate-50 border-b flex items-center justify-between">
+                                                                    <div class="text-xs font-extrabold text-slate-800 truncate">{{ $child->name }}</div>
+                                                                    <div class="text-[11px] font-bold text-slate-500 shrink-0">{{ count($childProducts) }}</div>
+                                                                </div>
+                                                            </a>
+                                                            <div class="p-3 space-y-2">
+                                                                @forelse(array_slice($childProducts, 0, 6) as $p)
+                                                                    <a href="{{ route('site.store.product', $p->slug) }}" class="block rounded-xl border px-3 py-2 hover:border-[#2c004d]/30 hover:bg-slate-50 transition">
+                                                                        <div class="text-sm font-bold text-slate-900 line-clamp-1">{{ $p->name }}</div>
+                                                                        <div class="text-xs text-slate-500 mt-0.5">
+                                                                            @if((float) ($p->average_rating ?? 0) > 0)
+                                                                                ⭐ {{ number_format((float) $p->average_rating, 1) }}
+                                                                                <span class="opacity-60">•</span>
+                                                                            @endif
+                                                                            {{ number_format((float) ($p->price ?? 0), 2) }} ج.م
+                                                                        </div>
+                                                                    </a>
+                                                                @empty
+                                                                    <div class="py-6 text-center text-sm text-slate-500">
+                                                                        لا توجد منتجات.
+                                                                    </div>
+                                                                @endforelse
+                                                            </div>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            @endif
+
+                                            @if(empty($storeDirectProducts) && !$cat->children->count())
+                                                <div class="py-10 text-center text-sm text-slate-500">
+                                                    لا توجد منتجات في هذا القسم حالياً.
+                                                </div>
+                                            @endif
+                                        </div>
+                                    @empty
+                                        <div class="py-10 text-center text-sm text-slate-500">
+                                            <a href="{{ route('site.store') }}" class="text-[#2c004d] font-bold hover:underline">عرض كل المتجر</a>
+                                        </div>
+                                    @endforelse
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <a href="{{ route('site.contact') }}" class="hover:text-[#2c004d] transition-colors">الاتصال بنا</a>
             </nav>
         </div>

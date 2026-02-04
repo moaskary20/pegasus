@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Models\Conversation;
 use App\Models\User;
+use App\Filament\Pages\Conversation as ConversationPage;
 use BackedEnum;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
@@ -118,12 +119,12 @@ class Messages extends Page
         
         $this->closeNewConversation();
         
-        $this->redirect(route('filament.admin.pages.conversation', ['id' => $conversation->id]));
+        $this->redirect(ConversationPage::getUrl(['id' => $conversation->id]));
     }
     
     public function openConversation(int $conversationId): void
     {
-        $this->redirect(route('filament.admin.pages.conversation', ['id' => $conversationId]));
+        $this->redirect(ConversationPage::getUrl(['id' => $conversationId]));
     }
     
     public function getUnreadCount(Conversation $conversation): int

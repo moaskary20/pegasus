@@ -941,6 +941,9 @@ Route::middleware(['web', 'auth'])->group(function () {
         Route::delete('/read/clear', [NotificationController::class, 'destroyRead'])->name('api.notifications.destroy-read');
     });
     
+    // Messages API (recent conversations for header)
+    Route::get('/api/messages/recent', [\App\Http\Controllers\Api\MessagesController::class, 'recent'])->name('api.messages.recent');
+
     // Reminders API
     Route::prefix('api/reminders')->group(function () {
         Route::get('/', [ReminderController::class, 'index'])->name('api.reminders.index');

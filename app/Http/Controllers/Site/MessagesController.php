@@ -147,8 +147,14 @@ class MessagesController extends Controller
         $users = collect();
 
         if (strlen($search) >= 2) {
+            $term = '%' . $search . '%';
             $users = User::where('id', '!=', auth()->id())
-                ->search($search)
+                ->where(function ($q) use ($term) {
+                    $q->where('name', 'LIKE', $term)
+                        ->orWhere('email', 'LIKE', $term)
+                        ->orWhere('phone', 'LIKE', $term);
+                })
+                ->orderBy('name')
                 ->limit(15)
                 ->get();
         }

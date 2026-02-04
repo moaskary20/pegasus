@@ -16,8 +16,11 @@
         <p class="text-sm text-slate-600 mt-1">ابحث عن مستخدم لبدء محادثة معه</p>
     </div>
 
-    <form method="GET" action="{{ route('site.messages.new') }}" class="mb-6">
-        <input type="search" name="q" value="{{ $search }}" placeholder="ابحث بالاسم أو البريد..." class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm focus:border-[#2c004d] focus:ring-2 focus:ring-[#2c004d]/20 outline-none" autofocus>
+    <form method="GET" action="{{ route('site.messages.new') }}" class="mb-6 flex gap-2">
+        <input type="search" name="q" value="{{ old('q', $search) }}" placeholder="ابحث بالاسم أو البريد أو رقم الهاتف..." class="flex-1 px-4 py-3 rounded-xl border border-slate-200 text-sm focus:border-[#2c004d] focus:ring-2 focus:ring-[#2c004d]/20 outline-none" autofocus>
+        <button type="submit" class="px-5 py-3 rounded-xl bg-[#2c004d] text-white font-bold hover:bg-[#2c004d]/95 transition">
+            بحث
+        </button>
     </form>
 
     <div class="rounded-3xl border bg-white overflow-hidden shadow-sm">

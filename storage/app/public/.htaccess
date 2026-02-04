@@ -1,0 +1,6 @@
+<IfModule mod_authz_core.c>
+    Require all granted
+</IfModule>
+<IfModule mod_autoindex.c>
+    Options -Indexes
+</IfModule>
