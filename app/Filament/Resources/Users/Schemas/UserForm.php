@@ -36,6 +36,7 @@ class UserForm
                 FileUpload::make('avatar')
                     ->label('الصورة الشخصية')
                     ->image()
+                    ->disk('public')
                     ->directory('avatars')
                     ->visibility('public'),
                 TextInput::make('city')

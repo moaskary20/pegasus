@@ -203,34 +203,68 @@
         </script>
     @endif
 
-    {{-- Categories Slider (5 cards) --}}
-    <section class="max-w-7xl mx-auto px-4 py-10">
-        <div class="flex items-end justify-between gap-3">
-            <div>
-                <h2 class="text-xl md:text-2xl font-extrabold text-slate-900">التصنيفات</h2>
-                <p class="text-sm text-slate-600 mt-1">اختر مجال اهتمامك بسهولة</p>
+    {{-- Categories Slider --}}
+    <section class="relative overflow-hidden py-12 md:py-16">
+        <div class="absolute inset-0 bg-gradient-to-b from-white via-slate-50/50 to-white"></div>
+        <div class="absolute top-0 right-0 w-96 h-96 bg-[#2c004d]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+        <div class="absolute bottom-0 left-0 w-72 h-72 bg-[#3d195c]/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
+        <div class="relative max-w-7xl mx-auto px-4">
+            <div class="flex items-end justify-between gap-3 mb-8">
+                <div>
+                    <div class="inline-flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-full bg-[#2c004d]/10 text-[#2c004d] mb-3">اكتشف المحتوى</div>
+                    <h2 class="text-2xl md:text-3xl font-extrabold text-slate-900">التصنيفات</h2>
+                    <p class="text-slate-600 mt-1">اختر مجال اهتمامك واستكشف الدورات المناسبة لك</p>
+                </div>
+                <a href="{{ route('site.courses') }}" class="hidden sm:inline-flex items-center gap-2 text-sm font-bold text-[#2c004d] hover:underline">
+                    عرض كل الدورات
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                </a>
             </div>
-        </div>
         @if($categories->isEmpty())
-            <div class="mt-6 text-center text-sm text-slate-500 py-10">لا توجد تصنيفات حالياً.</div>
+            <div class="relative text-center text-slate-500 py-16">لا توجد تصنيفات حالياً.</div>
         @else
-            <div class="mt-6 relative px-14" id="categories-slider-wrap">
-                <button type="button" id="categories-slider-prev" class="absolute top-1/2 -translate-y-1/2 right-2 z-10 w-12 h-12 rounded-2xl bg-white shadow-lg border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-50 hover:border-[#3d195c]/30 transition disabled:opacity-40 disabled:pointer-events-none" aria-label="السابق">
+            <div class="relative px-2 md:px-14" id="categories-slider-wrap">
+                <button type="button" id="categories-slider-prev" class="absolute top-1/2 -translate-y-1/2 right-2 z-10 w-12 h-12 rounded-2xl bg-white shadow-xl border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-[#2c004d] hover:text-white hover:border-[#2c004d] transition disabled:opacity-40 disabled:pointer-events-none" aria-label="السابق">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                 </button>
-                <button type="button" id="categories-slider-next" class="absolute top-1/2 -translate-y-1/2 left-2 z-10 w-12 h-12 rounded-2xl bg-white shadow-lg border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-50 hover:border-[#3d195c]/30 transition disabled:opacity-40 disabled:pointer-events-none" aria-label="التالي">
+                <button type="button" id="categories-slider-next" class="absolute top-1/2 -translate-y-1/2 left-2 z-10 w-12 h-12 rounded-2xl bg-white shadow-xl border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-[#2c004d] hover:text-white hover:border-[#2c004d] transition disabled:opacity-40 disabled:pointer-events-none" aria-label="التالي">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 </button>
                 <div class="overflow-hidden" style="direction: ltr;">
-                    <div id="categories-slider-track" class="flex gap-4 transition-transform duration-500 ease-out" style="direction: rtl;">
+                    <div id="categories-slider-track" class="flex gap-5 transition-transform duration-500 ease-out" style="direction: rtl;">
                         @foreach($categories as $i => $cat)
-                            <div class="categories-slider-card flex-shrink-0 w-[calc(20%-16px)] min-w-[160px] sm:min-w-[180px] lg:min-w-[200px]">
-                                <a href="{{ route('site.courses', ['category' => (int) $cat->id]) }}" class="block rounded-2xl bg-white border p-4 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 h-full">
-                                    <div class="font-extrabold text-sm text-slate-900 line-clamp-1">{{ $cat->name }}</div>
-                                    <div class="text-xs text-slate-600 mt-1 line-clamp-2">{{ $cat->description ?? '' }}</div>
-                                    <div class="mt-3 inline-flex items-center gap-2 text-xs font-extrabold text-[#3d195c]">
-                                        <span>استعرض الدورات</span>
-                                        <span aria-hidden="true">←</span>
+                            @php
+                                $catImageUrl = $cat->image ? asset('storage/' . ltrim($cat->image, '/')) : null;
+                                $coursesCount = (int) ($cat->published_courses_count ?? $cat->courses_count ?? 0);
+                            @endphp
+                            <div class="categories-slider-card flex-shrink-0 w-[calc(25%-15px)] min-w-[200px] sm:min-w-[220px] lg:min-w-[260px]">
+                                <a href="{{ route('site.courses', ['category' => (int) $cat->id]) }}" class="group block rounded-3xl bg-white border-2 border-slate-100 overflow-hidden hover:border-[#2c004d]/20 hover:shadow-2xl hover:shadow-[#2c004d]/10 hover:-translate-y-2 transition-all duration-300 h-full">
+                                    <div class="relative h-32 md:h-40 overflow-hidden">
+                                        @if($catImageUrl)
+                                            <img src="{{ $catImageUrl }}" alt="{{ $cat->name }}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" />
+                                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                                        @else
+                                            <div class="w-full h-full bg-gradient-to-br from-[#2c004d] via-[#3d195c] to-[#2c004d]/90 flex items-center justify-center">
+                                                <span class="text-5xl md:text-6xl font-extrabold text-white/90">{{ mb_substr($cat->name, 0, 1) }}</span>
+                                                <div class="absolute inset-0 bg-[radial-gradient(circle_at_30%_70%,rgba(255,255,255,0.15),transparent)]"></div>
+                                            </div>
+                                        @endif
+                                        <div class="absolute bottom-2 right-2 left-2">
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/95 backdrop-blur text-xs font-bold text-slate-800 shadow-sm">
+                                                <svg class="w-3.5 h-3.5 text-[#2c004d]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                                                {{ $coursesCount }} دورة
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="p-4 md:p-5">
+                                        <h3 class="font-extrabold text-slate-900 text-base md:text-lg group-hover:text-[#2c004d] transition-colors line-clamp-1">{{ $cat->name }}</h3>
+                                        @if(!empty($cat->description))
+                                            <p class="text-sm text-slate-600 mt-2 line-clamp-2">{{ $cat->description }}</p>
+                                        @endif
+                                        <span class="mt-4 inline-flex items-center gap-2 text-[#2c004d] font-bold text-sm group-hover:underline">
+                                            استعرض الدورات
+                                            <svg class="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                                        </span>
                                     </div>
                                 </a>
                             </div>
@@ -261,8 +295,8 @@
 
                     function getVisibleCount() {
                         const w = wrap.offsetWidth;
-                        const cardW = cards[0] ? cards[0].offsetWidth + gap : 216;
-                        return Math.min(5, Math.max(1, Math.floor(w / cardW)));
+                        const cardW = cards[0] ? cards[0].offsetWidth + gap : 280;
+                        return Math.min(4, Math.max(1, Math.floor(w / cardW)));
                     }
 
                     function update() {

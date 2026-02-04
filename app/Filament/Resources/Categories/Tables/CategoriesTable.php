@@ -7,6 +7,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -16,10 +17,12 @@ class CategoriesTable
     {
         return $table
             ->columns([
-                TextColumn::make('icon')
+                ImageColumn::make('image')
                     ->label('')
-                    ->formatStateUsing(fn ($state) => $state ?: '📁')
-                    ->alignCenter(),
+                    ->circular()
+                    ->getStateUsing(fn ($record) => $record->image ? asset('storage/' . ltrim($record->image, '/')) : null)
+                    ->defaultImageUrl(fn ($record) => 'https://ui-avatars.com/api/?name=' . urlencode($record->name ?? '') . '&background=2c004d&color=fff')
+                    ->toggleable(),
                     
                 TextColumn::make('name')
                     ->label('اسم التصنيف')

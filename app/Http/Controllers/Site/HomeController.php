@@ -45,9 +45,11 @@ class HomeController extends Controller
             ->limit(8)
             ->get();
 
-        // Categories
+        // Categories (with courses count for homepage)
         $categories = Category::query()
             ->whereNull('parent_id')
+            ->where('is_active', true)
+            ->withCount(['courses as published_courses_count' => fn ($q) => $q->where('is_published', true)])
             ->orderBy('sort_order')
             ->orderBy('name')
             ->limit(10)
