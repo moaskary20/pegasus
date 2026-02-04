@@ -180,7 +180,7 @@
                     $coverUrl = $course->cover_image ? asset('storage/' . ltrim($course->cover_image, '/')) : null;
                 @endphp
                 <article class="course-card rounded-2xl border bg-white overflow-hidden shadow-sm">
-                    <a href="{{ url('/admin/view-course?course=' . $course->id) }}" class="block">
+                    <a href="{{ route('site.course.show', $course) }}" class="block">
                         <div class="aspect-video bg-slate-200 relative overflow-hidden">
                             @if($coverUrl)
                                 <img src="{{ $coverUrl }}" alt="{{ $course->title }}" class="w-full h-full object-cover" />
@@ -208,7 +208,7 @@
                         </div>
                     </a>
                     <div class="p-4">
-                        <a href="{{ url('/admin/view-course?course=' . $course->id) }}" class="block">
+                        <a href="{{ route('site.course.show', $course) }}" class="block">
                             <h3 class="font-extrabold text-slate-900 line-clamp-2 hover:text-[#2c004d] transition">{{ $course->title }}</h3>
                         </a>
                         @if($course->instructor)
@@ -229,7 +229,7 @@
                             </div>
                         </div>
                         <a
-                            href="{{ url('/admin/view-course?course=' . $course->id) }}"
+                            href="{{ route('site.course.show', $course) }}"
                             class="mt-4 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold {{ $isCompleted ? 'bg-slate-100 text-slate-700 hover:bg-slate-200' : 'bg-[#2c004d] text-white hover:bg-[#2c004d]/90' }} transition"
                         >
                             @if($isCompleted)

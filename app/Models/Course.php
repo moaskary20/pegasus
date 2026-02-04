@@ -12,6 +12,9 @@ class Course extends Model
     protected $fillable = [
         'user_id',
         'cover_image',
+        'preview_video_path',
+        'preview_youtube_url',
+        'preview_lesson_id',
         'title',
         'slug',
         'description',
@@ -170,6 +173,97 @@ class Course extends Model
         return $query->where('rating', '>=', $rating);
     }
     
+    /**
+     * Get the full URL for cover image
+     */
+    public function getCoverImageAttribute($value): ?string
+    {
+        if (empty($value)) {
+            return null;
+        }
+        if (str_starts_with($value, 'http')) {
+            return $value;
+        }
+        return asset('storage/' . ltrim($value, '/'));
+    }
+
+    public function previewLesson(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Lesson::class, 'preview_lesson_id');
+    }
+
+    /**
+     * Check if course has YouTube preview
+     */
+    public function isPreviewYoutube(): bool
+    {
+        return !empty($this->getPreviewYoutubeVideoId());
+    }
+
+    /**
+     * Extract YouTube video ID from preview_youtube_url
+     */
+    public function getPreviewYoutubeVideoId(): ?string
+    {
+        $url = trim((string) ($this->preview_youtube_url ?? ''));
+        if (empty($url) && $this->relationLoaded('previewLesson') && $this->previewLesson?->youtube_url) {
+            $url = $this->previewLesson->youtube_url;
+        }
+        if (empty($url)) {
+            return null;
+        }
+        if (preg_match('/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/', $url, $m)) {
+            return $m[1];
+        }
+        return null;
+    }
+
+    /**
+     * Get YouTube embed URL for preview
+     */
+    public function getPreviewYoutubeEmbedUrlAttribute(): ?string
+    {
+        $id = $this->getPreviewYoutubeVideoId();
+        return $id ? 'https://www.youtube.com/embed/' . $id : null;
+    }
+
+    /**
+     * Get the full URL for preview video (preview lesson, youtube, or file)
+     */
+    public function getPreviewVideoUrlAttribute(): ?string
+    {
+        $lesson = $this->previewLesson ?? $this->previewLesson()->first();
+        if ($lesson && ($lesson->video_url || $lesson->youtube_url)) {
+            if ($lesson->isYoutubeVideo()) {
+                return $lesson->youtube_embed_url;
+            }
+            return $lesson->video_url;
+        }
+        if ($this->isPreviewYoutube()) {
+            return $this->preview_youtube_embed_url;
+        }
+        $value = $this->attributes['preview_video_path'] ?? null;
+        if (empty($value)) {
+            return null;
+        }
+        if (str_starts_with($value, 'http')) {
+            return $value;
+        }
+        return asset('storage/' . ltrim($value, '/'));
+    }
+
+    /**
+     * Check if preview is YouTube (from course or preview lesson)
+     */
+    public function isPreviewVideoYoutube(): bool
+    {
+        $lesson = $this->previewLesson ?? $this->previewLesson()->first();
+        if ($lesson && $lesson->isYoutubeVideo()) {
+            return true;
+        }
+        return $this->isPreviewYoutube();
+    }
+
     /**
      * Get the effective price (offer price or regular price)
      */

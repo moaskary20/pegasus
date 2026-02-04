@@ -14,6 +14,7 @@ class Lesson extends Model
         'title',
         'description',
         'video_path',
+        'youtube_url',
         'image_path',
         'content',
         'content_type',
@@ -117,6 +118,73 @@ class Lesson extends Model
         return $query->whereHas('section.course', fn($q) => $q->where('is_published', true));
     }
     
+    /**
+     * Check if lesson has YouTube video
+     */
+    public function isYoutubeVideo(): bool
+    {
+        return !empty($this->youtube_url) && $this->getYoutubeVideoId() !== null;
+    }
+
+    /**
+     * Extract YouTube video ID from URL
+     * Supports: youtube.com/watch?v=ID, youtu.be/ID, youtube.com/embed/ID
+     */
+    public function getYoutubeVideoId(): ?string
+    {
+        $url = trim((string) ($this->youtube_url ?? ''));
+        if (empty($url)) {
+            return null;
+        }
+        if (preg_match('/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/', $url, $m)) {
+            return $m[1];
+        }
+        return null;
+    }
+
+    /**
+     * Get YouTube embed URL
+     */
+    public function getYoutubeEmbedUrlAttribute(): ?string
+    {
+        $id = $this->getYoutubeVideoId();
+        return $id ? 'https://www.youtube.com/embed/' . $id : null;
+    }
+
+    /**
+     * Get the video URL for playback (from video relation or video_path)
+     * For YouTube use youtube_embed_url and isYoutubeVideo()
+     */
+    public function getVideoUrlAttribute(): ?string
+    {
+        if ($this->isYoutubeVideo()) {
+            return $this->youtube_embed_url;
+        }
+        if ($this->video) {
+            if ($this->video->hls_path) {
+                return $this->video->hls_path;
+            }
+            if ($this->video->path) {
+                return asset('storage/' . ltrim($this->video->path, '/'));
+            }
+        }
+        if ($this->video_path) {
+            return asset('storage/' . ltrim($this->video_path, '/'));
+        }
+        return null;
+    }
+
+    /**
+     * Check if user can watch this lesson (enrolled or free preview)
+     */
+    public function canWatch(?bool $isEnrolled): bool
+    {
+        if ($isEnrolled) {
+            return true;
+        }
+        return (bool) ($this->is_free ?? false) || (bool) ($this->is_free_preview ?? false);
+    }
+
     /**
      * Scope to filter free lessons
      */

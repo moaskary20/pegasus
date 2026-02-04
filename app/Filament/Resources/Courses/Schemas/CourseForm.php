@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Courses\Schemas;
 
+use App\Models\Lesson;
 use App\Models\User;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
@@ -22,11 +23,38 @@ class CourseForm
                     ->required()
                     ->searchable()
                     ->preload(),
+                FileUpload::make('preview_video_path')
+                    ->label('فيديو معاينة الدورة')
+                    ->acceptedFileTypes(['video/mp4', 'video/webm', 'video/quicktime'])
+                    ->directory('courses/preview-videos')
+                    ->visibility('public')
+                    ->maxSize(51200)
+                    ->helperText('فيديو قصير للمعاينة يظهر عند الضغط على "معاينة الدورة"'),
+                TextInput::make('preview_youtube_url')
+                    ->label('رابط يوتيوب لمعاينة الدورة')
+                    ->placeholder('https://www.youtube.com/watch?v=... أو https://youtu.be/...')
+                    ->url()
+                    ->maxLength(500)
+                    ->helperText('أو استخدم رابط يوتيوب. إذا أدخلت رابط يوتيوب سيُستخدم بدل الملف المرفوع.'),
+                Select::make('preview_lesson_id')
+                    ->label('درس المعاينة')
+                    ->options(function ($get, $livewire) {
+                        $record = $livewire->getRecord() ?? $livewire->data ?? null;
+                        if (!$record || !($record->id ?? null)) return [];
+                        return Lesson::whereHas('section', fn ($q) => $q->where('course_id', $record->id))
+                            ->with('section')
+                            ->get()
+                            ->mapWithKeys(fn ($l) => [$l->id => $l->title . ' (قسم: ' . ($l->section?->title ?? '-') . ')'])
+                            ->toArray();
+                    })
+                    ->searchable()
+                    ->helperText('اختر درساً لاستخدام فيديوه كمعاينة للدورة. أولوية: درس المعاينة ثم يوتيوب ثم الملف.'),
                 FileUpload::make('cover_image')
                     ->label('صورة الغلاف')
                     ->image()
                     ->directory('courses/covers')
-                    ->visibility('public'),
+                    ->visibility('public')
+                    ->helperText('صورة تظهر في صفحة الدورة على الموقع (أسفل معاينة الدورة)'),
                 TextInput::make('title')
                     ->label('العنوان')
                     ->required()

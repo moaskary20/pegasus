@@ -56,6 +56,7 @@ class LessonsRelationManager extends RelationManager
                         // مسح الحقول غير المستخدمة
                         if ($state === 'text') {
                             $set('video_path', null);
+                            $set('youtube_url', null);
                             $set('image_path', null);
                         }
                         // تفعيل Zoom عند اختيار نوع zoom
@@ -105,8 +106,15 @@ class LessonsRelationManager extends RelationManager
                     ->visible(fn ($get) => $get('content_type') === 'zoom' && $get('has_zoom_meeting'))
                     ->helperText('سيملأ تلقائياً بعد الحفظ عند إنشاء الاجتماع في Zoom'),
                 
+                TextInput::make('youtube_url')
+                    ->label('رابط فيديو يوتيوب')
+                    ->placeholder('https://www.youtube.com/watch?v=... أو https://youtu.be/...')
+                    ->url()
+                    ->maxLength(500)
+                    ->visible(fn ($get) => in_array($get('content_type'), ['video', 'mixed']))
+                    ->helperText('أو ارفع ملف فيديو أدناه. إذا أدخلت رابط يوتيوب فلن يُستخدم الملف المرفوع.'),
                 FileUpload::make('video_path')
-                    ->label('فيديو الدرس')
+                    ->label('فيديو الدرس (ملف)')
                     ->disk('public')
                     ->directory('lessons/videos')
                     ->acceptedFileTypes(['video/mp4', 'video/quicktime', 'video/webm'])
@@ -158,6 +166,11 @@ class LessonsRelationManager extends RelationManager
                     ->label('السماح بفتح الدرس بدون إكمال السابق')
                     ->default(false)
                     ->helperText('إذا كان مفعلاً، يمكن للطلاب فتح هذا الدرس حتى بدون إكمال الدرس السابق'),
+                Toggle::make('use_as_course_preview')
+                    ->label('استخدم كمعاينة للدورة')
+                    ->default(fn ($record) => $record && $record->section?->course?->preview_lesson_id === $record->id)
+                    ->helperText('فعّل لاستخدام فيديو هذا الدرس كمعاينة للدورة على الموقع')
+                    ->dehydrated(false),
                 
                 // Zoom Meeting Fields
                 Toggle::make('has_zoom_meeting')
@@ -210,9 +223,9 @@ class LessonsRelationManager extends RelationManager
                     ->color(fn ($record) => $record->quiz ? 'success' : 'gray'),
                 TextColumn::make('has_video')
                     ->label('فيديو')
-                    ->getStateUsing(fn ($record) => $record->video ? '✓' : '✗')
+                    ->getStateUsing(fn ($record) => ($record->video || $record->youtube_url || $record->video_path) ? '✓' : '✗')
                     ->badge()
-                    ->color(fn ($record) => $record->video ? 'success' : 'gray'),
+                    ->color(fn ($record) => ($record->video || $record->youtube_url || $record->video_path) ? 'success' : 'gray'),
                 TextColumn::make('has_files')
                     ->label('ملفات')
                     ->getStateUsing(fn ($record) => $record->files->count() > 0 ? $record->files->count() : '✗')
@@ -249,10 +262,24 @@ class LessonsRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                CreateAction::make(),
+                CreateAction::make()
+                    ->after(function ($record) {
+                        $data = $this->form->getState();
+                        if (!empty($data['use_as_course_preview']) && $record && $record->section?->course_id) {
+                            \App\Models\Course::where('id', $record->section->course_id)->update(['preview_lesson_id' => $record->id]);
+                        }
+                    }),
             ])
             ->recordActions([
-                EditAction::make(),
+                EditAction::make()
+                    ->after(function ($record) {
+                        $data = $this->form->getState();
+                        if (!empty($data['use_as_course_preview']) && $record && $record->section?->course_id) {
+                            \App\Models\Course::where('id', $record->section->course_id)->update(['preview_lesson_id' => $record->id]);
+                        } elseif (empty($data['use_as_course_preview']) && $record && $record->section?->course?->preview_lesson_id == $record->id) {
+                            \App\Models\Course::where('id', $record->section->course_id)->update(['preview_lesson_id' => null]);
+                        }
+                    }),
                 Action::make('manage_quiz')
                     ->label('الاختبار')
                     ->icon('heroicon-o-clipboard-document-check')

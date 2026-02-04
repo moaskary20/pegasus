@@ -48,6 +48,7 @@ class CourseResource extends Resource
         return [
             RelationManagers\SectionsRelationManager::class,
             RelationManagers\AllLessonsRelationManager::class,
+            RelationManagers\RatingsRelationManager::class,
             RelationManagers\QuestionBanksRelationManager::class,
         ];
     }

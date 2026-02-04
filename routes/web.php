@@ -315,8 +315,9 @@ Route::get('/courses/{course:slug}', function (Course $course) {
         'instructor:id,name,avatar,job,city,skills',
         'category:id,name',
         'subCategory:id,name',
+        'previewLesson',
         'sections' => fn ($q) => $q->orderBy('sort_order')->with([
-            'lessons' => fn ($q) => $q->orderBy('sort_order'),
+            'lessons' => fn ($q) => $q->orderBy('sort_order')->with('video'),
         ]),
         'ratings' => fn ($q) => $q->latest()->with('user:id,name,avatar'),
     ]);
@@ -337,11 +338,18 @@ Route::get('/courses/{course:slug}', function (Course $course) {
     $avgRating = (float) ($course->rating ?? 0);
 
     $isEnrolled = false;
+    $userRating = null;
     if (auth()->check()) {
         $isEnrolled = Enrollment::query()
             ->where('user_id', auth()->id())
             ->where('course_id', $course->id)
             ->exists();
+        if ($isEnrolled) {
+            $userRating = CourseRating::query()
+                ->where('course_id', $course->id)
+                ->where('user_id', auth()->id())
+                ->first();
+        }
     }
 
     $relatedCourses = Course::query()
@@ -353,18 +361,167 @@ Route::get('/courses/{course:slug}', function (Course $course) {
         ->limit(6)
         ->get();
 
+    $firstLesson = null;
+    if ($isEnrolled && auth()->check() && $lessons->count() > 0) {
+        $accessService = app(\App\Services\LessonAccessService::class);
+        foreach ($lessons as $l) {
+            if ($accessService->canAccessLesson(auth()->user(), $l)) {
+                $firstLesson = $l;
+                break;
+            }
+        }
+        $firstLesson = $firstLesson ?? $lessons->first();
+    }
+
     return view('courses.show', [
         'course' => $course,
+        'isEnrolled' => $isEnrolled,
+        'userRating' => $userRating,
+        'firstLesson' => $firstLesson,
         'lessonsCount' => $lessonsCount,
         'totalMinutes' => $totalMinutes,
         'previewLessonsCount' => $previewLessonsCount,
         'starsCounts' => $starsCounts,
         'totalReviews' => $totalReviews,
         'avgRating' => $avgRating,
-        'isEnrolled' => $isEnrolled,
         'relatedCourses' => $relatedCourses,
     ]);
 })->name('site.course.show');
+
+Route::post('/courses/{course:slug}/rate', [\App\Http\Controllers\Site\CourseRatingController::class, 'store'])
+    ->name('site.course.rate')
+    ->middleware('auth');
+
+Route::get('/courses/{course:slug}/lessons/{lesson}', function (Course $course, \App\Models\Lesson $lesson) {
+    abort_unless((bool) $course->is_published, 404);
+    abort_unless($lesson->section && (int) $lesson->section->course_id === (int) $course->id, 404);
+
+    $course->load([
+        'sections' => fn ($q) => $q->orderBy('sort_order')->with(['lessons' => fn ($q) => $q->orderBy('sort_order')]),
+    ]);
+
+    $lesson->load([
+        'section.course',
+        'video',
+        'files',
+        'quiz',
+        'zoomMeeting',
+        'assignments' => fn ($q) => $q->where('is_published', true),
+    ]);
+
+    $isEnrolled = false;
+    $canAccess = false;
+    $accessMessage = null;
+
+    if (auth()->check()) {
+        $isEnrolled = \App\Models\Enrollment::query()
+            ->where('user_id', auth()->id())
+            ->where('course_id', $course->id)
+            ->exists();
+
+        if ($isEnrolled) {
+            $accessService = app(\App\Services\LessonAccessService::class);
+            $canAccess = $accessService->canAccessLesson(auth()->user(), $lesson);
+            if (!$canAccess) {
+                $incomplete = $accessService->getFirstIncompleteLesson(auth()->user(), $lesson);
+                $accessMessage = $incomplete
+                    ? "يجب إكمال الدرس السابق: {$incomplete->title}"
+                    : 'يجب إكمال الدروس السابقة أولاً';
+            }
+        }
+    }
+
+    if (!$isEnrolled) {
+        $canAccess = (bool) ($lesson->is_free ?? false) || (bool) ($lesson->is_free_preview ?? false);
+        if (!$canAccess) {
+            $accessMessage = 'يجب الاشتراك في الدورة لمشاهدة هذا الدرس';
+        }
+    }
+
+    $prevLesson = null;
+    $nextLesson = null;
+    $allLessons = $course->sections->flatMap(fn ($s) => $s->lessons->sortBy('sort_order'))->values();
+    $idx = $allLessons->search(fn ($l) => (int) $l->id === (int) $lesson->id);
+    if ($idx !== false && $idx > 0) {
+        $prevLesson = $allLessons[$idx - 1];
+    }
+    if ($idx !== false && $idx < $allLessons->count() - 1) {
+        $nextLesson = $allLessons[$idx + 1];
+    }
+
+    $progress = null;
+    if (auth()->check() && $isEnrolled && $canAccess) {
+        $progress = \App\Models\VideoProgress::firstOrCreate(
+            [
+                'user_id' => auth()->id(),
+                'lesson_id' => $lesson->id,
+            ],
+            ['last_position_seconds' => 0, 'completed' => false, 'watch_time_minutes' => 0]
+        );
+    }
+
+    return view('courses.lesson', [
+        'course' => $course,
+        'lesson' => $lesson,
+        'canAccess' => $canAccess,
+        'accessMessage' => $accessMessage,
+        'isEnrolled' => $isEnrolled,
+        'prevLesson' => $prevLesson,
+        'nextLesson' => $nextLesson,
+        'progress' => $progress,
+    ]);
+})->name('site.course.lesson.show');
+
+Route::post('/courses/{course:slug}/lessons/{lesson}/save-progress', function (Request $request, Course $course, \App\Models\Lesson $lesson) {
+    if (!auth()->check()) {
+        return response()->json(['ok' => false], 401);
+    }
+    abort_unless($lesson->section && (int) $lesson->section->course_id === (int) $course->id, 404);
+    $enrollment = \App\Models\Enrollment::query()
+        ->where('user_id', auth()->id())
+        ->where('course_id', $course->id)
+        ->exists();
+    if (!$enrollment) {
+        return response()->json(['ok' => false], 403);
+    }
+    $accessService = app(\App\Services\LessonAccessService::class);
+    if (!$accessService->canAccessLesson(auth()->user(), $lesson)) {
+        return response()->json(['ok' => false], 403);
+    }
+    $position = (int) ($request->input('position') ?? $request->json('position') ?? 0);
+    $duration = (int) ($request->input('duration') ?? $request->json('duration') ?? 0);
+    $progress = \App\Models\VideoProgress::firstOrCreate(
+        ['user_id' => auth()->id(), 'lesson_id' => $lesson->id],
+        ['last_position_seconds' => 0, 'completed' => false, 'watch_time_minutes' => 0]
+    );
+    $wasCompleted = (bool) $progress->completed;
+    $isCompleted = $duration > 0 && $position >= (int) ($duration * 0.9);
+    $progress->update([
+        'last_position_seconds' => $position,
+        'last_watched_at' => now(),
+        'completed' => $isCompleted,
+    ]);
+    if ($isCompleted && !$wasCompleted) {
+        app(\App\Services\PointsService::class)->awardLessonCompleted(auth()->user(), $lesson);
+    }
+    $enrollmentModel = \App\Models\Enrollment::where('user_id', auth()->id())->where('course_id', $course->id)->first();
+    if ($enrollmentModel) {
+        $course->load(['sections' => fn ($q) => $q->withCount('lessons')]);
+        $totalLessons = $course->sections->sum('lessons_count');
+        $completedCount = \App\Models\VideoProgress::where('user_id', auth()->id())
+            ->whereHas('lesson.section', fn ($q) => $q->where('course_id', $course->id))
+            ->where('completed', true)->count();
+        $enrollmentModel->update([
+            'progress_percentage' => $totalLessons > 0 ? ($completedCount / $totalLessons) * 100 : 0,
+            'completed_at' => $completedCount >= $totalLessons ? now() : null,
+        ]);
+    }
+    return response()->json(['ok' => true]);
+})->name('site.course.lesson.save-progress')->middleware('auth');
+
+Route::get('/courses/{course:slug}/lessons/{lesson}/quiz', [\App\Http\Controllers\Site\QuizController::class, 'show'])->name('site.course.quiz.show');
+Route::post('/courses/{course:slug}/lessons/{lesson}/quiz', [\App\Http\Controllers\Site\QuizController::class, 'submit'])->name('site.course.quiz.submit')->middleware('auth');
+Route::post('/courses/{course:slug}/lessons/{lesson}/quiz/retake', [\App\Http\Controllers\Site\QuizController::class, 'retake'])->name('site.course.quiz.retake')->middleware('auth');
 
 Route::get('/courses/{course:slug}/subscribe', function (Course $course) {
     abort_unless((bool) $course->is_published, 404);

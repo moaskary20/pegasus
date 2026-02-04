@@ -20,5 +20,8 @@ class DatabaseSeeder extends Seeder
         
         // تشغيل SampleDataSeeder لإنشاء البيانات التجريبية
         $this->call(SampleDataSeeder::class);
+        
+        // إضافة صور للدورات
+        $this->call(CourseImagesSeeder::class);
     }
 }
