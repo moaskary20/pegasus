@@ -222,6 +222,12 @@ Route::get('/my-courses', function () {
 Route::view('/support', 'pages.support')->name('site.support');
 Route::view('/contact', 'pages.contact')->name('site.contact');
 Route::view('/about', 'pages.about')->name('site.about');
+
+Route::get('/messages', [\App\Http\Controllers\Site\MessagesController::class, 'index'])->name('site.messages');
+Route::get('/messages/new', [\App\Http\Controllers\Site\MessagesController::class, 'newConversation'])->name('site.messages.new');
+Route::post('/messages/start', [\App\Http\Controllers\Site\MessagesController::class, 'startConversation'])->name('site.messages.start');
+Route::get('/messages/{id}', [\App\Http\Controllers\Site\MessagesController::class, 'show'])->name('site.messages.show');
+Route::post('/messages/{id}/send', [\App\Http\Controllers\Site\MessagesController::class, 'send'])->name('site.messages.send');
 Route::get('/courses', function (Request $request) {
     $categoryId = (int) $request->query('category', 0);
     $subCategoryId = (int) $request->query('sub', 0);
@@ -876,7 +882,36 @@ Route::post('/cart/courses/clear', function () {
     return redirect()->route('site.cart');
 })->name('site.cart.courses.clear');
 
-Route::view('/store', 'pages.store')->name('site.store');
+Route::get('/store', [\App\Http\Controllers\Site\StoreController::class, 'index'])->name('site.store');
+Route::get('/store/{product:slug}', [\App\Http\Controllers\Site\StoreController::class, 'show'])->name('site.store.product');
+Route::post('/store/{product}/add-to-cart', [\App\Http\Controllers\Site\StoreController::class, 'addToCart'])->name('site.store.add-to-cart');
+
+Route::post('/wishlist/products/{product}', function (Request $request, \App\Models\Product $product) {
+    if (!auth()->check()) {
+        session(['url.intended' => url()->current()]);
+        return redirect(url('/admin/login'));
+    }
+    \App\Models\Wishlist::firstOrCreate(['user_id' => auth()->id(), 'product_id' => $product->id]);
+    return redirect()->back()->with('notice', ['type' => 'success', 'message' => 'تمت إضافة المنتج إلى قائمة الرغبات.']);
+})->name('site.wishlist.products.add');
+
+Route::post('/wishlist/products/{product}/remove', function (Request $request, \App\Models\Product $product) {
+    if (auth()->check()) {
+        \App\Models\Wishlist::where('user_id', auth()->id())->where('product_id', $product->id)->delete();
+    }
+    return redirect()->back()->with('notice', ['type' => 'success', 'message' => 'تمت إزالة المنتج من قائمة الرغبات.']);
+})->name('site.wishlist.products.remove');
+
+Route::post('/cart/store/{item}', function (Request $request, \App\Models\StoreCart $item) {
+    $user = auth()->user();
+    $sessionId = session()->getId();
+    $canRemove = ($user && (int) $item->user_id === (int) $user->id) || (!$user && $item->session_id === $sessionId);
+    if ($canRemove) {
+        $item->delete();
+    }
+    return redirect()->route('site.cart')->with('notice', ['type' => 'success', 'message' => 'تمت إزالة المنتج من السلة.']);
+})->name('site.cart.store.remove');
+
 Route::view('/blog', 'pages.blog')->name('site.blog');
 
 // Search API routes with rate limiting

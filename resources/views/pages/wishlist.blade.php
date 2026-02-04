@@ -111,10 +111,18 @@
                 <p class="text-sm text-slate-600">منتجات المتجر المحفوظة تظهر هنا عند إضافتها.</p>
                 <div class="mt-4 space-y-3">
                     @foreach($storeWishlist->take(10) as $w)
+                        @if($w->product)
                         <div class="flex items-center justify-between gap-3 py-3 border-b border-slate-100 last:border-0">
-                            <span class="font-semibold text-slate-900">{{ $w->product?->name ?? 'منتج' }}</span>
-                            <a href="{{ route('site.store') }}" class="text-sm font-bold text-[#2c004d] hover:underline">عرض المتجر</a>
+                            <a href="{{ route('site.store.product', $w->product) }}" class="font-semibold text-slate-900 hover:text-[#2c004d]">{{ $w->product->name }}</a>
+                            <div class="flex items-center gap-2">
+                                <a href="{{ route('site.store.product', $w->product) }}" class="text-sm font-bold text-[#2c004d] hover:underline">عرض</a>
+                                <form method="POST" action="{{ route('site.wishlist.products.remove', $w->product) }}" class="inline">
+                                    @csrf
+                                    <button type="submit" class="text-xs text-rose-600 hover:underline">إزالة</button>
+                                </form>
+                            </div>
                         </div>
+                        @endif
                     @endforeach
                 </div>
             </div>

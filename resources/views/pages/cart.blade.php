@@ -139,11 +139,17 @@
                         <div class="divide-y">
                             @foreach($storeCart as $i)
                                 <div class="p-5 flex items-start justify-between gap-3">
-                                    <div class="min-w-0">
-                                        <div class="text-sm font-extrabold text-slate-900 line-clamp-1">{{ $i->product?->name ?? 'منتج' }}</div>
+                                    <div class="min-w-0 flex-1">
+                                        <a href="{{ $i->product ? route('site.store.product', $i->product) : route('site.store') }}" class="block text-sm font-extrabold text-slate-900 line-clamp-1 hover:text-[#3d195c]">{{ $i->product?->name ?? 'منتج' }}</a>
                                         <div class="text-xs text-slate-600 mt-1">الكمية: {{ (int) $i->quantity }}</div>
                                     </div>
-                                    <div class="text-sm font-extrabold text-slate-900 shrink-0">{{ number_format((float) $i->total, 2) }} ج.م</div>
+                                    <div class="flex items-center gap-2 shrink-0">
+                                        <span class="text-sm font-extrabold text-slate-900">{{ number_format((float) $i->total, 2) }} ج.م</span>
+                                        <form method="POST" action="{{ route('site.cart.store.remove', $i) }}">
+                                            @csrf
+                                            <button type="submit" class="px-2 py-1 rounded-lg bg-slate-100 text-slate-600 text-xs font-bold hover:bg-rose-50 hover:text-rose-600">حذف</button>
+                                        </form>
+                                    </div>
                                 </div>
                             @endforeach
                         </div>
@@ -212,6 +218,9 @@
                         </a>
                         <a href="{{ route('site.courses') }}" class="w-full inline-flex items-center justify-center px-5 py-3 rounded-2xl bg-slate-100 text-slate-900 font-extrabold hover:bg-slate-200 transition">
                             إضافة دورات أخرى
+                        </a>
+                        <a href="{{ route('site.store') }}" class="w-full inline-flex items-center justify-center px-5 py-3 rounded-2xl border-2 border-[#3d195c] text-[#3d195c] font-extrabold hover:bg-[#3d195c]/5 transition">
+                            تصفّح المتجر
                         </a>
                     </div>
 

@@ -106,9 +106,10 @@
                     <div class="text-sm font-extrabold">روابط سريعة</div>
                     <div class="mt-4 grid grid-cols-2 gap-2 text-sm">
                         <a href="{{ url('/') }}" class="text-white/85 hover:text-white transition">الرئيسية</a>
-                        <a href="{{ url('/about') }}" class="text-white/85 hover:text-white transition">من نحن</a>
+                        <a href="{{ route('site.about') }}" class="text-white/85 hover:text-white transition">من نحن</a>
+                        <a href="{{ route('site.contact') }}" class="text-white/85 hover:text-white transition">الاتصال بنا</a>
                         <a href="{{ url('/courses') }}" class="text-white/85 hover:text-white transition">الدورات</a>
-                        <a href="{{ url('/store') }}" class="text-white/85 hover:text-white transition">المتجر</a>
+                        <a href="{{ route('site.store') }}" class="text-white/85 hover:text-white transition">المتجر</a>
                         <a href="{{ url('/blog') }}" class="text-white/85 hover:text-white transition">المدونة</a>
                         <a href="{{ route('site.support') }}" class="text-white/85 hover:text-white transition">الدعم</a>
                         <a href="{{ route('site.account') }}" class="text-white/85 hover:text-white transition">الحساب</a>

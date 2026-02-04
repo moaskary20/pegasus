@@ -37,7 +37,7 @@ class NewMessageNotification extends Notification implements ShouldQueue
             ->line('لديك رسالة جديدة من ' . $sender->name)
             ->line('المحادثة: ' . $conversationName)
             ->line('الرسالة: ' . \Str::limit($this->message->body, 100))
-            ->action('عرض المحادثة', url('/admin/conversation/' . $conversation->id))
+            ->action('عرض المحادثة', route('site.messages.show', $conversation->id))
             ->line('شكراً لاستخدامك منصة Pegasus Academy!');
     }
 

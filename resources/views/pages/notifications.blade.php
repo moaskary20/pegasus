@@ -60,6 +60,7 @@
                         $title = $data['title'] ?? 'إشعار';
                         $message = $data['message'] ?? '';
                         $isRead = $notification->read_at !== null;
+                        $conversationId = $data['conversation_id'] ?? null;
                     @endphp
                     <li class="{{ $isRead ? 'bg-white' : 'bg-sky-50/50' }} hover:bg-slate-50/50 transition">
                         <div class="flex items-start gap-4 p-4 sm:p-5">
@@ -76,12 +77,17 @@
                                 @if($message)
                                     <p class="mt-1 text-sm text-slate-600 leading-relaxed">{{ $message }}</p>
                                 @endif
-                                @if(!$isRead)
-                                <form method="POST" action="{{ route('site.notifications.read-one', $notification->id) }}" class="mt-3 inline-block">
-                                    @csrf
-                                    <button type="submit" class="text-xs font-bold text-[#2c004d] hover:underline">تعليم كمقروء</button>
-                                </form>
-                                @endif
+                                <div class="mt-3 flex flex-wrap items-center gap-3">
+                                    @if($conversationId)
+                                        <a href="{{ route('site.messages.show', $conversationId) }}" class="text-xs font-bold text-[#2c004d] hover:underline">عرض المحادثة</a>
+                                    @endif
+                                    @if(!$isRead)
+                                        <form method="POST" action="{{ route('site.notifications.read-one', $notification->id) }}" class="inline-block">
+                                            @csrf
+                                            <button type="submit" class="text-xs font-bold text-[#2c004d] hover:underline">تعليم كمقروء</button>
+                                        </form>
+                                    @endif
+                                </div>
                             </div>
                         </div>
                     </li>
