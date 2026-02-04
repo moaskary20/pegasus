@@ -202,7 +202,7 @@
     }
 @endphp
 
-<header class="sticky top-0 z-50">
+<header class="md:sticky md:top-0 z-50">
     {{-- Top strip --}}
     <div class="bg-[#2c004d] text-white">
         <div class="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between gap-3">
