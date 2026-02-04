@@ -615,8 +615,8 @@
                     </div>
                 </div>
 
-                {{-- Search (center) --}}
-                <div class="flex-1">
+                {{-- Search (center) - desktop only --}}
+                <div class="hidden md:block flex-1">
                     <form action="{{ route('site.search') }}" method="GET">
                         <x-search-autocomplete
                             placeholder="ابحث عن الدورات أو الدروس أو المدرسين..."
@@ -639,6 +639,16 @@
                         <span class="font-extrabold text-[#2c004d]">{{ config('app.name', 'Pegasus Academy') }}</span>
                     @endif
                 </a>
+            </div>
+
+            {{-- Mobile search bar (below header) --}}
+            <div class="md:hidden mt-3 pb-1">
+                <form action="{{ route('site.search') }}" method="GET">
+                    <x-search-autocomplete
+                        placeholder="ابحث عن الدورات أو الدروس أو المدرسين..."
+                        class="w-full rounded-2xl border-slate-200 bg-slate-50 py-3 focus:bg-white focus:border-[#2c004d] focus:ring-2 focus:ring-[#2c004d]/20"
+                    />
+                </form>
             </div>
 
             {{-- Row 2: Menu under search --}}

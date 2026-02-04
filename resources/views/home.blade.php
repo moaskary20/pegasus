@@ -92,8 +92,8 @@
         </div>
     </section>
 
-    {{-- Stats Bar with Count-up --}}
-    <section class="bg-[#2c004d] py-8 md:py-10">
+    {{-- Stats Bar with Count-up (desktop only) --}}
+    <section class="hidden md:block bg-[#2c004d] py-8 md:py-10">
         <div class="max-w-7xl mx-auto px-4">
             <div class="grid grid-cols-2 md:grid-cols-5 gap-4" id="stats-section">
                 <x-site.stat-counter :value="$stats['courses_count'] ?? 0" label="دورات" icon="academic" />
