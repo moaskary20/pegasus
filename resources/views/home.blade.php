@@ -124,7 +124,7 @@
                     @if($firstImage)
                         <img id="home-slider-image" src="{{ $firstImage }}" alt="" class="absolute inset-0 w-full h-full object-cover opacity-95 transition-opacity duration-300" />
                     @endif
-                    <div class="absolute inset-0 bg-gradient-to-l from-black/55 via-black/25 to-black/10"></div>
+                    <div class="absolute inset-0 bg-gradient-to-l from-black/55 via-black/25 to-black/10 pointer-events-none"></div>
                     <div class="relative z-10 h-full flex items-end">
                         <div class="p-5 sm:p-7 md:p-10 max-w-2xl text-white">
                             <div class="inline-flex items-center gap-2 text-[11px] font-bold px-3 py-1 rounded-full bg-white/10 border border-white/15">
@@ -142,15 +142,15 @@
                         </div>
                     </div>
                     @if(count($homeSlides) > 1)
-                        <button type="button" id="home-slider-prev" class="absolute top-1/2 -translate-y-1/2 left-3 sm:left-4 w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-white flex items-center justify-center transition" aria-label="السابق">
+                        <button type="button" id="home-slider-prev" class="absolute top-1/2 -translate-y-1/2 left-3 sm:left-4 z-20 w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-white flex items-center justify-center transition cursor-pointer" aria-label="السابق">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                         </button>
-                        <button type="button" id="home-slider-next" class="absolute top-1/2 -translate-y-1/2 right-3 sm:right-4 w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-white flex items-center justify-center transition" aria-label="التالي">
+                        <button type="button" id="home-slider-next" class="absolute top-1/2 -translate-y-1/2 right-3 sm:right-4 z-20 w-10 h-10 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/15 text-white flex items-center justify-center transition cursor-pointer" aria-label="التالي">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                         </button>
-                        <div class="absolute bottom-3 sm:bottom-4 right-1/2 translate-x-1/2 flex items-center gap-2">
+                        <div class="absolute bottom-3 sm:bottom-4 right-1/2 translate-x-1/2 z-20 flex items-center gap-2">
                             @foreach($homeSlides as $i => $s)
-                                <button type="button" class="home-slider-dot w-2.5 h-2.5 rounded-full border border-white/40 transition" data-index="{{ $i }}" aria-label="انتقل إلى شريحة {{ $i + 1 }}" style="{{ $i === 0 ? 'background: rgba(255,255,255,.95);' : 'background: rgba(255,255,255,.15);' }}"></button>
+                                <button type="button" class="home-slider-dot w-2.5 h-2.5 rounded-full border border-white/40 transition cursor-pointer" data-index="{{ $i }}" aria-label="انتقل إلى شريحة {{ $i + 1 }}" style="{{ $i === 0 ? 'background: rgba(255,255,255,.95);' : 'background: rgba(255,255,255,.15);' }}"></button>
                             @endforeach
                         </div>
                     @endif
