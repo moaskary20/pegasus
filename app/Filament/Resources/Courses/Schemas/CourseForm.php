@@ -52,8 +52,10 @@ class CourseForm
                 FileUpload::make('cover_image')
                     ->label('صورة الغلاف')
                     ->image()
+                    ->disk('public')
                     ->directory('courses/covers')
                     ->visibility('public')
+                    ->imagePreviewHeight('200')
                     ->helperText('صورة تظهر في صفحة الدورة على الموقع (أسفل معاينة الدورة)'),
                 TextInput::make('title')
                     ->label('العنوان')
