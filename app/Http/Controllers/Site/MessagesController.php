@@ -205,7 +205,7 @@ class MessagesController extends Controller
     {
         if ($conversation->type === Conversation::TYPE_PRIVATE) {
             $other = $conversation->getOtherParticipant(auth()->id());
-            return $other?->avatar;
+            return $other?->avatar_url;
         }
         return null;
     }

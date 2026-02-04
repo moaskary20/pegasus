@@ -79,6 +79,17 @@ location /storage {
 
 ---
 
+## صور الأفاتار (404 على /avatars/xxx.jpg)
+المشروع يخدم الأفاتار عبر route. بعد النشر:
+```bash
+git pull origin main
+php artisan route:clear
+php artisan config:clear
+```
+تأكد أن الملفات موجودة في `storage/app/public/avatars/` على السيرفر.
+
+---
+
 ## التحقق
 بعد التنفيذ، تأكد من وجود الرابط:
 ```bash

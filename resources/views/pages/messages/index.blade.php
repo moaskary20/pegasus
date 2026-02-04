@@ -55,7 +55,7 @@
             <a href="{{ route('site.messages.show', $conversation->id) }}" class="flex items-center gap-4 px-5 py-4 border-b border-slate-100 hover:bg-slate-50 transition {{ $unreadCount > 0 ? 'bg-[#2c004d]/5' : '' }}">
                 <div class="relative w-12 h-12 rounded-full bg-[#2c004d]/10 flex items-center justify-center text-[#2c004d] font-bold text-lg shrink-0 overflow-hidden">
                     @if($avatar)
-                        <img src="{{ asset('storage/' . ltrim($avatar, '/')) }}" alt="{{ $name }}" class="w-full h-full object-cover">
+                        <img src="{{ $avatar }}" alt="{{ $name }}" class="w-full h-full object-cover">
                     @elseif($conversation->type === 'private')
                         {{ mb_substr($name, 0, 1) }}
                     @else

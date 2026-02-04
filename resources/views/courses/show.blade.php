@@ -536,7 +536,7 @@
                     <div class="mt-4 flex items-start gap-4">
                         <div class="w-14 h-14 rounded-2xl bg-slate-100 overflow-hidden shrink-0">
                             @if($course->instructor?->avatar)
-                                <img src="{{ asset('storage/' . ltrim((string) $course->instructor->avatar, '/')) }}" alt="{{ $course->instructor->name }}" class="w-full h-full object-cover" loading="lazy">
+                                <img src="{{ $course->instructor->avatar_url }}" alt="{{ $course->instructor->name }}" class="w-full h-full object-cover" loading="lazy">
                             @endif
                         </div>
                         <div class="min-w-0">

@@ -16,7 +16,7 @@
         </a>
         <div class="w-12 h-12 rounded-full bg-[#2c004d]/10 flex items-center justify-center text-[#2c004d] font-bold text-lg shrink-0 overflow-hidden">
             @if($avatar)
-                <img src="{{ asset('storage/' . ltrim($avatar, '/')) }}" alt="{{ $name }}" class="w-full h-full object-cover">
+                <img src="{{ $avatar }}" alt="{{ $name }}" class="w-full h-full object-cover">
             @elseif($conversation->type === 'private')
                 {{ mb_substr($name, 0, 1) }}
             @else
@@ -55,7 +55,7 @@
                         @if(!$isOwn && $conversation->type !== 'private')
                             <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600 shrink-0 overflow-hidden">
                                 @if($message->user?->avatar)
-                                    <img src="{{ asset('storage/' . ltrim($message->user->avatar, '/')) }}" class="w-full h-full object-cover">
+                                    <img src="{{ $message->user->avatar_url }}" class="w-full h-full object-cover">
                                 @else
                                     {{ mb_substr($message->user?->name ?? '?', 0, 1) }}
                                 @endif

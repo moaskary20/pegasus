@@ -32,7 +32,7 @@
                     <button type="submit" class="w-full flex items-center gap-4 px-5 py-4 hover:bg-slate-50 transition text-right">
                         <div class="w-12 h-12 rounded-full bg-[#2c004d]/10 flex items-center justify-center text-[#2c004d] font-bold text-lg shrink-0 overflow-hidden">
                             @if($user->avatar)
-                                <img src="{{ asset('storage/' . ltrim($user->avatar, '/')) }}" alt="{{ $user->name }}" class="w-full h-full object-cover">
+                                <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="w-full h-full object-cover">
                             @else
                                 {{ mb_substr($user->name, 0, 1) }}
                             @endif

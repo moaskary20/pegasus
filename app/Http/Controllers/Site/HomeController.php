@@ -67,7 +67,7 @@ class HomeController extends Controller
             ->map(fn ($u) => [
                 'id' => $u->id,
                 'name' => $u->name,
-                'avatar' => $u->avatar,
+                'avatar' => $u->avatar_url,
                 'courses_count' => (int) ($u->published_courses_count ?? 0),
                 'students_count' => (int) ($u->total_students ?? 0),
             ]);

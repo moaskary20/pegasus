@@ -208,6 +208,21 @@ class User extends Authenticatable implements FilamentUser
     }
     
     /**
+     * Get the full URL for avatar (يدعم المسار أو الرابط الكامل)
+     */
+    public function getAvatarUrlAttribute(): ?string
+    {
+        $value = $this->attributes['avatar'] ?? null;
+        if (empty($value)) {
+            return null;
+        }
+        if (str_starts_with($value, 'http')) {
+            return $value;
+        }
+        return asset('storage/' . ltrim($value, '/'));
+    }
+
+    /**
      * Scope to search users by name, email, job, city
      */
     public function scopeSearch($query, string $search)
