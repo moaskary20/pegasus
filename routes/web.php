@@ -220,6 +220,7 @@ Route::get('/my-courses', function () {
     ]);
 })->name('site.my-courses');
 Route::view('/support', 'pages.support')->name('site.support');
+Route::view('/contact', 'pages.contact')->name('site.contact');
 Route::view('/about', 'pages.about')->name('site.about');
 Route::get('/courses', function (Request $request) {
     $categoryId = (int) $request->query('category', 0);

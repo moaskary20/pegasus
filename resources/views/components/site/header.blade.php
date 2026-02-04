@@ -649,7 +649,7 @@
                     </div>
                 </div>
                 <a href="{{ url('/store') }}" class="hover:text-[#2c004d] transition-colors">المتجر</a>
-                <a href="{{ url('/blog') }}" class="hover:text-[#2c004d] transition-colors">المدونة</a>
+                <a href="{{ route('site.contact') }}" class="hover:text-[#2c004d] transition-colors">الاتصال بنا</a>
             </nav>
         </div>
     </div>
