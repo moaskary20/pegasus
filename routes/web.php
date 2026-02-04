@@ -17,16 +17,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    $buildId = now()->format('Ymd-His');
-
-    return response()
-        ->view('home', ['__build_id' => $buildId])
-        ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
-        ->header('Pragma', 'no-cache')
-        ->header('Expires', '0')
-        ->header('X-Pegasus-Home-Build', $buildId);
-});
+Route::get('/', [\App\Http\Controllers\Site\HomeController::class, '__invoke'])
+    ->name('site.home');
 
 Route::get('/lang/{locale}', function (string $locale) {
     $locale = strtolower(trim($locale));
@@ -190,6 +182,10 @@ Route::post('/wishlist/courses/{course}/remove', function (Request $request, Cou
     session(['course_wishlist' => $ids]);
     return redirect()->back()->with('notice', ['type' => 'success', 'message' => 'تمت إزالة الدورة من قائمة الرغبات.']);
 })->name('site.wishlist.courses.remove');
+
+Route::get('/my-assignments', \App\Livewire\MyAssignments::class)
+    ->name('site.my-assignments')
+    ->middleware('auth');
 
 Route::get('/my-courses', function () {
     if (!auth()->check()) {

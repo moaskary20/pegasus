@@ -32,7 +32,7 @@ class AssignmentGradedNotification extends Notification implements ShouldQueue
             ->line('الواجب: ' . $this->submission->assignment->title)
             ->line('الدرجة: ' . $this->submission->score . '/' . $this->submission->assignment->max_score)
             ->line($passed ? '🎉 تهانينا! لقد اجتزت الواجب بنجاح.' : '😔 للأسف لم تصل لدرجة النجاح. حاول مرة أخرى!')
-            ->action('عرض التفاصيل', url('/admin/my-assignments'))
+            ->action('عرض التفاصيل', route('site.my-assignments'))
             ->line('شكراً لاستخدامك منصة Pegasus Academy');
     }
 

@@ -278,6 +278,12 @@
                                     <span>تعلّمي / دوراتي</span>
                                     <span class="text-slate-400">›</span>
                                 </a>
+                                @if($user)
+                                <a href="{{ route('site.my-assignments') }}" class="flex items-center justify-between px-4 py-2 text-sm hover:bg-slate-50">
+                                    <span>واجباتي</span>
+                                    <span class="text-slate-400">›</span>
+                                </a>
+                                @endif
                                 <a href="{{ route('site.cart') }}" class="flex items-center justify-between px-4 py-2 text-sm hover:bg-slate-50">
                                     <span>سلة المشتريات</span>
                                     <span class="text-slate-400">›</span>

@@ -198,7 +198,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                         <p class="text-sm text-slate-600 mt-1">{{ Str::limit($assignment->description, 150) }}</p>
                                     @endif
                                     @if($isEnrolled)
-                                        <a href="{{ url('/admin/my-assignments') }}" class="inline-flex items-center gap-2 mt-3 text-sm font-bold text-[#3d195c] hover:underline">
+                                        <a href="{{ route('site.my-assignments') }}" class="inline-flex items-center gap-2 mt-3 text-sm font-bold text-[#3d195c] hover:underline">
                                             عرض الواجب
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                                         </a>
