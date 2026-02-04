@@ -177,7 +177,7 @@
                     if (!$course) continue;
                     $progress = (float) ($enrollment->progress_percentage ?? 0);
                     $isCompleted = $enrollment->completed_at !== null;
-                    $coverUrl = $course->cover_image ? asset('storage/' . ltrim($course->cover_image, '/')) : null;
+                    $coverUrl = $course->cover_image;
                 @endphp
                 <article class="course-card rounded-2xl border bg-white overflow-hidden shadow-sm">
                     <a href="{{ route('site.course.show', $course) }}" class="block">
