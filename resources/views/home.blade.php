@@ -203,7 +203,7 @@
         </script>
     @endif
 
-    {{-- Categories --}}
+    {{-- Categories Slider (5 cards) --}}
     <section class="max-w-7xl mx-auto px-4 py-10">
         <div class="flex items-end justify-between gap-3">
             <div>
@@ -211,20 +211,92 @@
                 <p class="text-sm text-slate-600 mt-1">اختر مجال اهتمامك بسهولة</p>
             </div>
         </div>
-        <div class="mt-6 grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-            @forelse($categories as $i => $cat)
-                <a href="{{ route('site.courses', ['category' => (int) $cat->id]) }}" class="reveal-item rounded-2xl bg-white border p-4 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 block" data-reveal data-stagger="{{ $i }}">
-                    <div class="font-extrabold text-sm text-slate-900 line-clamp-1">{{ $cat->name }}</div>
-                    <div class="text-xs text-slate-600 mt-1 line-clamp-2">{{ $cat->description ?? '' }}</div>
-                    <div class="mt-3 inline-flex items-center gap-2 text-xs font-extrabold text-[#3d195c]">
-                        <span>استعرض الدورات</span>
-                        <span aria-hidden="true">←</span>
+        @if($categories->isEmpty())
+            <div class="mt-6 text-center text-sm text-slate-500 py-10">لا توجد تصنيفات حالياً.</div>
+        @else
+            <div class="mt-6 relative px-14" id="categories-slider-wrap">
+                <button type="button" id="categories-slider-prev" class="absolute top-1/2 -translate-y-1/2 right-2 z-10 w-12 h-12 rounded-2xl bg-white shadow-lg border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-50 hover:border-[#3d195c]/30 transition disabled:opacity-40 disabled:pointer-events-none" aria-label="السابق">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <button type="button" id="categories-slider-next" class="absolute top-1/2 -translate-y-1/2 left-2 z-10 w-12 h-12 rounded-2xl bg-white shadow-lg border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-slate-50 hover:border-[#3d195c]/30 transition disabled:opacity-40 disabled:pointer-events-none" aria-label="التالي">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </button>
+                <div class="overflow-hidden" style="direction: ltr;">
+                    <div id="categories-slider-track" class="flex gap-4 transition-transform duration-500 ease-out" style="direction: rtl;">
+                        @foreach($categories as $i => $cat)
+                            <div class="categories-slider-card flex-shrink-0 w-[calc(20%-16px)] min-w-[160px] sm:min-w-[180px] lg:min-w-[200px]">
+                                <a href="{{ route('site.courses', ['category' => (int) $cat->id]) }}" class="block rounded-2xl bg-white border p-4 hover:shadow-lg hover:scale-[1.02] transition-all duration-300 h-full">
+                                    <div class="font-extrabold text-sm text-slate-900 line-clamp-1">{{ $cat->name }}</div>
+                                    <div class="text-xs text-slate-600 mt-1 line-clamp-2">{{ $cat->description ?? '' }}</div>
+                                    <div class="mt-3 inline-flex items-center gap-2 text-xs font-extrabold text-[#3d195c]">
+                                        <span>استعرض الدورات</span>
+                                        <span aria-hidden="true">←</span>
+                                    </div>
+                                </a>
+                            </div>
+                        @endforeach
                     </div>
-                </a>
-            @empty
-                <div class="col-span-full text-center text-sm text-slate-500 py-10">لا توجد تصنيفات حالياً.</div>
-            @endforelse
-        </div>
+                </div>
+            </div>
+            <script>
+                (function () {
+                    const wrap = document.getElementById('categories-slider-wrap');
+                    const track = document.getElementById('categories-slider-track');
+                    const prevBtn = document.getElementById('categories-slider-prev');
+                    const nextBtn = document.getElementById('categories-slider-next');
+                    if (!wrap || !track || !prevBtn || !nextBtn) return;
+
+                    const cards = track.querySelectorAll('.categories-slider-card');
+                    const total = cards.length;
+                    const gap = 16;
+                    const visibleCount = 5;
+
+                    let currentIndex = 0;
+
+                    function getCardWidth() {
+                        const first = cards[0];
+                        if (!first) return 200;
+                        return first.offsetWidth + gap;
+                    }
+
+                    function getVisibleCount() {
+                        const w = wrap.offsetWidth;
+                        const cardW = cards[0] ? cards[0].offsetWidth + gap : 216;
+                        return Math.min(5, Math.max(1, Math.floor(w / cardW)));
+                    }
+
+                    function update() {
+                        const visible = getVisibleCount();
+                        const maxIndex = Math.max(0, total - visible);
+                        currentIndex = Math.min(currentIndex, maxIndex);
+                        const offset = currentIndex * getCardWidth();
+                        track.style.transform = 'translateX(' + offset + 'px)';
+                        prevBtn.disabled = currentIndex <= 0;
+                        nextBtn.disabled = currentIndex >= maxIndex;
+                    }
+
+                    prevBtn.addEventListener('click', () => {
+                        if (currentIndex > 0) {
+                            currentIndex--;
+                            update();
+                        }
+                    });
+
+                    nextBtn.addEventListener('click', () => {
+                        const visible = getVisibleCount();
+                        const maxIndex = Math.max(0, total - visible);
+                        if (currentIndex < maxIndex) {
+                            currentIndex++;
+                            update();
+                        }
+                    });
+
+                    update();
+
+                    window.addEventListener('resize', () => update());
+                })();
+            </script>
+        @endif
     </section>
 
     {{-- Featured Courses Grid --}}

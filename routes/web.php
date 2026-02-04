@@ -215,7 +215,9 @@ Route::get('/my-courses', function () {
         'totalHours' => $totalHours,
     ]);
 })->name('site.my-courses');
-Route::view('/support', 'pages.support')->name('site.support');
+Route::get('/support', [\App\Http\Controllers\Site\SupportController::class, 'index'])->name('site.support');
+Route::post('/support/complaint', [\App\Http\Controllers\Site\SupportController::class, 'storeComplaint'])->name('site.support.complaint');
+Route::post('/support/contact', [\App\Http\Controllers\Site\SupportController::class, 'storeContact'])->name('site.support.contact');
 Route::view('/contact', 'pages.contact')->name('site.contact');
 Route::view('/about', 'pages.about')->name('site.about');
 
