@@ -1,4 +1,4 @@
-@props(['product', 'staggerIndex' => 0, 'inSlider' => false])
+@props(['product', 'staggerIndex' => 0, 'inSlider' => false, 'inWishlist' => false])
 @php
     $product = $product ?? null;
     if (!$product) return;
@@ -11,6 +11,7 @@
     @if(!$inSlider) data-reveal data-stagger="{{ $staggerIndex }}" @endif
 >
     <div class="relative aspect-[16/10] bg-slate-100 overflow-hidden">
+        <x-wishlist-heart-product :product="$product" :in-wishlist="$inWishlist" />
         <a href="{{ route('site.store.product', $product) }}" class="block w-full h-full">
             @if($imgUrl)
                 <img

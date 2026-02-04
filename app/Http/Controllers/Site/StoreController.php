@@ -69,6 +69,10 @@ class StoreController extends Controller
 
         $products = $query->paginate(12)->withQueryString();
 
+        $productWishlistIds = auth()->check()
+            ? Wishlist::where('user_id', auth()->id())->pluck('product_id')->toArray()
+            : [];
+
         $categoriesTree = ProductCategory::query()
             ->active()
             ->whereNull('parent_id')
@@ -78,6 +82,7 @@ class StoreController extends Controller
 
         return view('pages.store.index', [
             'products' => $products,
+            'productWishlistIds' => $productWishlistIds,
             'categoriesTree' => $categoriesTree,
             'categoryId' => $categoryId,
             'subCategoryId' => $subCategoryId,
@@ -103,14 +108,31 @@ class StoreController extends Controller
             ? Wishlist::where('user_id', $user->id)->where('product_id', $product->id)->exists()
             : false;
 
+        $userReview = $user
+            ? $product->reviews()->where('user_id', $user->id)->first()
+            : null;
+
+        $starsCounts = $product->approvedReviews()
+            ->selectRaw('rating, COUNT(*) as c')
+            ->groupBy('rating')
+            ->pluck('c', 'rating')
+            ->all();
+
         $sessionId = session()->getId();
         $cartItems = StoreCart::getCart($user?->id, $user ? null : $sessionId);
         $inCart = $cartItems->contains('product_id', $product->id);
+
+        $totalReviews = (int) ($product->ratings_count ?? 0);
+        $avgRating = (float) ($product->average_rating ?? 0);
 
         return view('pages.store.show', [
             'product' => $product,
             'inWishlist' => $inWishlist,
             'inCart' => $inCart,
+            'userReview' => $userReview,
+            'starsCounts' => $starsCounts,
+            'totalReviews' => $totalReviews,
+            'avgRating' => $avgRating,
         ]);
     }
 

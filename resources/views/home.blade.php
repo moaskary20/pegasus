@@ -269,7 +269,7 @@
                         <div id="products-slider-track" class="flex gap-4 transition-transform duration-500 ease-out" style="direction: rtl;">
                             @foreach($featuredProducts as $i => $product)
                                 <div class="products-slider-card flex-shrink-0 w-[calc(25%-12px)] min-w-[200px] sm:min-w-[220px] lg:min-w-[260px]">
-                                    <x-site.product-card :product="$product" :in-slider="true" />
+                                    <x-site.product-card :product="$product" :in-slider="true" :in-wishlist="in_array((int) $product->id, $productWishlistIds ?? [])" />
                                 </div>
                             @endforeach
                         </div>

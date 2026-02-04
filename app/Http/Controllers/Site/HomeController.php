@@ -62,6 +62,10 @@ class HomeController extends Controller
             ->limit(8)
             ->get();
 
+        $productWishlistIds = auth()->check()
+            ? Wishlist::where('user_id', auth()->id())->pluck('product_id')->toArray()
+            : [];
+
         // Home slider
         $rawSlides = PlatformSetting::get('site_home_slider', []);
         if (is_string($rawSlides)) {
@@ -105,6 +109,7 @@ class HomeController extends Controller
             'newCourses' => $newCourses,
             'categories' => $categories,
             'featuredProducts' => $featuredProducts,
+            'productWishlistIds' => $productWishlistIds,
             'homeSlides' => $homeSlides,
             'quickLinksData' => $quickLinksData,
         ];

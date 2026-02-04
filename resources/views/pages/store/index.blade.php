@@ -144,6 +144,7 @@
                             @endphp
                             <div class="group rounded-3xl border bg-white overflow-hidden hover:shadow-lg transition">
                                 <div class="relative aspect-square bg-slate-100 overflow-hidden">
+                                    <x-wishlist-heart-product :product="$product" :in-wishlist="in_array((int) $product->id, $productWishlistIds ?? [])" />
                                     <a href="{{ route('site.store.product', $product) }}" class="block w-full h-full">
                                         @if($imgUrl)
                                             <img src="{{ $imgUrl }}" alt="{{ $product->name }}" class="w-full h-full object-cover group-hover:scale-[1.02] transition duration-300" loading="lazy">

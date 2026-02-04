@@ -39,11 +39,11 @@
         <div class="lg:col-span-7">
             <h1 class="text-2xl md:text-3xl font-extrabold text-slate-900">{{ $product->name }}</h1>
             <div class="mt-3 flex flex-wrap items-center gap-3 text-sm">
-                <span class="inline-flex items-center gap-1">
+                <a href="#reviews" class="inline-flex items-center gap-1 hover:underline">
                     <span>⭐</span>
                     <span class="font-extrabold">{{ number_format((float) ($product->average_rating ?? 0), 1) }}</span>
                     <span class="text-slate-500">({{ (int) ($product->ratings_count ?? 0) }} تقييم)</span>
-                </span>
+                </a>
                 @if($product->category)
                     <span class="text-slate-500">•</span>
                     <span class="text-slate-600">{{ $product->category->name }}</span>
@@ -108,5 +108,115 @@
             </div>
         </div>
     @endif
+
+    {{-- التقييمات --}}
+    <div id="reviews" class="mt-12 rounded-3xl border bg-white overflow-hidden">
+        <div class="px-6 py-5 border-b bg-slate-50 flex items-center justify-between gap-3">
+            <div>
+                <div class="text-lg font-extrabold text-slate-900">التقييمات</div>
+                <div class="text-xs text-slate-600 mt-1">{{ number_format($totalReviews ?? 0) }} تقييم • متوسط {{ number_format($avgRating ?? 0, 1) }}</div>
+            </div>
+        </div>
+
+        @auth
+            <div class="p-6 border-b bg-slate-50/50" x-data="{
+                stars: {{ old('rating', $userReview?->rating ?? 0) }},
+                comment: {{ json_encode(old('comment', $userReview?->comment ?? '')) }},
+                submitting: false
+            }">
+                <div class="text-sm font-extrabold text-slate-900 mb-3">
+                    {{ $userReview ? 'تعديل تقييمك' : 'قيّم هذا المنتج' }}
+                </div>
+                <form action="{{ route('site.store.product.rate', $product) }}" method="POST" @submit="submitting = true">
+                    @csrf
+                    <div class="flex flex-wrap gap-2 mb-3">
+                        @foreach([1,2,3,4,5] as $s)
+                            <button type="button" @click="stars = {{ $s }}" class="p-1 rounded-lg transition"
+                                :class="stars >= {{ $s }} ? 'text-amber-400' : 'text-slate-300 hover:text-amber-300'">
+                                <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                            </button>
+                        @endforeach
+                    </div>
+                    <input type="hidden" name="rating" :value="stars">
+                    @error('rating')
+                        <p class="text-sm text-rose-600 mb-2">{{ $message }}</p>
+                    @enderror
+                    <textarea name="comment" rows="3" maxlength="2000" placeholder="اكتب تعليقك (اختياري)..." x-model="comment"
+                        class="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-800 focus:border-[#3d195c] focus:ring-2 focus:ring-[#3d195c]/20 outline-none transition"></textarea>
+                    <div class="mt-3 flex justify-end">
+                        <button type="submit" :disabled="stars < 1 || submitting"
+                            class="px-6 py-2.5 rounded-2xl bg-[#3d195c] text-white font-extrabold hover:bg-[#3d195c]/95 disabled:opacity-50 disabled:cursor-not-allowed transition">
+                            {{ $userReview ? 'تحديث التقييم' : 'إرسال التقييم' }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        @else
+            <div class="p-6 border-b bg-slate-50/50">
+                <p class="text-sm text-slate-600">
+                    <a href="{{ route('site.auth') }}?intended={{ urlencode(route('site.store.product', $product)) }}" class="font-bold text-[#3d195c] hover:underline">سجّل الدخول</a>
+                    لتقييم هذا المنتج.
+                </p>
+            </div>
+        @endauth
+
+        <div class="p-6">
+            @php
+                $den = max(1, (int) ($totalReviews ?? 0));
+                $counts = [
+                    5 => (int) ($starsCounts[5] ?? 0),
+                    4 => (int) ($starsCounts[4] ?? 0),
+                    3 => (int) ($starsCounts[3] ?? 0),
+                    2 => (int) ($starsCounts[2] ?? 0),
+                    1 => (int) ($starsCounts[1] ?? 0),
+                ];
+            @endphp
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <div class="text-3xl font-extrabold text-slate-900">{{ number_format($avgRating ?? 0, 1) }}</div>
+                    <div class="text-sm text-slate-600 mt-1">متوسط التقييم</div>
+                    <div class="mt-4 space-y-2">
+                        @foreach($counts as $stars => $c)
+                            @php $pct = (int) round(($c / $den) * 100); @endphp
+                            <div class="flex items-center gap-3">
+                                <div class="w-12 text-xs font-extrabold text-slate-700">{{ $stars }} ⭐</div>
+                                <div class="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden">
+                                    <div class="h-full bg-[#3d195c]" style="width: {{ $pct }}%"></div>
+                                </div>
+                                <div class="w-10 text-xs font-bold text-slate-600 text-left">{{ $pct }}%</div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    @forelse($product->approvedReviews->take(6) as $r)
+                        <div class="rounded-3xl border p-4">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-2">
+                                        <div class="text-sm font-extrabold text-slate-900">{{ $r->user?->name ?? 'مستخدم' }}</div>
+                                        @if($r->is_verified_purchase)
+                                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-bold">شراء مؤكد</span>
+                                        @endif
+                                    </div>
+                                    <div class="text-xs text-slate-500 mt-1">{{ optional($r->created_at)->format('Y-m-d') }}</div>
+                                </div>
+                                <div class="shrink-0 text-xs font-extrabold text-[#3d195c]">{{ (int) $r->rating }} ⭐</div>
+                            </div>
+                            @if($r->comment)
+                                <div class="mt-3 text-sm text-slate-700 leading-relaxed whitespace-pre-line">{{ $r->comment }}</div>
+                            @endif
+                        </div>
+                    @empty
+                        <div class="rounded-3xl border p-6 text-center text-sm text-slate-600">
+                            لا توجد تقييمات بعد.
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+    </div>
 </section>
 @endsection

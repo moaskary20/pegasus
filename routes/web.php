@@ -957,6 +957,7 @@ Route::post('/cart/courses/clear', function () {
 
 Route::get('/store', [\App\Http\Controllers\Site\StoreController::class, 'index'])->name('site.store');
 Route::get('/store/{product:slug}', [\App\Http\Controllers\Site\StoreController::class, 'show'])->name('site.store.product');
+Route::post('/store/{product:slug}/rate', [\App\Http\Controllers\Site\ProductReviewController::class, 'store'])->name('site.store.product.rate')->middleware('web');
 Route::post('/store/{product}/add-to-cart', [\App\Http\Controllers\Site\StoreController::class, 'addToCart'])->name('site.store.add-to-cart');
 
 Route::post('/wishlist/products/{product}', function (Request $request, \App\Models\Product $product) {
