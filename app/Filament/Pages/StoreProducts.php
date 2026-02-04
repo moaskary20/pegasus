@@ -24,7 +24,9 @@ class StoreProducts extends Page
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCube;
 
     protected string $view = 'filament.pages.store-products';
-    
+
+    protected static ?string $slug = 'store-products-legacy';
+
     public static function getNavigationGroup(): ?string
     {
         return 'إدارة المتجر';
@@ -32,7 +34,7 @@ class StoreProducts extends Page
     
     public static function shouldRegisterNavigation(): bool
     {
-        return auth()->user()?->hasRole('admin') ?? false;
+        return false; // تم استبداله بـ ProductResource
     }
     
     // Filters
