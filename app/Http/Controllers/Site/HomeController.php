@@ -53,6 +53,23 @@ class HomeController extends Controller
             ->limit(10)
             ->get();
 
+        // Top instructors (أشهر المدرسين)
+        $topInstructors = User::query()
+            ->whereHas('courses', fn ($q) => $q->where('is_published', true))
+            ->withCount(['courses as published_courses_count' => fn ($q) => $q->where('is_published', true)])
+            ->withSum('courses as total_students', 'students_count')
+            ->orderByDesc('published_courses_count')
+            ->orderByDesc('total_students')
+            ->limit(12)
+            ->get()
+            ->map(fn ($u) => [
+                'id' => $u->id,
+                'name' => $u->name,
+                'avatar' => $u->avatar,
+                'courses_count' => (int) ($u->published_courses_count ?? 0),
+                'students_count' => (int) ($u->total_students ?? 0),
+            ]);
+
         // Featured products
         $featuredProducts = Product::query()
             ->with(['category', 'images'])
@@ -108,6 +125,7 @@ class HomeController extends Controller
             'featuredCourses' => $featuredCourses,
             'newCourses' => $newCourses,
             'categories' => $categories,
+            'topInstructors' => $topInstructors,
             'featuredProducts' => $featuredProducts,
             'productWishlistIds' => $productWishlistIds,
             'homeSlides' => $homeSlides,

@@ -474,6 +474,122 @@
         </div>
     </section>
 
+    {{-- أشهر مدرسينا --}}
+    <section class="relative overflow-hidden bg-gradient-to-b from-slate-50 to-white py-14 md:py-20">
+        <div class="absolute inset-0 opacity-30" style="background-image: radial-gradient(circle at 20% 50%, rgba(44,0,77,0.08) 0%, transparent 50%);"></div>
+        <div class="relative max-w-7xl mx-auto px-4">
+            <div class="text-center mb-10">
+                <div class="inline-flex items-center gap-2 text-xs font-bold px-4 py-2 rounded-full bg-[#2c004d]/10 text-[#2c004d] mb-4">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/></svg>
+                    فريقنا التعليمي
+                </div>
+                <h2 class="text-2xl md:text-4xl font-extrabold text-slate-900">أشهر مدرسينا</h2>
+                <p class="mt-3 text-slate-600 max-w-2xl mx-auto">تعلم من أفضل المدرسين ذوي الخبرة والتميز في مجالاتهم</p>
+            </div>
+
+            @if($topInstructors->isEmpty())
+                <div class="text-center text-slate-500 py-12">لا يوجد مدرسون لعرضهم حالياً.</div>
+            @else
+                <div class="relative px-2 md:px-14" id="instructors-slider-wrap">
+                    <button type="button" id="instructors-slider-prev" class="absolute top-1/2 -translate-y-1/2 right-2 z-10 w-12 h-12 rounded-2xl bg-white shadow-xl border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-[#2c004d] hover:text-white hover:border-[#2c004d] transition disabled:opacity-40 disabled:pointer-events-none" aria-label="السابق">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                    </button>
+                    <button type="button" id="instructors-slider-next" class="absolute top-1/2 -translate-y-1/2 left-2 z-10 w-12 h-12 rounded-2xl bg-white shadow-xl border border-slate-200 flex items-center justify-center text-slate-700 hover:bg-[#2c004d] hover:text-white hover:border-[#2c004d] transition disabled:opacity-40 disabled:pointer-events-none" aria-label="التالي">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </button>
+                    <div class="overflow-hidden" style="direction: ltr;">
+                        <div id="instructors-slider-track" class="flex gap-5 transition-transform duration-500 ease-out" style="direction: rtl;">
+                            @foreach($topInstructors as $instructor)
+                                <div class="instructors-slider-card flex-shrink-0 w-[calc(25%-15px)] min-w-[240px] sm:min-w-[260px] lg:min-w-[280px]">
+                                    <a href="{{ route('site.courses', ['instructor' => $instructor['id']]) }}" class="group block rounded-3xl bg-white border-2 border-slate-100 p-6 hover:border-[#2c004d]/20 hover:shadow-2xl hover:shadow-[#2c004d]/10 hover:-translate-y-1 transition-all duration-300 h-full">
+                                        <div class="flex flex-col items-center text-center">
+                                            <div class="relative mb-4">
+                                                <div class="w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden ring-4 ring-[#2c004d]/5 group-hover:ring-[#2c004d]/20 transition-all duration-300">
+                                                    @if(!empty($instructor['avatar']))
+                                                        <img src="{{ $instructor['avatar'] }}" alt="{{ $instructor['name'] }}" class="w-full h-full object-cover" loading="lazy" />
+                                                    @else
+                                                        <div class="w-full h-full bg-gradient-to-br from-[#2c004d] to-[#3d195c] flex items-center justify-center">
+                                                            <span class="text-2xl md:text-3xl font-extrabold text-white">{{ mb_substr($instructor['name'], 0, 1) }}</span>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                                <div class="absolute -bottom-1 -right-1 w-8 h-8 rounded-xl bg-emerald-500 flex items-center justify-center text-white text-xs font-bold shadow-lg">
+                                                    ✓
+                                                </div>
+                                            </div>
+                                            <h3 class="font-extrabold text-slate-900 text-lg group-hover:text-[#2c004d] transition-colors line-clamp-1">{{ $instructor['name'] }}</h3>
+                                            <div class="mt-3 flex flex-wrap items-center justify-center gap-3 text-sm">
+                                                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#2c004d]/5 text-[#2c004d] font-bold">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                                                    {{ $instructor['courses_count'] }} دورة
+                                                </span>
+                                                @if($instructor['students_count'] > 0)
+                                                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-semibold">
+                                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                                                        {{ number_format($instructor['students_count']) }} طالب
+                                                    </span>
+                                                @endif
+                                            </div>
+                                            <span class="mt-4 inline-flex items-center gap-2 text-[#2c004d] font-bold text-sm group-hover:underline">
+                                                عرض الدورات
+                                                <svg class="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                                            </span>
+                                        </div>
+                                    </a>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+                <script>
+                    (function () {
+                        const wrap = document.getElementById('instructors-slider-wrap');
+                        const track = document.getElementById('instructors-slider-track');
+                        const prevBtn = document.getElementById('instructors-slider-prev');
+                        const nextBtn = document.getElementById('instructors-slider-next');
+                        if (!wrap || !track || !prevBtn || !nextBtn) return;
+
+                        const cards = track.querySelectorAll('.instructors-slider-card');
+                        const total = cards.length;
+                        const gap = 20;
+                        let currentIndex = 0;
+
+                        function getCardWidth() {
+                            const first = cards[0];
+                            if (!first) return 280;
+                            return first.offsetWidth + gap;
+                        }
+
+                        function getVisibleCount() {
+                            const w = wrap.offsetWidth;
+                            const cardW = cards[0] ? cards[0].offsetWidth + gap : 300;
+                            return Math.min(4, Math.max(1, Math.floor(w / cardW)));
+                        }
+
+                        function update() {
+                            const visible = getVisibleCount();
+                            const maxIndex = Math.max(0, total - visible);
+                            currentIndex = Math.min(currentIndex, maxIndex);
+                            const offset = currentIndex * getCardWidth();
+                            track.style.transform = 'translateX(' + offset + 'px)';
+                            prevBtn.disabled = currentIndex <= 0;
+                            nextBtn.disabled = currentIndex >= maxIndex;
+                        }
+
+                        prevBtn.addEventListener('click', () => { if (currentIndex > 0) { currentIndex--; update(); } });
+                        nextBtn.addEventListener('click', () => {
+                            const visible = getVisibleCount();
+                            const maxIndex = Math.max(0, total - visible);
+                            if (currentIndex < maxIndex) { currentIndex++; update(); }
+                        });
+                        update();
+                        window.addEventListener('resize', () => update());
+                    })();
+                </script>
+            @endif
+        </div>
+    </section>
+
     {{-- Scripts: Typing, Scroll Reveal, Count-up, Parallax --}}
     <script>
         (function () {

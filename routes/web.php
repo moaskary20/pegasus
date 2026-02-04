@@ -17,6 +17,20 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 
+// خدمة ملفات التخزين عبر Laravel (بديل عند فشل الرابط الرمزي) (بديل عند فشل الرابط الرمزي أو 403)
+Route::get('/storage/{path}', function (string $path) {
+    $path = trim($path, '/');
+    if ($path === '' || str_contains($path, '..')) {
+        abort(404);
+    }
+    $fullPath = storage_path('app/public/' . $path);
+    if (!is_file($fullPath)) {
+        abort(404);
+    }
+    $mime = mime_content_type($fullPath) ?: 'application/octet-stream';
+    return response()->file($fullPath, ['Content-Type' => $mime]);
+})->where('path', '.*')->name('storage.serve');
+
 Route::get('/', [\App\Http\Controllers\Site\HomeController::class, '__invoke'])
     ->name('site.home');
 

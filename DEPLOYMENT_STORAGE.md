@@ -4,9 +4,33 @@
 - مثال: `https://academypegasus.com/storage/courses/covers/xxx.png` يعطي 403
 - الصورة ترفع وتحفظ لكن لا تظهر بعد تحديث الصفحة
 
-## الخطوات على السيرفر الخارجي
+---
 
-### 1. إنشاء رابط التخزين (مهم جداً)
+## الحل الموصى به: إزالة الرابط الرمزي والاعتماد على Laravel
+
+المشروع يحتوي على route يخدم ملفات التخزين عبر Laravel مباشرة. إذا كان الرابط الرمزي يسبب 403:
+
+```bash
+cd /path/to/your/project
+
+# 1. احذف الرابط الرمزي (إن وُجد)
+rm -f public/storage
+
+# 2. سحب التحديثات (يحتوي على route خدمة الملفات)
+git pull origin main
+
+# 3. مسح الكاش
+php artisan route:clear
+php artisan config:clear
+```
+
+بعد ذلك، الملفات ستُخدم عبر Laravel ولن تحتاج للرابط الرمزي.
+
+---
+
+## الحل البديل: استخدام الرابط الرمزي
+
+### 1. إنشاء رابط التخزين
 ```bash
 cd /path/to/your/project
 php artisan storage:link
