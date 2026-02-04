@@ -103,6 +103,48 @@
                 المساعدة والدعم
             </a>
         </div>
+
+        {{-- Google Map --}}
+        <div class="mt-16">
+            <div class="flex items-center justify-between gap-3 mb-6">
+                <div>
+                    <div class="inline-flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-700 mb-3">موقعنا</div>
+                    <h2 class="text-xl md:text-2xl font-extrabold text-slate-900">الموقع على الخريطة</h2>
+                    <p class="text-sm text-slate-600 mt-1">اكتشف موقعنا وتواصل معنا بسهولة</p>
+                </div>
+                <a href="https://maps.app.goo.gl/DrD8gM9hZDXVPx697?g_st=ac" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 text-slate-700 font-bold hover:bg-slate-50 hover:border-[#2c004d]/30 transition shrink-0">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                    </svg>
+                    فتح في خرائط جوجل
+                </a>
+            </div>
+            <a href="https://maps.app.goo.gl/DrD8gM9hZDXVPx697?g_st=ac" target="_blank" rel="noopener noreferrer" class="block rounded-3xl overflow-hidden border-2 border-slate-200 shadow-lg hover:border-[#2c004d]/40 hover:shadow-xl transition-all group" style="direction: ltr;">
+                <div class="relative h-[350px] md:h-[400px] bg-slate-100">
+                    {{-- خريطة OpenStreetMap - مجانية ولا تظهر أخطاء. لتحديث الموقع: غيّر bbox و marker بالإحداثيات من خرائط جوجل --}}
+                    <iframe
+                        src="https://www.openstreetmap.org/export/embed.html?bbox=31.18%2C30.02%2C31.28%2C30.08&layer=mapnik&marker=30.05%2C31.23"
+                        width="100%"
+                        height="100%"
+                        style="border:0; min-height: 350px;"
+                        loading="lazy"
+                        title="موقعنا على الخريطة"
+                        class="w-full h-full"
+                    ></iframe>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end justify-center pb-8 pointer-events-none">
+                        <span class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white/95 text-slate-800 font-bold shadow-lg group-hover:bg-white transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                            </svg>
+                            اضغط لفتح الموقع على خرائط جوجل
+                        </span>
+                    </div>
+                </div>
+            </a>
+            <p class="mt-3 text-center text-sm text-slate-500">
+                <a href="https://maps.app.goo.gl/DrD8gM9hZDXVPx697?g_st=ac" target="_blank" rel="noopener noreferrer" class="text-[#2c004d] font-bold hover:underline">عرض الموقع الكامل على خرائط جوجل</a>
+            </p>
+        </div>
     </div>
 </section>
 
