@@ -119,6 +119,7 @@ Route::put('/account/update', function (Request $request) {
         'job' => ['nullable', 'string', 'max:100'],
         'skills' => ['nullable', 'array'],
         'interests' => ['nullable', 'array'],
+        'academic_history' => ['nullable', 'string', 'max:5000'],
         'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,gif,png', 'max:2048'],
     ]);
     
@@ -258,6 +259,10 @@ Route::get('/messages/new', [\App\Http\Controllers\Site\MessagesController::clas
 Route::post('/messages/start', [\App\Http\Controllers\Site\MessagesController::class, 'startConversation'])->name('site.messages.start');
 Route::get('/messages/{id}', [\App\Http\Controllers\Site\MessagesController::class, 'show'])->name('site.messages.show');
 Route::post('/messages/{id}/send', [\App\Http\Controllers\Site\MessagesController::class, 'send'])->name('site.messages.send');
+Route::get('/instructors/{instructor}', [\App\Http\Controllers\Site\InstructorProfileController::class, 'show'])
+    ->name('site.instructor.show')
+    ->scopeBindings();
+
 Route::get('/courses', function (Request $request) {
     $categoryId = (int) $request->query('category', 0);
     $subCategoryId = (int) $request->query('sub', 0);

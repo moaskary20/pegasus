@@ -138,6 +138,16 @@
                     </div>
                 </div>
 
+                {{-- Academic History --}}
+                <div class="mt-6">
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">التاريخ العلمي</label>
+                    <textarea name="academic_history" rows="5"
+                        class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-[#2c004d] focus:ring-2 focus:ring-[#2c004d]/20 outline-none transition"
+                        placeholder="المؤهلات والشهادات والخبرات التعليمية">{{ old('academic_history', $user?->academic_history) }}</textarea>
+                    <p class="text-xs text-slate-500 mt-1">يظهر في صفحة ملفك الشخصي كمدرب (اختياري)</p>
+                    @error('academic_history')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                </div>
+
                 {{-- Interests --}}
                 <div class="mt-6">
                     <label class="block text-sm font-semibold text-slate-700 mb-3">اهتماماتك</label>

@@ -27,6 +27,9 @@ class EnrollmentObserver
     public function created(Enrollment $enrollment): void
     {
         try {
+            // Update course students_count
+            $enrollment->course?->increment('students_count');
+
             // Load relationships
             $enrollment->load(['user', 'course.instructor']);
             
@@ -53,6 +56,17 @@ class EnrollmentObserver
         }
     }
     
+    /**
+     * Handle the Enrollment "deleted" event.
+     */
+    public function deleted(Enrollment $enrollment): void
+    {
+        $course = $enrollment->course;
+        if ($course && $course->students_count > 0) {
+            $course->decrement('students_count');
+        }
+    }
+
     /**
      * Handle the Enrollment "updated" event.
      */

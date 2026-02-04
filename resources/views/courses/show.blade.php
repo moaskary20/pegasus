@@ -145,6 +145,14 @@
                                 @endif
                             </div>
 
+                            @if((int) ($course->students_count ?? 0) > 0)
+                                <div class="mt-3 flex items-center gap-2 text-sm text-slate-600">
+                                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                                    <span class="font-bold text-slate-700">{{ number_format((int) $course->students_count) }}</span>
+                                    <span>مشترك في هذه الدورة</span>
+                                </div>
+                            @endif
+
                             @if($isEnrolled && $enrollment)
                                 @php
                                     $progress = (float) ($enrollment->progress_percentage ?? 0);
@@ -366,6 +374,14 @@
                             <span aria-hidden="true">⭐</span>
                             <span class="text-white/75">({{ number_format((int) $totalReviews) }} تقييم)</span>
                         </div>
+                        @if((int) ($course->students_count ?? 0) > 0)
+                            <span class="text-white/40">•</span>
+                            <div class="inline-flex items-center gap-1.5 text-white/85">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                                <span class="font-extrabold text-white">{{ number_format((int) $course->students_count) }}</span>
+                                <span>مشترك</span>
+                            </div>
+                        @endif
                         <span class="text-white/40">•</span>
                         <div class="text-white/85">
                             بواسطة
@@ -531,32 +547,39 @@
                 </div>
 
                 {{-- Instructor --}}
-                <div class="mt-6 rounded-3xl border bg-white p-6">
+                @if($course->instructor)
+                <a href="{{ route('site.instructor.show', $course->instructor) }}" class="mt-6 block rounded-3xl border bg-white p-6 hover:border-[#2c004d]/30 hover:shadow-lg transition-all group">
                     <h2 class="text-lg font-extrabold text-slate-900">عن المدرّس</h2>
                     <div class="mt-4 flex items-start gap-4">
                         <div class="w-14 h-14 rounded-2xl bg-slate-100 overflow-hidden shrink-0">
-                            @if($course->instructor?->avatar)
+                            @if($course->instructor->avatar_url)
                                 <img src="{{ $course->instructor->avatar_url }}" alt="{{ $course->instructor->name }}" class="w-full h-full object-cover" loading="lazy">
+                            @else
+                                <div class="w-full h-full bg-gradient-to-br from-[#2c004d] to-[#3d195c] flex items-center justify-center">
+                                    <span class="text-xl font-extrabold text-white">{{ mb_substr($course->instructor->name, 0, 1) }}</span>
+                                </div>
                             @endif
                         </div>
-                        <div class="min-w-0">
-                            <div class="text-sm font-extrabold text-slate-900">{{ $course->instructor?->name }}</div>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-sm font-extrabold text-slate-900 group-hover:text-[#2c004d] transition-colors">{{ $course->instructor->name }}</div>
                             <div class="text-xs text-slate-600 mt-1">
-                                {{ $course->instructor?->job }}
-                                @if($course->instructor?->city)
-                                    <span class="mx-1">•</span>{{ $course->instructor?->city }}
+                                {{ $course->instructor->job }}
+                                @if($course->instructor->city)
+                                    <span class="mx-1">•</span>{{ $course->instructor->city }}
                                 @endif
                             </div>
-                            @if(is_array($course->instructor?->skills) && count($course->instructor->skills))
+                            @if(is_array($course->instructor->skills) && count($course->instructor->skills))
                                 <div class="mt-3 flex flex-wrap gap-2">
                                     @foreach(array_slice($course->instructor->skills, 0, 10) as $sk)
                                         <span class="text-[11px] font-extrabold px-3 py-1 rounded-2xl bg-slate-100 text-slate-700">{{ $sk }}</span>
                                     @endforeach
                                 </div>
                             @endif
+                            <div class="mt-3 text-xs font-bold text-[#2c004d] group-hover:underline">عرض الملف الشخصي والدورات ←</div>
                         </div>
                     </div>
-                </div>
+                </a>
+                @endif
 
                 {{-- Reviews --}}
                 <div id="reviews" class="mt-6 rounded-3xl border bg-white overflow-hidden">

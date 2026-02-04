@@ -535,7 +535,7 @@
                         <div id="instructors-slider-track" class="flex gap-5 transition-transform duration-500 ease-out" style="direction: rtl;">
                             @foreach($topInstructors as $instructor)
                                 <div class="instructors-slider-card flex-shrink-0 w-[calc(25%-15px)] min-w-[240px] sm:min-w-[260px] lg:min-w-[280px]">
-                                    <a href="{{ route('site.courses', ['instructor' => $instructor['id']]) }}" class="group block rounded-3xl bg-white border-2 border-slate-100 p-6 hover:border-[#2c004d]/20 hover:shadow-2xl hover:shadow-[#2c004d]/10 hover:-translate-y-1 transition-all duration-300 h-full">
+                                    <a href="{{ route('site.instructor.show', $instructor['id']) }}" class="group block rounded-3xl bg-white border-2 border-slate-100 p-6 hover:border-[#2c004d]/20 hover:shadow-2xl hover:shadow-[#2c004d]/10 hover:-translate-y-1 transition-all duration-300 h-full">
                                         <div class="flex flex-col items-center text-center">
                                             <div class="relative mb-4">
                                                 <div class="w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden ring-4 ring-[#2c004d]/5 group-hover:ring-[#2c004d]/20 transition-all duration-300">

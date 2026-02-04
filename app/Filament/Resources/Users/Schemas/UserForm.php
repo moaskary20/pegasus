@@ -51,6 +51,11 @@ class UserForm
                     ->label('الاهتمامات')
                     ->columnSpanFull()
                     ->helperText('أدخل الاهتمامات مفصولة بفواصل'),
+                Textarea::make('academic_history')
+                    ->label('التاريخ العلمي')
+                    ->columnSpanFull()
+                    ->rows(5)
+                    ->helperText('المؤهلات والشهادات والخبرات التعليمية (للمدرسين)'),
                 Select::make('roles')
                     ->label('الأدوار')
                     ->multiple()
