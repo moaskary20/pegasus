@@ -432,7 +432,7 @@
             <div class="grid lg:grid-cols-2 gap-10 items-center">
                 <div class="lg:order-2 relative pro-reveal" data-reveal>
                     <div class="rounded-[22px] overflow-hidden shadow-xl">
-                        <img src="{{ asset('assets/site/images/10.png') }}" alt="طالبة عربية تتعلم باستخدام الحاسوب" class="w-full h-[540px] md:h-[600px] object-cover" loading="lazy" />
+                        <img src="{{ asset('assets/site/images/10.png') }}" alt="طالبة عربية تتعلم باستخدام الحاسوب" class="w-full h-[590px] md:h-[650px] object-cover" loading="lazy" />
                     </div>
                 </div>
                 <div class="lg:order-1 pro-reveal" data-reveal>
