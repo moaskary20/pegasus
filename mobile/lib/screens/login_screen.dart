@@ -46,10 +46,13 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       } else {
         setState(() => _isLoading = false);
+        final msg = result.firstFieldError ?? result.message ?? 'فشل تسجيل الدخول';
+        final extra = result.error != null && result.error!.isNotEmpty ? '\n${result.error}' : '';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(result.firstFieldError ?? result.message ?? 'فشل تسجيل الدخول'),
+            content: Text('$msg$extra'),
             backgroundColor: Colors.red.shade700,
+            duration: const Duration(seconds: 5),
           ),
         );
         _formKey.currentState?.validate();

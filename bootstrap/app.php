@@ -15,6 +15,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             SetLocale::class,
         ]);
+        // استثناء مسارات API من التحقق من CSRF (تطبيق الموبايل يستخدم Bearer token وليس الجلسة)
+        $middleware->validateCsrfTokens(except: [
+            'api/*',
+            'api/auth/login',
+            'api/auth/register',
+            'api/auth/logout',
+            'api/auth/user',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

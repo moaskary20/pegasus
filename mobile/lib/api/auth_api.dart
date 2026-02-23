@@ -57,7 +57,17 @@ class AuthApi {
           'password': password,
         }),
       );
-      final data = jsonDecode(res.body is String ? res.body : res.body.toString()) as Map<String, dynamic>? ?? {};
+      Map<String, dynamic> data = {};
+      try {
+        data = jsonDecode(res.body is String ? res.body : res.body.toString()) as Map<String, dynamic>? ?? {};
+      } catch (_) {
+        if (res.statusCode != 200) {
+          return AuthResult.failure(
+            message: 'خطأ من الخادم (${res.statusCode})',
+            error: res.body.length > 300 ? '${res.body.substring(0, 300)}...' : res.body,
+          );
+        }
+      }
       if (res.statusCode == 200) {
         final token = data['token'] as String?;
         final user = data['user'] as Map<String, dynamic>?;
@@ -66,9 +76,9 @@ class AuthApi {
           return AuthResult.success(token: token, user: user);
         }
       }
-      final message = data['message'] as String? ?? 'حدث خطأ غير متوقع';
+      final message = data['message'] as String? ?? 'حدث خطأ غير متوقع (${res.statusCode})';
       final errors = data['errors'] as Map<String, dynamic>?;
-      return AuthResult.failure(message: message, errors: errors);
+      return AuthResult.failure(message: message, errors: errors, error: 'HTTP ${res.statusCode}: ${res.body.length > 200 ? "${res.body.substring(0, 200)}..." : res.body}');
     } catch (e) {
       return AuthResult.failure(
         message: 'تحقق من الاتصال بالإنترنت وحاول مرة أخرى.',
