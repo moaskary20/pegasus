@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/app_header.dart';
 import '../../api/home_api.dart';
+import '../../api/config.dart';
 import '../../app_theme.dart';
 
 /// تبويب الرئيسية: دورات مميزة أفقياً + أحدث الدورات عمودياً (مطابق للتصميم المطلوب)
@@ -17,6 +18,16 @@ class _HomeTabState extends State<HomeTab> {
   bool _loading = true;
   HomeResponse? _data;
   final Set<int> _wishlistIds = {};
+  final PageController _topCoursesPageController = PageController(viewportFraction: 0.88);
+  final PageController _homeSliderPageController = PageController();
+  int _homeSliderPage = 0;
+
+  @override
+  void dispose() {
+    _topCoursesPageController.dispose();
+    _homeSliderPageController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -87,6 +98,7 @@ class _HomeTabState extends State<HomeTab> {
                     ),
                   ),
                   if (_data != null) ...[
+                    _buildHomeSlider(_data!.homeSlider),
                     _buildSectionTitle('الدورات الأكثر مشاهدة', '🔥'),
                     _buildTopCourses(_data!.topCourses),
                     _buildSectionTitle('أحدث الدورات', '⚡'),
@@ -128,6 +140,61 @@ class _HomeTabState extends State<HomeTab> {
     );
   }
 
+  Widget _buildHomeSlider(List<HomeSlideItem> slides) {
+    if (slides.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        child: SizedBox(
+          height: 200,
+          child: Stack(
+            children: [
+              PageView.builder(
+                controller: _homeSliderPageController,
+                onPageChanged: (i) => setState(() => _homeSliderPage = i),
+                itemCount: slides.length,
+                itemBuilder: (context, index) => _HomeSliderSlide(slide: slides[index]),
+              ),
+              if (slides.length > 1)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 12,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(
+                      slides.length,
+                      (i) {
+                        final active = i == _homeSliderPage;
+                        return GestureDetector(
+                          onTap: () => _homeSliderPageController.animateToPage(
+                            i,
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeOutCubic,
+                          ),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            margin: const EdgeInsets.symmetric(horizontal: 3),
+                            width: active ? 20 : 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: active ? Colors.white : Colors.white.withValues(alpha: 0.4),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.5), width: 1),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildTopCourses(List<CourseItem> list) {
     if (list.isEmpty) {
       return SliverToBoxAdapter(
@@ -139,20 +206,23 @@ class _HomeTabState extends State<HomeTab> {
     }
     return SliverToBoxAdapter(
       child: SizedBox(
-        height: 292,
-        child: ListView.builder(
+        height: 300,
+        child: PageView.builder(
+          controller: _topCoursesPageController,
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padEnds: true,
+          physics: const BouncingScrollPhysics(parent: PageScrollPhysics()),
           itemCount: list.length,
           itemBuilder: (context, index) {
             return Padding(
-              padding: const EdgeInsets.only(left: 12, right: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 8),
               child: _TopCourseCard(
                 index: index,
                 course: list[index],
                 isBookmarked: _wishlistIds.contains(list[index].id),
                 onBookmark: () => _toggleWishlist(list[index].id),
                 onTap: () {},
+                cardWidth: null,
               ),
             );
           },
@@ -256,6 +326,7 @@ class _HomeTabState extends State<HomeTab> {
                     isBookmarked: _wishlistIds.contains(course.id),
                     onBookmark: () => _toggleWishlist(course.id),
                     onTap: () {},
+                    cardWidth: 220,
                   ),
                 );
               },
@@ -290,6 +361,128 @@ class _HomeTabState extends State<HomeTab> {
   }
 }
 
+class _HomeSliderSlide extends StatelessWidget {
+  const _HomeSliderSlide({required this.slide});
+
+  final HomeSlideItem slide;
+
+  @override
+  Widget build(BuildContext context) {
+    final imageUrl = _fullImageUrl(slide.imageUrl);
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (imageUrl != null && imageUrl.isNotEmpty)
+              Image.network(
+                imageUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(color: AppTheme.primary),
+              )
+            else
+              Container(color: AppTheme.primary),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                gradient: LinearGradient(
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.6),
+                    Colors.black.withValues(alpha: 0.25),
+                    Colors.black.withValues(alpha: 0.05),
+                  ],
+                ),
+              ),
+            ),
+            Positioned(
+              left: 16,
+              right: 16,
+              bottom: 16,
+              top: 16,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    slide.title.isNotEmpty ? slide.title : 'اكتشف أحدث الدورات والعروض',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      height: 1.25,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (slide.subtitle.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      slide.subtitle,
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.white.withValues(alpha: 0.9),
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      if (slide.primaryText.isNotEmpty)
+                        FilledButton(
+                          onPressed: () => _onSlideAction(context, slide.primaryUrl),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: AppTheme.primary,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: Text(slide.primaryText),
+                        ),
+                      if (slide.primaryText.isNotEmpty && slide.secondaryText.isNotEmpty) const SizedBox(width: 10),
+                      if (slide.secondaryText.isNotEmpty)
+                        OutlinedButton(
+                          onPressed: () => _onSlideAction(context, slide.secondaryUrl),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            side: const BorderSide(color: Colors.white54),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: Text(slide.secondaryText),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _onSlideAction(BuildContext context, String url) {
+    if (url.isEmpty) return;
+    if (url.startsWith('http')) {
+      // يمكن لاحقاً استخدام url_launcher لفتح الرابط
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('رابط: $url'), duration: const Duration(seconds: 2)),
+      );
+    } else {
+      // مسار داخلي يمكن التعامل معه لاحقاً
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('رابط: $url'), duration: const Duration(seconds: 2)),
+      );
+    }
+  }
+}
+
 class _TopCourseCard extends StatelessWidget {
   const _TopCourseCard({
     required this.index,
@@ -297,6 +490,7 @@ class _TopCourseCard extends StatelessWidget {
     required this.isBookmarked,
     required this.onBookmark,
     required this.onTap,
+    this.cardWidth,
   });
 
   final int index;
@@ -304,6 +498,7 @@ class _TopCourseCard extends StatelessWidget {
   final bool isBookmarked;
   final VoidCallback onBookmark;
   final VoidCallback onTap;
+  final double? cardWidth;
 
   @override
   Widget build(BuildContext context) {
@@ -318,11 +513,11 @@ class _TopCourseCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           elevation: 0,
           shadowColor: Colors.black.withValues(alpha: 0.08),
-          child: InkWell(
+            child: InkWell(
             onTap: onTap,
             borderRadius: BorderRadius.circular(16),
             child: SizedBox(
-              width: 220,
+              width: cardWidth,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
@@ -600,9 +795,10 @@ class _RecentCourseTile extends StatelessWidget {
 }
 
 Widget _courseImage(String? url, {double? width, double? height}) {
+  final fullUrl = _fullImageUrl(url);
   final w = width ?? double.infinity;
   final h = height ?? 120.0;
-  if (url == null || url.isEmpty) {
+  if (fullUrl == null || fullUrl.isEmpty) {
     return Container(
       width: w == double.infinity ? null : w,
       height: h,
@@ -611,7 +807,7 @@ Widget _courseImage(String? url, {double? width, double? height}) {
     );
   }
   return Image.network(
-    url,
+    fullUrl,
     width: w == double.infinity ? null : w,
     height: h,
     fit: BoxFit.cover,
@@ -643,6 +839,15 @@ Widget _courseImage(String? url, {double? width, double? height}) {
       child: Icon(Icons.broken_image_outlined, size: 40, color: Colors.grey.shade500),
     ),
   );
+}
+
+/// يبني رابط الصورة الكامل إن كان الـ backend يعيد مساراً نسبياً
+String? _fullImageUrl(String? url) {
+  if (url == null || url.isEmpty) return null;
+  final u = url.trim();
+  if (u.startsWith('http://') || u.startsWith('https://')) return u;
+  final base = apiBaseUrl.endsWith('/') ? apiBaseUrl.substring(0, apiBaseUrl.length - 1) : apiBaseUrl;
+  return u.startsWith('/') ? '$base$u' : '$base/$u';
 }
 
 String _formatStudents(int n) {

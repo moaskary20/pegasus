@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Course;
+use App\Models\PlatformSetting;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -63,12 +64,44 @@ class HomeController extends Controller
             ];
         });
 
+        $homeSlider = $this->getHomeSlider();
+
         return response()->json([
+            'home_slider' => $homeSlider,
             'top_courses' => $topCourses->map(fn ($c) => $this->formatCourse($c)),
             'recent_courses' => $recentCourses->map(fn ($c) => $this->formatCourse($c)),
             'categories' => $categoriesWithCourses,
             'wishlist_ids' => [],
         ]);
+    }
+
+    /** شرائح السلايدر من إعدادات الموقع (يُتحكم بها من لوحة التحكم) */
+    private function getHomeSlider(): array
+    {
+        $rawSlides = PlatformSetting::get('site_home_slider', []);
+        if (is_string($rawSlides)) {
+            $rawSlides = json_decode($rawSlides, true) ?: [];
+        }
+        $slides = collect(is_array($rawSlides) ? $rawSlides : [])
+            ->filter(fn ($s) => is_array($s) && ! empty($s['image_path'] ?? '') && ((bool) ($s['is_active'] ?? true)))
+            ->values()
+            ->all();
+
+        return array_map(function ($s) {
+            $imagePath = ltrim((string) ($s['image_path'] ?? ''), '/');
+            $storagePath = $imagePath !== '' ? 'storage/' . $imagePath : '';
+            $imageUrl = $storagePath !== '' ? $this->absoluteCoverUrl($storagePath) : null;
+
+            return [
+                'image_url' => $imageUrl,
+                'title' => (string) ($s['title'] ?? ''),
+                'subtitle' => (string) ($s['subtitle'] ?? ''),
+                'primary_text' => (string) ($s['primary_text'] ?? ''),
+                'primary_url' => (string) ($s['primary_url'] ?? ''),
+                'secondary_text' => (string) ($s['secondary_text'] ?? ''),
+                'secondary_url' => (string) ($s['secondary_url'] ?? ''),
+            ];
+        }, $slides);
     }
 
     private function formatCourse(Course $course): array
@@ -86,9 +119,22 @@ class HomeController extends Controller
             'rating' => round((float) ($course->rating ?? 0), 1),
             'reviews_count' => (int) ($course->reviews_count ?? 0),
             'students_count' => (int) ($course->students_count ?? 0),
-            'cover_image' => $course->cover_image,
+            'cover_image' => $this->absoluteCoverUrl($course->cover_image),
             'category' => $course->category ? ['id' => $course->category->id, 'name' => $course->category->name] : null,
             'instructor' => $course->instructor ? ['id' => $course->instructor->id, 'name' => $course->instructor->name] : null,
         ];
+    }
+
+    /** تأكد من إرجاع رابط صورة مطلق للتطبيق */
+    private function absoluteCoverUrl(?string $coverImage): ?string
+    {
+        if (empty($coverImage)) {
+            return null;
+        }
+        $coverImage = trim($coverImage);
+        if (str_starts_with($coverImage, 'http://') || str_starts_with($coverImage, 'https://')) {
+            return $coverImage;
+        }
+        return rtrim(config('app.url', ''), '/') . '/' . ltrim($coverImage, '/');
     }
 }

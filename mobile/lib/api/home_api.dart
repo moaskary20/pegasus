@@ -22,6 +22,8 @@ class HomeApi {
         final recent = (data['recent_courses'] as List<dynamic>?) ?? [];
         final wishlistIds = (data['wishlist_ids'] as List<dynamic>?)?.cast<int>() ?? [];
         final categoriesRaw = (data['categories'] as List<dynamic>?) ?? [];
+        final homeSliderRaw = (data['home_slider'] as List<dynamic>?) ?? [];
+        final homeSlider = homeSliderRaw.map((e) => HomeSlideItem.fromJson(e as Map<String, dynamic>)).toList();
         final categories = categoriesRaw.map((e) {
           final m = e as Map<String, dynamic>;
           final coursesList = (m['courses'] as List<dynamic>?) ?? [];
@@ -34,30 +36,64 @@ class HomeApi {
           );
         }).toList();
         return HomeResponse(
+          homeSlider: homeSlider,
           topCourses: top.map((e) => CourseItem.fromJson(e as Map<String, dynamic>)).toList(),
           recentCourses: recent.map((e) => CourseItem.fromJson(e as Map<String, dynamic>)).toList(),
           categories: categories,
           wishlistIds: wishlistIds,
         );
       }
-      return HomeResponse(topCourses: [], recentCourses: [], categories: [], wishlistIds: []);
+      return HomeResponse(homeSlider: [], topCourses: [], recentCourses: [], categories: [], wishlistIds: []);
     } catch (e) {
-      return HomeResponse(topCourses: [], recentCourses: [], categories: [], wishlistIds: []);
+      return HomeResponse(homeSlider: [], topCourses: [], recentCourses: [], categories: [], wishlistIds: []);
     }
   }
 }
 
 class HomeResponse {
   HomeResponse({
+    required this.homeSlider,
     required this.topCourses,
     required this.recentCourses,
     required this.categories,
     required this.wishlistIds,
   });
+  final List<HomeSlideItem> homeSlider;
   final List<CourseItem> topCourses;
   final List<CourseItem> recentCourses;
   final List<CategoryWithCourses> categories;
   final List<int> wishlistIds;
+}
+
+class HomeSlideItem {
+  HomeSlideItem({
+    this.imageUrl,
+    required this.title,
+    required this.subtitle,
+    required this.primaryText,
+    required this.primaryUrl,
+    required this.secondaryText,
+    required this.secondaryUrl,
+  });
+  final String? imageUrl;
+  final String title;
+  final String subtitle;
+  final String primaryText;
+  final String primaryUrl;
+  final String secondaryText;
+  final String secondaryUrl;
+
+  factory HomeSlideItem.fromJson(Map<String, dynamic> json) {
+    return HomeSlideItem(
+      imageUrl: json['image_url']?.toString(),
+      title: (json['title'] ?? '').toString(),
+      subtitle: (json['subtitle'] ?? '').toString(),
+      primaryText: (json['primary_text'] ?? '').toString(),
+      primaryUrl: (json['primary_url'] ?? '').toString(),
+      secondaryText: (json['secondary_text'] ?? '').toString(),
+      secondaryUrl: (json['secondary_url'] ?? '').toString(),
+    );
+  }
 }
 
 class CategoryWithCourses {
