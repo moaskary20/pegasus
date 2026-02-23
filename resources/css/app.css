@@ -10,11 +10,8 @@
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
-/* Header icon badges positioning */
-.icon-badge {
-    margin-top: 17px;
-}
-
-.absolute.-top-1.-right-1 {
+/* Header icon badges positioning - higher specificity to override Tailwind */
+header .absolute.-top-1.-right-1,
+header .absolute.-top-1.-right-1.min-w-\[18px\].h-\[18px\] {
     top: 10px !important;
 }

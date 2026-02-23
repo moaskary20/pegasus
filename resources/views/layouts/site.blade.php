@@ -21,12 +21,10 @@
             :root { --brand: #2c004d; }
             body { font-family: 'Tajawal', system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
             
-            /* Header icon badges positioning - overrides */
-            .absolute.-top-1.-right-1 {
+            /* Header icon badges positioning - higher specificity */
+            header .absolute.-top-1.-right-1,
+            header .absolute.-top-1.-right-1.min-w-\[18px\].h-\[18px\] {
                 top: 10px !important;
-            }
-            .absolute.-top-1.-right-1.min-w-\[18px\].h-\[18px\] {
-                margin-top: 17px;
             }
         </style>
     @endif

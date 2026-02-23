@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AuthController as ApiAuthController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\ReminderController;
 use App\Http\Controllers\Api\SearchController;
@@ -253,6 +254,14 @@ Route::view('/about', 'pages.about')->name('site.about');
 Route::get('/auth', [\App\Http\Controllers\Site\AuthController::class, 'show'])->name('site.auth');
 Route::post('/auth/login', [\App\Http\Controllers\Site\AuthController::class, 'login'])->name('site.auth.login');
 Route::post('/auth/register', [\App\Http\Controllers\Site\AuthController::class, 'register'])->name('site.auth.register');
+
+// API للموبايل: تسجيل الدخول والتسجيل (بدون مصادقة)
+Route::prefix('api/auth')->middleware(['throttle:60,1'])->group(function () {
+    Route::post('/login', [ApiAuthController::class, 'login'])->name('api.auth.login');
+    Route::post('/register', [ApiAuthController::class, 'register'])->name('api.auth.register');
+    Route::post('/logout', [ApiAuthController::class, 'logout'])->middleware('auth:sanctum')->name('api.auth.logout');
+    Route::get('/user', [ApiAuthController::class, 'user'])->middleware('auth:sanctum')->name('api.auth.user');
+});
 
 Route::get('/messages', [\App\Http\Controllers\Site\MessagesController::class, 'index'])->name('site.messages');
 Route::get('/messages/new', [\App\Http\Controllers\Site\MessagesController::class, 'newConversation'])->name('site.messages.new');
