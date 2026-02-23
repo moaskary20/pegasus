@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../api/auth_api.dart';
+import 'main_shell.dart';
 import 'register_screen.dart';
-import 'home_page.dart';
 
 /// لون الأكاديمية
 const Color _academyPrimary = Color(0xFF2c004d);
@@ -41,7 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (result.isSuccess) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (_) => const HomePage(title: 'أكاديمية بيغاسوس'),
+            builder: (_) => const MainShell(),
           ),
         );
       } else {
@@ -65,7 +65,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void _goToRegister() {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => const RegisterScreen(),
+        builder: (_) => RegisterScreen(),
       ),
     );
   }

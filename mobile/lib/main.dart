@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'api/auth_api.dart';
-import 'screens/home_page.dart';
+import 'screens/main_shell.dart';
 import 'screens/login_screen.dart';
 
 void main() {
@@ -64,7 +64,7 @@ class _SplashScreenState extends State<SplashScreen> {
     if (AuthApi.token != null) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) => const HomePage(title: 'أكاديمية بيغاسوس'),
+          builder: (_) => const MainShell(),
         ),
       );
     } else {

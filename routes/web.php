@@ -263,6 +263,10 @@ Route::prefix('api/auth')->middleware(['throttle:60,1'])->group(function () {
     Route::get('/user', [ApiAuthController::class, 'user'])->middleware('auth:sanctum')->name('api.auth.user');
 });
 
+Route::get('/api/home', [\App\Http\Controllers\Api\HomeController::class, '__invoke'])
+    ->middleware(['throttle:60,1'])
+    ->name('api.home');
+
 Route::get('/messages', [\App\Http\Controllers\Site\MessagesController::class, 'index'])->name('site.messages');
 Route::get('/messages/new', [\App\Http\Controllers\Site\MessagesController::class, 'newConversation'])->name('site.messages.new');
 Route::post('/messages/start', [\App\Http\Controllers\Site\MessagesController::class, 'startConversation'])->name('site.messages.start');

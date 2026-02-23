@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../api/auth_api.dart';
-import 'home_page.dart';
+import 'main_shell.dart';
 
 const Color _academyPrimary = Color(0xFF2c004d);
 
@@ -52,7 +52,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (result.isSuccess) {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(
-            builder: (_) => const HomePage(title: 'أكاديمية بيغاسوس'),
+            builder: (_) => const MainShell(),
           ),
           (route) => false,
         );

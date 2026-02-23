@@ -16,3 +16,17 @@ const String apiAuthLogout = '/api/auth/logout';
 
 /// مسار بيانات المستخدم
 const String apiAuthUser = '/api/auth/user';
+
+/// الإشعارات (يتطلب مصادقة)
+const String apiNotifications = '/api/notifications';
+const String apiNotificationsUnreadCount = '/api/notifications/unread-count';
+const String apiNotificationsRead = '/api/notifications';
+const String apiNotificationsReadAll = '/api/notifications/read-all';
+const String apiNotificationsDestroyRead = '/api/notifications/read/clear';
+
+/// الرسائل (يتطلب مصادقة)
+const String apiMessagesRecent = '/api/messages/recent';
+const String apiMessagesUnreadCount = '/api/messages/unread-count';
+
+/// الصفحة الرئيسية (دورات مميزة + أحدث الدورات)
+const String apiHome = '/api/home';
