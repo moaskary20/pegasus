@@ -89,8 +89,19 @@ class HomeController extends Controller
 
         return array_map(function ($s) {
             $imagePath = ltrim((string) ($s['image_path'] ?? ''), '/');
-            $storagePath = $imagePath !== '' ? 'storage/' . $imagePath : '';
-            $imageUrl = $storagePath !== '' ? $this->absoluteCoverUrl($storagePath) : null;
+            if ($imagePath === '') {
+                return [
+                    'image_url' => null,
+                    'title' => (string) ($s['title'] ?? ''),
+                    'subtitle' => (string) ($s['subtitle'] ?? ''),
+                    'primary_text' => (string) ($s['primary_text'] ?? ''),
+                    'primary_url' => (string) ($s['primary_url'] ?? ''),
+                    'secondary_text' => (string) ($s['secondary_text'] ?? ''),
+                    'secondary_url' => (string) ($s['secondary_url'] ?? ''),
+                ];
+            }
+            $storagePath = str_starts_with($imagePath, 'storage/') ? $imagePath : 'storage/' . $imagePath;
+            $imageUrl = $this->absoluteCoverUrl($storagePath);
 
             return [
                 'image_url' => $imageUrl,
@@ -110,6 +121,8 @@ class HomeController extends Controller
         $originalPrice = (float) ($course->price ?? 0);
         $hasDiscount = $course->offer_price !== null && (float) $course->offer_price < $originalPrice;
 
+        $coverImage = $this->courseCoverImageUrl($course);
+
         return [
             'id' => $course->id,
             'title' => $course->title,
@@ -119,10 +132,22 @@ class HomeController extends Controller
             'rating' => round((float) ($course->rating ?? 0), 1),
             'reviews_count' => (int) ($course->reviews_count ?? 0),
             'students_count' => (int) ($course->students_count ?? 0),
-            'cover_image' => $this->absoluteCoverUrl($course->cover_image),
+            'cover_image' => $coverImage,
             'category' => $course->category ? ['id' => $course->category->id, 'name' => $course->category->name] : null,
             'instructor' => $course->instructor ? ['id' => $course->instructor->id, 'name' => $course->instructor->name] : null,
         ];
+    }
+
+    /** رابط صورة غلاف الدورة (من الحقل الخام أو الـ accessor) */
+    private function courseCoverImageUrl(Course $course): ?string
+    {
+        $raw = $course->getRawOriginal('cover_image');
+        if (is_string($raw) && trim($raw) !== '') {
+            $path = 'storage/' . ltrim($raw, '/');
+            return $this->absoluteCoverUrl($path);
+        }
+        $fromAccessor = $course->cover_image;
+        return $this->absoluteCoverUrl($fromAccessor);
     }
 
     /** تأكد من إرجاع رابط صورة مطلق للتطبيق */
@@ -135,6 +160,10 @@ class HomeController extends Controller
         if (str_starts_with($coverImage, 'http://') || str_starts_with($coverImage, 'https://')) {
             return $coverImage;
         }
-        return rtrim(config('app.url', ''), '/') . '/' . ltrim($coverImage, '/');
+        $base = rtrim(config('app.url', ''), '/');
+        if ($base === '') {
+            $base = request()->getSchemeAndHttpHost() ?? 'https://academypegasus.com';
+        }
+        return $base . '/' . ltrim($coverImage, '/');
     }
 }

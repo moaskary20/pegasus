@@ -847,7 +847,10 @@ String? _fullImageUrl(String? url) {
   final u = url.trim();
   if (u.startsWith('http://') || u.startsWith('https://')) return u;
   final base = apiBaseUrl.endsWith('/') ? apiBaseUrl.substring(0, apiBaseUrl.length - 1) : apiBaseUrl;
-  return u.startsWith('/') ? '$base$u' : '$base/$u';
+  if (u.startsWith('/')) return '$base$u';
+  // مسار مثل storage/courses/x.jpg أو courses/x.jpg
+  if (u.startsWith('storage/')) return '$base/$u';
+  return '$base/storage/$u';
 }
 
 String _formatStudents(int n) {
