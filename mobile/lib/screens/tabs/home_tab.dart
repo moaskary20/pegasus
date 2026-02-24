@@ -100,7 +100,9 @@ class _HomeTabState extends State<HomeTab> {
         color: AppTheme.primary,
         child: _loading
             ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
-            : CustomScrollView(
+            : _data?.loadError != null
+                ? _buildLoadErrorState()
+                : CustomScrollView(
                 slivers: [
                   SliverToBoxAdapter(
                     child: Padding(
@@ -133,6 +135,7 @@ class _HomeTabState extends State<HomeTab> {
                     _buildSectionTitle('أحدث الدورات', '⚡'),
                     _buildRecentCourses(_data!.recentCourses),
                     _buildCategoriesSection(_data!.categories),
+                    if (_isHomeFullyEmpty) _buildUnifiedEmptyState(),
                   ] else
                     const SliverFillRemaining(
                       hasScrollBody: false,
@@ -141,6 +144,89 @@ class _HomeTabState extends State<HomeTab> {
                   const SliverToBoxAdapter(child: SizedBox(height: 24)),
                 ],
               ),
+      ),
+    );
+  }
+
+  bool get _isHomeFullyEmpty {
+    if (_data == null) return false;
+    final d = _data!;
+    if (d.topCourses.isNotEmpty || d.recentCourses.isNotEmpty) return false;
+    if (d.categories.any((c) => c.courses.isNotEmpty)) return false;
+    return true;
+  }
+
+  Widget _buildLoadErrorState() {
+    return ListView(
+      padding: const EdgeInsets.all(24),
+      children: [
+        const SizedBox(height: 48),
+        Icon(Icons.wifi_off_rounded, size: 72, color: Colors.grey.shade400),
+        const SizedBox(height: 24),
+        Text(
+          'تعذر تحميل المحتوى',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: AppTheme.primaryDark,
+              ),
+        ),
+        const SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Text(
+            _data?.loadError ?? '',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
+          ),
+        ),
+        const SizedBox(height: 24),
+        FilledButton.icon(
+          onPressed: () => _load(),
+          icon: const Icon(Icons.refresh_rounded),
+          label: const Text('إعادة المحاولة'),
+          style: FilledButton.styleFrom(
+            backgroundColor: AppTheme.primary,
+            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildUnifiedEmptyState() {
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+          decoration: BoxDecoration(
+            color: AppTheme.primary.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppTheme.primary.withValues(alpha: 0.15)),
+          ),
+          child: Column(
+            children: [
+              Icon(Icons.school_rounded, size: 56, color: AppTheme.primary.withValues(alpha: 0.7)),
+              const SizedBox(height: 16),
+              Text(
+                'لا توجد دورات في المنصة حالياً',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primaryDark,
+                    ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'يمكنك تصفح التصنيفات من تبويب «الدورات» أو إضافة دورات من لوحة التحكم',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

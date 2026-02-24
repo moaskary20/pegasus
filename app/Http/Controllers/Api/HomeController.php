@@ -9,6 +9,7 @@ use App\Models\CourseWishlist;
 use App\Models\PlatformSetting;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class HomeController extends Controller
 {
@@ -17,74 +18,93 @@ class HomeController extends Controller
      */
     public function __invoke(Request $request): JsonResponse
     {
-        $topCourses = Course::query()
-            ->where('is_published', true)
-            ->with(['instructor:id,name', 'category:id,name'])
-            ->orderByDesc('rating')
-            ->orderByDesc('reviews_count')
-            ->limit(10)
-            ->get();
-
-        $recentCourses = Course::query()
-            ->where('is_published', true)
-            ->with(['instructor:id,name', 'category:id,name'])
-            ->latest()
-            ->limit(10)
-            ->get();
-
-        $categories = Category::query()
-            ->whereNull('parent_id')
-            ->where('is_active', true)
-            ->withCount(['courses as published_courses_count' => fn ($q) => $q->where('is_published', true)])
-            ->orderBy('sort_order')
-            ->orderBy('name')
-            ->limit(10)
-            ->get();
-
-        $categoriesWithCourses = $categories->map(function (Category $cat) {
-            $childIds = Category::query()->where('parent_id', $cat->id)->pluck('id')->all();
-            $courses = Course::query()
+        try {
+            $topCourses = Course::query()
                 ->where('is_published', true)
-                ->where(function ($q) use ($cat, $childIds) {
-                    $q->where('category_id', $cat->id);
-                    if (count($childIds) > 0) {
-                        $q->orWhereIn('sub_category_id', $childIds);
-                    }
-                })
                 ->with(['instructor:id,name', 'category:id,name'])
                 ->orderByDesc('rating')
-                ->limit(8)
+                ->orderByDesc('reviews_count')
+                ->limit(10)
                 ->get();
 
-            return [
-                'id' => $cat->id,
-                'name' => $cat->name,
-                'slug' => $cat->slug,
-                'published_courses_count' => (int) ($cat->published_courses_count ?? 0),
-                'courses' => $courses->map(fn ($c) => $this->formatCourse($c)),
-            ];
-        });
+            $recentCourses = Course::query()
+                ->where('is_published', true)
+                ->with(['instructor:id,name', 'category:id,name'])
+                ->latest()
+                ->limit(10)
+                ->get();
 
-        $homeSlider = $this->getHomeSlider();
+            $categories = Category::query()
+                ->whereNull('parent_id')
+                ->where('is_active', true)
+                ->withCount(['courses as published_courses_count' => fn ($q) => $q->where('is_published', true)])
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->limit(10)
+                ->get();
 
-        $wishlistIds = [];
-        if (auth('sanctum')->check()) {
-            $wishlistIds = CourseWishlist::where('user_id', auth('sanctum')->id())->pluck('course_id')->all();
+            $categoriesWithCourses = $categories->map(function (Category $cat) {
+                $childIds = Category::query()->where('parent_id', $cat->id)->pluck('id')->all();
+                $courses = Course::query()
+                    ->where('is_published', true)
+                    ->where(function ($q) use ($cat, $childIds) {
+                        $q->where('category_id', $cat->id);
+                        if (count($childIds) > 0) {
+                            $q->orWhereIn('sub_category_id', $childIds);
+                        }
+                    })
+                    ->with(['instructor:id,name', 'category:id,name'])
+                    ->orderByDesc('rating')
+                    ->limit(8)
+                    ->get();
+
+                return [
+                    'id' => $cat->id,
+                    'name' => $cat->name,
+                    'slug' => $cat->slug,
+                    'published_courses_count' => (int) ($cat->published_courses_count ?? 0),
+                    'courses' => $courses->map(fn ($c) => $this->formatCourse($c)),
+                ];
+            });
+
+            $homeSlider = $this->getHomeSlider();
+
+            $wishlistIds = [];
+            if (auth('sanctum')->check()) {
+                $wishlistIds = CourseWishlist::where('user_id', auth('sanctum')->id())->pluck('course_id')->all();
+            }
+
+            return response()->json([
+                'home_slider' => $homeSlider,
+                'top_courses' => $topCourses->map(fn ($c) => $this->formatCourse($c)),
+                'recent_courses' => $recentCourses->map(fn ($c) => $this->formatCourse($c)),
+                'categories' => $categoriesWithCourses,
+                'wishlist_ids' => array_values($wishlistIds),
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('HomeController API error: ' . $e->getMessage(), [
+                'exception' => $e,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'home_slider' => [],
+                'top_courses' => [],
+                'recent_courses' => [],
+                'categories' => [],
+                'wishlist_ids' => [],
+            ], 200);
         }
-
-        return response()->json([
-            'home_slider' => $homeSlider,
-            'top_courses' => $topCourses->map(fn ($c) => $this->formatCourse($c)),
-            'recent_courses' => $recentCourses->map(fn ($c) => $this->formatCourse($c)),
-            'categories' => $categoriesWithCourses,
-            'wishlist_ids' => array_values($wishlistIds),
-        ]);
     }
 
     /** شرائح السلايدر من إعدادات الموقع (يُتحكم بها من لوحة التحكم) */
     private function getHomeSlider(): array
     {
-        $rawSlides = PlatformSetting::get('site_home_slider', []);
+        try {
+            $rawSlides = PlatformSetting::get('site_home_slider', []);
+        } catch (\Throwable $e) {
+            return [];
+        }
         if (is_string($rawSlides)) {
             $rawSlides = json_decode($rawSlides, true) ?: [];
         }

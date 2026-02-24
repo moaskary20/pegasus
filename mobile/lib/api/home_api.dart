@@ -41,11 +41,26 @@ class HomeApi {
           recentCourses: recent.map((e) => CourseItem.fromJson(e as Map<String, dynamic>)).toList(),
           categories: categories,
           wishlistIds: wishlistIds,
+          loadError: null,
         );
       }
-      return HomeResponse(homeSlider: [], topCourses: [], recentCourses: [], categories: [], wishlistIds: []);
+      return HomeResponse(
+        homeSlider: [],
+        topCourses: [],
+        recentCourses: [],
+        categories: [],
+        wishlistIds: [],
+        loadError: 'تعذر تحميل البيانات (${res.statusCode})',
+      );
     } catch (e) {
-      return HomeResponse(homeSlider: [], topCourses: [], recentCourses: [], categories: [], wishlistIds: []);
+      return HomeResponse(
+        homeSlider: [],
+        topCourses: [],
+        recentCourses: [],
+        categories: [],
+        wishlistIds: [],
+        loadError: 'تحقق من الاتصال بالإنترنت أو بعنوان الخادم',
+      );
     }
   }
 }
@@ -57,12 +72,15 @@ class HomeResponse {
     required this.recentCourses,
     required this.categories,
     required this.wishlistIds,
+    this.loadError,
   });
   final List<HomeSlideItem> homeSlider;
   final List<CourseItem> topCourses;
   final List<CourseItem> recentCourses;
   final List<CategoryWithCourses> categories;
   final List<int> wishlistIds;
+  /// إن وُجد يعني فشل تحميل البيانات (شبكة أو خادم)
+  final String? loadError;
 }
 
 class HomeSlideItem {
