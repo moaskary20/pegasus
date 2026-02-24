@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import '../api/config.dart';
 import '../api/store_api.dart';
+import '../api/wishlist_api.dart';
+import '../api/cart_api.dart';
 import '../app_theme.dart';
+import 'cart_screen.dart';
 
 /// شاشة تفاصيل المنتج — تعرض كل المزايا من الـ backend بتصميم احترافي وحركة
 class ProductDetailScreen extends StatefulWidget {
@@ -9,10 +12,16 @@ class ProductDetailScreen extends StatefulWidget {
     super.key,
     required this.productSlug,
     this.productName,
+    this.initialIsInWishlist = false,
+    this.productId,
+    this.onWishlistChanged,
   });
 
   final String productSlug;
   final String? productName;
+  final bool initialIsInWishlist;
+  final int? productId;
+  final VoidCallback? onWishlistChanged;
 
   @override
   State<ProductDetailScreen> createState() => _ProductDetailScreenState();
@@ -23,13 +32,47 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> with SingleTi
   bool _loading = true;
   String? _error;
   int _selectedImageIndex = 0;
+  bool _isInWishlist = false;
   late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
+    _isInWishlist = widget.initialIsInWishlist;
     _tabController = TabController(length: 3, vsync: this);
     _load();
+  }
+
+  Future<void> _toggleWishlist() async {
+    final id = widget.productId ?? _product?.id;
+    if (id == null) return;
+    final ok = _isInWishlist
+        ? await WishlistApi.removeProduct(id)
+        : await WishlistApi.addProduct(id);
+    if (ok && mounted) {
+      setState(() => _isInWishlist = !_isInWishlist);
+      widget.onWishlistChanged?.call();
+    }
+  }
+
+  Future<void> _addProductToCart(int productId) async {
+    final ok = await CartApi.addProduct(productId);
+    if (!mounted) return;
+    if (ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('تمت إضافة المنتج إلى السلة'),
+          action: SnackBarAction(
+            label: 'فتح السلة',
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CartScreen())),
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('يجب تسجيل الدخول لإضافة المنتج إلى السلة')),
+      );
+    }
   }
 
   @override
@@ -45,8 +88,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> with SingleTi
     });
     final product = await StoreApi.getProductBySlug(widget.productSlug);
     if (!mounted) return;
+    bool inWishlist = widget.initialIsInWishlist;
+    if (product != null && widget.productId == null) {
+      final res = await WishlistApi.getWishlist();
+      inWishlist = res.productIds.contains(product.id);
+    } else if (product != null && widget.productId != null) {
+      inWishlist = widget.initialIsInWishlist;
+    }
     setState(() {
       _product = product;
+      _isInWishlist = inWishlist;
       _loading = false;
       _error = product == null ? 'لم يتم العثور على المنتج' : null;
     });
@@ -133,6 +184,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> with SingleTi
         icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
         onPressed: () => Navigator.of(context).pop(),
       ),
+      actions: [
+        IconButton(
+          icon: Icon(
+            _isInWishlist ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+            color: _isInWishlist ? Colors.redAccent : Colors.white,
+          ),
+          onPressed: _toggleWishlist,
+          tooltip: _isInWishlist ? 'إزالة من المفضلة' : 'إضافة للمفضلة',
+        ),
+      ],
       flexibleSpace: FlexibleSpaceBar(
         background: Stack(
           fit: StackFit.expand,
@@ -302,11 +363,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> with SingleTi
       child: SafeArea(
         child: p.isInStock
             ? FilledButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('تمت إضافة المنتج إلى السلة (سيتم الربط لاحقاً)')),
-                  );
-                },
+                onPressed: () => _addProductToCart(p.id),
                 style: FilledButton.styleFrom(
                   backgroundColor: AppTheme.primary,
                   padding: const EdgeInsets.symmetric(vertical: 16),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../api/config.dart';
 import '../api/store_api.dart';
+import '../api/wishlist_api.dart';
 import '../app_theme.dart';
 import 'product_detail_screen.dart';
 
@@ -24,9 +25,23 @@ class StoreCategoryProductsScreen extends StatefulWidget {
 class _StoreCategoryProductsScreenState extends State<StoreCategoryProductsScreen> with SingleTickerProviderStateMixin {
   bool _loading = true;
   List<StoreProductItem> _products = [];
+  final Set<int> _wishlistProductIds = {};
   late AnimationController _animController;
   static const int _staggerMs = 50;
   static const int _animDurationMs = 350;
+
+  Future<void> _toggleWishlist(int productId) async {
+    final isIn = _wishlistProductIds.contains(productId);
+    final ok = isIn
+        ? await WishlistApi.removeProduct(productId)
+        : await WishlistApi.addProduct(productId);
+    if (ok && mounted) {
+      setState(() {
+        if (isIn) _wishlistProductIds.remove(productId);
+        else _wishlistProductIds.add(productId);
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -46,13 +61,20 @@ class _StoreCategoryProductsScreenState extends State<StoreCategoryProductsScree
 
   Future<void> _load() async {
     setState(() => _loading = true);
-    final list = await StoreApi.getProductsByCategory(
-      categoryId: widget.categoryId,
-      subCategoryId: widget.subCategoryId,
-    );
+    final results = await Future.wait([
+      StoreApi.getProductsByCategory(
+        categoryId: widget.categoryId,
+        subCategoryId: widget.subCategoryId,
+      ),
+      WishlistApi.getWishlist(),
+    ]);
     if (!mounted) return;
+    final list = results[0] as List<StoreProductItem>;
+    final wishlist = results[1] as WishlistResponse;
     setState(() {
       _products = list;
+      _wishlistProductIds.clear();
+      _wishlistProductIds.addAll(wishlist.productIds);
       _loading = false;
     });
     _animController.forward(from: 0);
@@ -88,12 +110,17 @@ class _StoreCategoryProductsScreenState extends State<StoreCategoryProductsScree
                         product: product,
                         animation: _animController,
                         staggerMs: _staggerMs,
+                        isInWishlist: _wishlistProductIds.contains(product.id),
+                        onToggleWishlist: () => _toggleWishlist(product.id),
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute<void>(
                               builder: (_) => ProductDetailScreen(
                                 productSlug: product.slug,
                                 productName: product.name,
+                                initialIsInWishlist: _wishlistProductIds.contains(product.id),
+                                productId: product.id,
+                                onWishlistChanged: _load,
                               ),
                             ),
                           );
@@ -198,6 +225,8 @@ class _AnimatedProductTile extends StatelessWidget {
     required this.animation,
     required this.staggerMs,
     required this.onTap,
+    required this.isInWishlist,
+    required this.onToggleWishlist,
   });
 
   final int index;
@@ -205,6 +234,8 @@ class _AnimatedProductTile extends StatelessWidget {
   final Animation<double> animation;
   final int staggerMs;
   final VoidCallback onTap;
+  final bool isInWishlist;
+  final VoidCallback onToggleWishlist;
 
   @override
   Widget build(BuildContext context) {
@@ -223,7 +254,12 @@ class _AnimatedProductTile extends StatelessWidget {
             offset: Offset(0, slide),
             child: Padding(
               padding: const EdgeInsets.only(bottom: 14),
-              child: _ProductCard(product: product, onTap: onTap),
+              child: _ProductCard(
+                product: product,
+                onTap: onTap,
+                isInWishlist: isInWishlist,
+                onToggleWishlist: onToggleWishlist,
+              ),
             ),
           ),
         );
@@ -233,10 +269,17 @@ class _AnimatedProductTile extends StatelessWidget {
 }
 
 class _ProductCard extends StatelessWidget {
-  const _ProductCard({required this.product, required this.onTap});
+  const _ProductCard({
+    required this.product,
+    required this.onTap,
+    required this.isInWishlist,
+    required this.onToggleWishlist,
+  });
 
   final StoreProductItem product;
   final VoidCallback onTap;
+  final bool isInWishlist;
+  final VoidCallback onToggleWishlist;
 
   @override
   Widget build(BuildContext context) {
@@ -330,6 +373,15 @@ class _ProductCard extends StatelessWidget {
                     ],
                   ),
                 ),
+              ),
+              IconButton(
+                icon: Icon(
+                  isInWishlist ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                  color: isInWishlist ? Colors.redAccent : Colors.grey.shade500,
+                  size: 24,
+                ),
+                onPressed: onToggleWishlist,
+                tooltip: isInWishlist ? 'إزالة من المفضلة' : 'إضافة للمفضلة',
               ),
               Padding(
                 padding: const EdgeInsets.only(top: 14, left: 8),

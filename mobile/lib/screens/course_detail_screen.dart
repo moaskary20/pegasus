@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../api/courses_api.dart';
 import '../api/config.dart';
+import '../api/wishlist_api.dart';
+import '../api/cart_api.dart';
 import '../app_theme.dart';
+import 'cart_screen.dart';
 
 /// شاشة تفاصيل الدورة التدريبية — تصميم احترافي مع تبويبات وحركات (مشابه للصورة المرجعية)
 class CourseDetailScreen extends StatefulWidget {
@@ -9,10 +13,16 @@ class CourseDetailScreen extends StatefulWidget {
     super.key,
     required this.courseSlug,
     this.courseTitle,
+    this.initialIsInWishlist = false,
+    this.courseId,
+    this.onWishlistChanged,
   });
 
   final String courseSlug;
   final String? courseTitle;
+  final bool initialIsInWishlist;
+  final int? courseId;
+  final VoidCallback? onWishlistChanged;
 
   @override
   State<CourseDetailScreen> createState() => _CourseDetailScreenState();
@@ -29,6 +39,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> with SingleTick
   @override
   void initState() {
     super.initState();
+    _isBookmarked = widget.initialIsInWishlist;
     _tabController = TabController(length: _tabs.length, vsync: this);
     _load();
   }
@@ -46,11 +57,44 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> with SingleTick
     });
     final course = await CoursesApi.getCourseBySlug(widget.courseSlug);
     if (!mounted) return;
+    bool inWishlist = widget.initialIsInWishlist;
+    if (course != null && widget.courseId == null) {
+      final res = await WishlistApi.getWishlist();
+      inWishlist = res.courseIds.contains(course.id);
+    } else if (course != null && widget.courseId != null) {
+      inWishlist = widget.initialIsInWishlist;
+    }
     setState(() {
       _course = course;
+      _isBookmarked = inWishlist;
       _loading = false;
       _error = course == null ? 'لم يتم العثور على الدورة' : null;
     });
+  }
+
+  Future<void> _toggleWishlist() async {
+    final id = widget.courseId ?? _course?.id;
+    if (id == null) return;
+    final ok = _isBookmarked
+        ? await WishlistApi.removeCourse(id)
+        : await WishlistApi.addCourse(id);
+    if (ok && mounted) {
+      setState(() => _isBookmarked = !_isBookmarked);
+      widget.onWishlistChanged?.call();
+    }
+  }
+
+  Future<void> _openPreviewVideo() async {
+    final url = _course?.previewVideoUrl;
+    if (url == null || url.isEmpty) return;
+    String link = url.trim();
+    if (!link.startsWith('http://') && !link.startsWith('https://')) {
+      link = 'https://www.youtube.com/watch?v=$link';
+    }
+    final uri = Uri.tryParse(link);
+    if (uri != null && await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   @override
@@ -118,7 +162,57 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> with SingleTick
           ],
         ),
       ),
+      bottomNavigationBar: _buildCourseBottomBar(),
     );
+  }
+
+  Widget _buildCourseBottomBar() {
+    final c = _course!;
+    return Container(
+      padding: EdgeInsets.fromLTRB(20, 12, 20, 12 + MediaQuery.of(context).padding.bottom),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, -4))],
+      ),
+      child: SafeArea(
+        child: FilledButton(
+          onPressed: () => _addCourseToCart(c),
+          style: FilledButton.styleFrom(
+            backgroundColor: AppTheme.primary,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          ),
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.shopping_cart_rounded),
+              SizedBox(width: 8),
+              Text('إضافة إلى السلة', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _addCourseToCart(CourseDetailItem c) async {
+    final ok = await CartApi.addCourse(c.id);
+    if (!mounted) return;
+    if (ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('تمت إضافة الدورة إلى السلة'),
+          action: SnackBarAction(
+            label: 'فتح السلة',
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CartScreen())),
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('يجب تسجيل الدخول لإضافة الدورة إلى السلة')),
+      );
+    }
   }
 
   Widget _buildSliverAppBar() {
@@ -130,6 +224,16 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> with SingleTick
         icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
         onPressed: () => Navigator.of(context).pop(),
       ),
+      actions: [
+        IconButton(
+          icon: Icon(
+            _isBookmarked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+            color: _isBookmarked ? Colors.redAccent : Colors.white,
+          ),
+          onPressed: _toggleWishlist,
+          tooltip: _isBookmarked ? 'إزالة من المفضلة' : 'إضافة للمفضلة',
+        ),
+      ],
       flexibleSpace: FlexibleSpaceBar(
         background: Stack(
           fit: StackFit.expand,
@@ -159,9 +263,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> with SingleTick
                 color: Colors.white.withValues(alpha: 0.95),
                 shape: const CircleBorder(),
                 child: InkWell(
-                  onTap: () {
-                    // TODO: تشغيل فيديو التعريف
-                  },
+                  onTap: _openPreviewVideo,
                   customBorder: const CircleBorder(),
                   child: const Padding(
                     padding: EdgeInsets.all(20),
@@ -219,34 +321,80 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> with SingleTick
                   ),
                 ),
                 IconButton(
-                  onPressed: () => setState(() => _isBookmarked = !_isBookmarked),
+                  onPressed: _toggleWishlist,
                   icon: Icon(
-                    _isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
-                    color: AppTheme.primary,
+                    _isBookmarked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                    color: _isBookmarked ? Colors.redAccent : AppTheme.primary,
                     size: 28,
                   ),
+                  tooltip: _isBookmarked ? 'إزالة من المفضلة' : 'إضافة للمفضلة',
                 ),
               ],
             ),
             const SizedBox(height: 12),
-            if (c.category != null) ...[
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2563EB).withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  c.category!.name,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF2563EB),
-                    fontSize: 13,
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                if (c.category != null)
+                  _ChipLabel(
+                    label: c.category!.name,
+                    color: const Color(0xFF2563EB),
                   ),
-                ),
+                if (c.subCategory != null)
+                  _ChipLabel(
+                    label: c.subCategory!.name,
+                    color: const Color(0xFF059669),
+                  ),
+                if (c.levelLabel != null && c.levelLabel!.isNotEmpty)
+                  _ChipLabel(
+                    label: c.levelLabel!,
+                    color: AppTheme.primary,
+                  ),
+              ],
+            ),
+            if (c.instructor != null) ...[
+              const SizedBox(height: 14),
+              Row(
+                textDirection: TextDirection.rtl,
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: AppTheme.primary.withValues(alpha: 0.12),
+                    backgroundImage: c.instructor!.avatar != null && c.instructor!.avatar!.isNotEmpty
+                        ? NetworkImage(_fullImageUrl(c.instructor!.avatar) ?? '')
+                        : null,
+                    child: c.instructor!.avatar == null || c.instructor!.avatar!.isEmpty
+                        ? Text(
+                            c.instructor!.name.isNotEmpty ? c.instructor!.name.substring(0, 1).toUpperCase() : '?',
+                            style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold),
+                          )
+                        : null,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'المدرب',
+                          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                        ),
+                        Text(
+                          c.instructor!.name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                            color: Color(0xFF1A1A1A),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 12),
             ],
+            const SizedBox(height: 16),
             Row(
               children: [
                 Icon(Icons.star_rounded, size: 20, color: Colors.orange.shade700),
@@ -327,6 +475,28 @@ class _StatChip extends StatelessWidget {
   }
 }
 
+class _ChipLabel extends StatelessWidget {
+  const _ChipLabel({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(fontWeight: FontWeight.w600, color: color, fontSize: 13),
+      ),
+    );
+  }
+}
+
 class _TabBarDelegate extends SliverPersistentHeaderDelegate {
   _TabBarDelegate({required this.tabController, required this.tabs});
 
@@ -397,6 +567,47 @@ class _AboutTabState extends State<_AboutTab> with SingleTickerProviderStateMixi
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (c.announcement != null && c.announcement!.trim().isNotEmpty) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppTheme.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppTheme.primary.withValues(alpha: 0.2)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      textDirection: TextDirection.rtl,
+                      children: [
+                        Icon(Icons.campaign_rounded, size: 22, color: AppTheme.primary),
+                        const SizedBox(width: 8),
+                        Text(
+                          'إعلان الدورة',
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primary,
+                              ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      c.announcement!,
+                      style: TextStyle(
+                        fontSize: 14,
+                        height: 1.5,
+                        color: Colors.grey.shade800,
+                      ),
+                      textDirection: TextDirection.rtl,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
             Text(
               'عن الدورة',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -412,11 +623,12 @@ class _AboutTabState extends State<_AboutTab> with SingleTickerProviderStateMixi
                 height: 1.6,
                 color: Colors.grey.shade800,
               ),
+              textDirection: TextDirection.rtl,
             ),
             if (c.objectives.isNotEmpty) ...[
               const SizedBox(height: 28),
               Text(
-                'المتطلبات',
+                'أهداف الدورة',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: const Color(0xFF1A1A1A),
@@ -430,6 +642,7 @@ class _AboutTabState extends State<_AboutTab> with SingleTickerProviderStateMixi
                   height: 1.6,
                   color: Colors.grey.shade800,
                 ),
+                textDirection: TextDirection.rtl,
               ),
             ],
           ],
@@ -446,24 +659,170 @@ class _LessonsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.play_circle_outline_rounded, size: 64, color: AppTheme.primary.withValues(alpha: 0.5)),
-          const SizedBox(height: 16),
-          Text(
-            '${course.lessonsCount} درس',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade600),
+    final sections = course.sections;
+    if (sections.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.play_circle_outline_rounded, size: 64, color: AppTheme.primary.withValues(alpha: 0.5)),
+            const SizedBox(height: 16),
+            Text(
+              '${course.lessonsCount} درس',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'لا توجد أقسام أو دروس معروضة حالياً',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+      itemCount: sections.length,
+      itemBuilder: (context, sectionIndex) {
+        final section = sections[sectionIndex];
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(right: 4, bottom: 10),
+                child: Row(
+                  textDirection: TextDirection.rtl,
+                  children: [
+                    Icon(Icons.folder_rounded, size: 20, color: AppTheme.primary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        section.title.isEmpty ? 'القسم ${sectionIndex + 1}' : section.title,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF1A1A1A),
+                            ),
+                        textDirection: TextDirection.rtl,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${section.lessons.length} درس',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: AppTheme.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              ...section.lessons.asMap().entries.map((entry) {
+                final lesson = entry.value;
+                return Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: Colors.grey.shade200),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.04),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        // TODO: فتح الدرس عند توفر شاشة المشاهدة
+                      },
+                      borderRadius: BorderRadius.circular(14),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        child: Row(
+                          textDirection: TextDirection.rtl,
+                          children: [
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: AppTheme.primary.withValues(alpha: 0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                lesson.isFreePreview ? Icons.play_circle_filled_rounded : Icons.play_circle_outline_rounded,
+                                color: AppTheme.primary,
+                                size: 24,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    lesson.title.isEmpty ? 'الدرس ${entry.key + 1}' : lesson.title,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                      color: Color(0xFF1A1A1A),
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    textDirection: TextDirection.rtl,
+                                  ),
+                                  if (lesson.durationMinutes > 0) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      lesson.durationLabel,
+                                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            if (lesson.isFreePreview)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF059669).withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Text(
+                                  'معاينة مجانية',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF059669),
+                                  ),
+                                ),
+                              ),
+                            const SizedBox(width: 8),
+                            Icon(Icons.chevron_left_rounded, color: Colors.grey.shade400),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            'قائمة الدروس ستُعرض هنا عند ربطها بالـ API',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

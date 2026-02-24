@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Course;
+use App\Models\CourseWishlist;
 use App\Models\PlatformSetting;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -66,12 +67,17 @@ class HomeController extends Controller
 
         $homeSlider = $this->getHomeSlider();
 
+        $wishlistIds = [];
+        if (auth('sanctum')->check()) {
+            $wishlistIds = CourseWishlist::where('user_id', auth('sanctum')->id())->pluck('course_id')->all();
+        }
+
         return response()->json([
             'home_slider' => $homeSlider,
             'top_courses' => $topCourses->map(fn ($c) => $this->formatCourse($c)),
             'recent_courses' => $recentCourses->map(fn ($c) => $this->formatCourse($c)),
             'categories' => $categoriesWithCourses,
-            'wishlist_ids' => [],
+            'wishlist_ids' => array_values($wishlistIds),
         ]);
     }
 

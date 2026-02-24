@@ -22,21 +22,35 @@ class NotificationsApi {
       if (unreadOnly == true) path += '&unread=1';
       final uri = Uri.parse(path);
       final res = await http.get(uri, headers: _headers);
-      final data = jsonDecode(res.body.toString()) as Map<String, dynamic>? ?? {};
-      if (res.statusCode == 200) {
-        final list = (data['notifications'] as List<dynamic>?)?.cast<Map<String, dynamic>>() ?? [];
-        final meta = data['meta'] as Map<String, dynamic>? ?? {};
+      if (res.statusCode == 401) {
         return NotificationsResponse(
-          notifications: list.map((e) => AppNotification.fromJson(e)).toList(),
-          currentPage: meta['current_page'] as int? ?? 1,
-          lastPage: meta['last_page'] as int? ?? 1,
-          total: meta['total'] as int? ?? 0,
-          unreadCount: meta['unread_count'] as int? ?? 0,
+          notifications: [],
+          currentPage: 1,
+          lastPage: 1,
+          total: 0,
+          unreadCount: 0,
+          needsAuth: true,
         );
       }
-      return NotificationsResponse(notifications: [], currentPage: 1, lastPage: 1, total: 0, unreadCount: 0);
+      final data = jsonDecode(res.body.toString()) as Map<String, dynamic>? ?? {};
+      if (res.statusCode == 200) {
+        final list = (data['notifications'] as List<dynamic>?) ?? [];
+        final meta = data['meta'] as Map<String, dynamic>? ?? {};
+        final notifications = list
+            .map((e) => AppNotification.fromJson(Map<String, dynamic>.from(e as Map)))
+            .toList();
+        return NotificationsResponse(
+          notifications: notifications,
+          currentPage: (meta['current_page'] as num?)?.toInt() ?? 1,
+          lastPage: (meta['last_page'] as num?)?.toInt() ?? 1,
+          total: (meta['total'] as num?)?.toInt() ?? 0,
+          unreadCount: (meta['unread_count'] as num?)?.toInt() ?? 0,
+          needsAuth: false,
+        );
+      }
+      return NotificationsResponse(notifications: [], currentPage: 1, lastPage: 1, total: 0, unreadCount: 0, needsAuth: false);
     } catch (_) {
-      return NotificationsResponse(notifications: [], currentPage: 1, lastPage: 1, total: 0, unreadCount: 0);
+      return NotificationsResponse(notifications: [], currentPage: 1, lastPage: 1, total: 0, unreadCount: 0, needsAuth: false);
     }
   }
 
@@ -131,10 +145,12 @@ class NotificationsResponse {
     required this.lastPage,
     required this.total,
     required this.unreadCount,
+    this.needsAuth = false,
   });
   final List<AppNotification> notifications;
   final int currentPage;
   final int lastPage;
   final int total;
   final int unreadCount;
+  final bool needsAuth;
 }

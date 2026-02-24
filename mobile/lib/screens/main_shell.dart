@@ -6,6 +6,9 @@ import 'tabs/courses_tab.dart';
 import 'tabs/store_tab.dart';
 import 'tabs/account_tab.dart';
 import 'widgets/app_drawer.dart';
+import 'wishlist_screen.dart';
+import 'cart_screen.dart';
+import 'notifications_screen.dart';
 
 const Color _primary = Color(0xFF2c004d);
 
@@ -90,10 +93,54 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
             controller: _pageController,
             physics: const NeverScrollableScrollPhysics(),
             children: [
-              HomeTab(onOpenDrawer: openDrawer),
-              CoursesTab(onOpenDrawer: openDrawer),
-              StoreTab(onOpenDrawer: openDrawer),
-              AccountTab(onOpenDrawer: openDrawer),
+              HomeTab(
+                onOpenDrawer: openDrawer,
+                onOpenFavorite: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const WishlistScreen()),
+                ),
+                onOpenCart: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const CartScreen()),
+                ),
+                onOpenNotifications: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                ),
+              ),
+              CoursesTab(
+                onOpenDrawer: openDrawer,
+                onOpenFavorite: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const WishlistScreen()),
+                ),
+                onOpenCart: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const CartScreen()),
+                ),
+                onOpenNotifications: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                ),
+              ),
+              StoreTab(
+                onOpenDrawer: openDrawer,
+                onOpenFavorite: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const WishlistScreen()),
+                ),
+                onOpenCart: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const CartScreen()),
+                ),
+                onOpenNotifications: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                ),
+              ),
+              AccountTab(
+                onOpenDrawer: openDrawer,
+                onOpenFavorite: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const WishlistScreen()),
+                ),
+                onOpenCart: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const CartScreen()),
+                ),
+                onOpenNotifications: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                ),
+              ),
             ],
           ),
           if (_drawerVisible)

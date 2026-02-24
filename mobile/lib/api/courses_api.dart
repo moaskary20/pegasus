@@ -115,6 +115,9 @@ class CourseDetailItem {
     required this.slug,
     required this.description,
     required this.objectives,
+    this.announcement,
+    this.level,
+    this.levelLabel,
     this.coverImage,
     this.previewVideoUrl,
     required this.price,
@@ -125,7 +128,9 @@ class CourseDetailItem {
     required this.hours,
     required this.lessonsCount,
     this.category,
+    this.subCategory,
     this.instructor,
+    this.sections = const [],
   });
 
   final int id;
@@ -133,6 +138,9 @@ class CourseDetailItem {
   final String slug;
   final String description;
   final String objectives;
+  final String? announcement;
+  final String? level;
+  final String? levelLabel;
   final String? coverImage;
   final String? previewVideoUrl;
   final double price;
@@ -143,17 +151,26 @@ class CourseDetailItem {
   final int hours;
   final int lessonsCount;
   final CategoryRef? category;
+  final CategoryRef? subCategory;
   final InstructorDetailRef? instructor;
+  final List<CourseSectionItem> sections;
 
   bool get hasDiscount => originalPrice != null && originalPrice! > price;
 
   factory CourseDetailItem.fromJson(Map<String, dynamic> json) {
+    final sectionsRaw = (json['sections'] as List<dynamic>?) ?? [];
+    final sections = sectionsRaw
+        .map((e) => CourseSectionItem.fromJson(e as Map<String, dynamic>))
+        .toList();
     return CourseDetailItem(
       id: (json['id'] as num?)?.toInt() ?? 0,
       title: (json['title'] ?? '').toString(),
       slug: (json['slug'] ?? '').toString(),
       description: (json['description'] ?? '').toString(),
       objectives: (json['objectives'] ?? '').toString(),
+      announcement: json['announcement']?.toString(),
+      level: json['level']?.toString(),
+      levelLabel: json['level_label']?.toString(),
       coverImage: json['cover_image']?.toString(),
       previewVideoUrl: json['preview_video_url']?.toString(),
       price: (json['price'] as num?)?.toDouble() ?? 0,
@@ -164,7 +181,70 @@ class CourseDetailItem {
       hours: (json['hours'] as num?)?.toInt() ?? 0,
       lessonsCount: (json['lessons_count'] as num?)?.toInt() ?? 0,
       category: json['category'] != null ? CategoryRef.fromJson(json['category'] as Map<String, dynamic>) : null,
+      subCategory: json['sub_category'] != null ? CategoryRef.fromJson(json['sub_category'] as Map<String, dynamic>) : null,
       instructor: json['instructor'] != null ? InstructorDetailRef.fromJson(json['instructor'] as Map<String, dynamic>) : null,
+      sections: sections,
+    );
+  }
+}
+
+class CourseSectionItem {
+  CourseSectionItem({
+    required this.id,
+    required this.title,
+    required this.sortOrder,
+    required this.lessons,
+  });
+
+  final int id;
+  final String title;
+  final int sortOrder;
+  final List<CourseLessonItem> lessons;
+
+  factory CourseSectionItem.fromJson(Map<String, dynamic> json) {
+    final lessonsRaw = (json['lessons'] as List<dynamic>?) ?? [];
+    final lessons = lessonsRaw
+        .map((e) => CourseLessonItem.fromJson(e as Map<String, dynamic>))
+        .toList();
+    return CourseSectionItem(
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      title: (json['title'] ?? '').toString(),
+      sortOrder: (json['sort_order'] as num?)?.toInt() ?? 0,
+      lessons: lessons,
+    );
+  }
+}
+
+class CourseLessonItem {
+  CourseLessonItem({
+    required this.id,
+    required this.title,
+    required this.durationMinutes,
+    required this.isFreePreview,
+    required this.sortOrder,
+  });
+
+  final int id;
+  final String title;
+  final int durationMinutes;
+  final bool isFreePreview;
+  final int sortOrder;
+
+  String get durationLabel {
+    if (durationMinutes < 60) return '$durationMinutes د';
+    final h = durationMinutes ~/ 60;
+    final m = durationMinutes % 60;
+    if (m == 0) return '${h} س';
+    return '$h س $m د';
+  }
+
+  factory CourseLessonItem.fromJson(Map<String, dynamic> json) {
+    return CourseLessonItem(
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      title: (json['title'] ?? '').toString(),
+      durationMinutes: (json['duration_minutes'] as num?)?.toInt() ?? 0,
+      isFreePreview: (json['is_free_preview'] as bool?) ?? false,
+      sortOrder: (json['sort_order'] as num?)?.toInt() ?? 0,
     );
   }
 }

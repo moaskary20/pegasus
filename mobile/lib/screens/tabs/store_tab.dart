@@ -6,9 +6,12 @@ import '../../app_theme.dart';
 
 /// تبويب الاستور: يعرض تصنيفات المتجر من إدارة المتجر (ProductCategory)
 class StoreTab extends StatefulWidget {
-  const StoreTab({super.key, this.onOpenDrawer});
+  const StoreTab({super.key, this.onOpenDrawer, this.onOpenFavorite, this.onOpenCart, this.onOpenNotifications});
 
   final VoidCallback? onOpenDrawer;
+  final VoidCallback? onOpenFavorite;
+  final VoidCallback? onOpenCart;
+  final VoidCallback? onOpenNotifications;
 
   @override
   State<StoreTab> createState() => _StoreTabState();
@@ -41,6 +44,9 @@ class _StoreTabState extends State<StoreTab> {
       appBar: AppHeader(
         title: 'الاستور',
         onMenu: widget.onOpenDrawer ?? () => Scaffold.of(context).openDrawer(),
+        onFavorite: widget.onOpenFavorite,
+        onCart: widget.onOpenCart,
+        onBell: widget.onOpenNotifications,
       ),
       body: RefreshIndicator(
         onRefresh: _load,

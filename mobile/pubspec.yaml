@@ -35,6 +35,7 @@ dependencies:
   http: ^1.2.2
   shared_preferences: ^2.3.3
   rive_animated_icon: ^2.0.5
+  url_launcher: ^6.3.0
 
 dev_dependencies:
   flutter_test:

@@ -23,6 +23,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     _load();
   }
 
+  bool _needsAuth = false;
+
   Future<void> _load({bool refresh = false}) async {
     if (refresh) _page = 1;
     if (!refresh) {
@@ -37,6 +39,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         _list = [..._list, ...res.notifications];
       }
       _unreadCount = res.unreadCount;
+      _needsAuth = res.needsAuth;
       _loading = false;
     });
   }
@@ -62,12 +65,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return FeatureScaffold(
       title: 'الإشعارات',
       actions: [
-        if (_unreadCount > 0)
+        if (!_needsAuth && _unreadCount > 0)
           TextButton(
             onPressed: _markAllRead,
             child: const Text('تحديد الكل كمقروء'),
           ),
-        if (_list.any((e) => e.isRead))
+        if (!_needsAuth && _list.any((e) => e.isRead))
           TextButton(
             onPressed: _deleteRead,
             child: const Text('حذف المقروء'),
@@ -81,9 +84,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 padding: EdgeInsets.all(48),
                 child: Center(child: CircularProgressIndicator(color: AppTheme.primary)),
               )
-            : _list.isEmpty
-                ? _EmptyNotifications(onRefresh: () => _load(refresh: true))
-                : Padding(
+            : _needsAuth
+                ? _NeedsAuthNotifications()
+                : _list.isEmpty
+                    ? _EmptyNotifications(onRefresh: () => _load(refresh: true))
+                    : Padding(
                     padding: const EdgeInsets.all(20),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -225,6 +230,40 @@ class _NotificationTile extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _NeedsAuthNotifications extends StatelessWidget {
+  const _NeedsAuthNotifications();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.login_rounded, size: 72, color: AppTheme.primary.withValues(alpha: 0.6)),
+          const SizedBox(height: 20),
+          Text(
+            'سجّل الدخول لعرض الإشعارات',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.primaryDark,
+                ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Text(
+              'يجب تسجيل الدخول لاستلام وعرض الإشعارات',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
       ),
     );
   }

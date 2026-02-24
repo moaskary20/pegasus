@@ -45,13 +45,19 @@ class CoursesController extends Controller
 
     /**
      * تفاصيل دورة واحدة بالـ slug (لشاشة تفاصيل الدورة)
+     * يشمل: التصنيف الفرعي، الإعلان، المستوى، الأقسام والدروس
      */
     public function show(string $slug): JsonResponse
     {
         $course = Course::query()
             ->where('is_published', true)
             ->where('slug', $slug)
-            ->with(['instructor:id,name,avatar', 'category:id,name', 'subCategory:id,name'])
+            ->with([
+                'instructor:id,name,avatar',
+                'category:id,name',
+                'subCategory:id,name',
+                'sections' => fn ($q) => $q->orderBy('sort_order')->with(['lessons' => fn ($q2) => $q2->orderBy('sort_order')]),
+            ])
             ->withCount(['lessons'])
             ->first();
 
@@ -67,14 +73,45 @@ class CoursesController extends Controller
         $originalPrice = (float) ($course->price ?? 0);
         $hasDiscount = $course->offer_price !== null && (float) $course->offer_price < $originalPrice;
 
+        $levelMap = [
+            'beginner' => 'مبتدئ',
+            'intermediate' => 'متوسط',
+            'advanced' => 'متقدم',
+        ];
+        $level = $course->level ?? 'beginner';
+        $levelLabel = $levelMap[$level] ?? $level;
+
+        $previewUrl = $course->preview_youtube_url ?: $this->previewVideoUrl($course);
+        if ($previewUrl && !str_starts_with((string) $previewUrl, 'http')) {
+            $previewUrl = 'https://www.youtube.com/watch?v=' . ltrim((string) $previewUrl, '/');
+        }
+
+        $sections = $course->sections->map(function ($section) {
+            return [
+                'id' => $section->id,
+                'title' => $section->title ?? '',
+                'sort_order' => (int) ($section->sort_order ?? 0),
+                'lessons' => $section->lessons->map(fn ($lesson) => [
+                    'id' => $lesson->id,
+                    'title' => $lesson->title ?? '',
+                    'duration_minutes' => (int) ($lesson->duration_minutes ?? 0),
+                    'is_free_preview' => (bool) ($lesson->is_free_preview ?? false),
+                    'sort_order' => (int) ($lesson->sort_order ?? 0),
+                ])->values()->all(),
+            ];
+        })->values()->all();
+
         $data = [
             'id' => $course->id,
             'title' => $course->title,
             'slug' => $course->slug,
             'description' => $course->description ?? '',
             'objectives' => $course->objectives ?? '',
+            'announcement' => $course->announcement ? trim((string) $course->announcement) : null,
+            'level' => $level,
+            'level_label' => $levelLabel,
             'cover_image' => $this->courseCoverImageUrl($course),
-            'preview_video_url' => $course->preview_youtube_url ?: $this->previewVideoUrl($course),
+            'preview_video_url' => $previewUrl,
             'price' => round($price, 2),
             'original_price' => $hasDiscount ? round($originalPrice, 2) : null,
             'rating' => round((float) ($course->rating ?? 0), 1),
@@ -83,11 +120,13 @@ class CoursesController extends Controller
             'hours' => $hours,
             'lessons_count' => (int) $course->lessons_count,
             'category' => $course->category ? ['id' => $course->category->id, 'name' => $course->category->name] : null,
+            'sub_category' => $course->subCategory ? ['id' => $course->subCategory->id, 'name' => $course->subCategory->name] : null,
             'instructor' => $course->instructor ? [
                 'id' => $course->instructor->id,
                 'name' => $course->instructor->name,
                 'avatar' => $course->instructor->avatar ? asset('storage/' . ltrim($course->instructor->avatar, '/')) : null,
             ] : null,
+            'sections' => $sections,
         ];
 
         return response()->json($data);

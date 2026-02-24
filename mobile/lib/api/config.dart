@@ -40,6 +40,12 @@ const String apiStoreProducts = '/api/store/products';
 /// تفاصيل منتج واحد
 const String apiStoreProductDetail = '/api/store/product';
 
+/// المفضلة (دورات + منتجات، يتطلب مصادقة)
+const String apiWishlist = '/api/wishlist';
+
+/// السلة (دورات + منتجات، يتطلب مصادقة)
+const String apiCart = '/api/cart';
+
 /// تصنيفات الدورات (من إدارة الدورات التدريبية)
 const String apiCoursesCategories = '/api/courses/categories';
 

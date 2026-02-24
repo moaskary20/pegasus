@@ -6,9 +6,12 @@ import '../../app_theme.dart';
 
 /// تبويب الدورات: تصنيفات من إدارة الدورات التدريبية بتصميم احترافي
 class CoursesTab extends StatefulWidget {
-  const CoursesTab({super.key, this.onOpenDrawer});
+  const CoursesTab({super.key, this.onOpenDrawer, this.onOpenFavorite, this.onOpenCart, this.onOpenNotifications});
 
   final VoidCallback? onOpenDrawer;
+  final VoidCallback? onOpenFavorite;
+  final VoidCallback? onOpenCart;
+  final VoidCallback? onOpenNotifications;
 
   @override
   State<CoursesTab> createState() => _CoursesTabState();
@@ -41,6 +44,9 @@ class _CoursesTabState extends State<CoursesTab> {
       appBar: AppHeader(
         title: 'الدورات',
         onMenu: widget.onOpenDrawer ?? () => Scaffold.of(context).openDrawer(),
+        onFavorite: widget.onOpenFavorite,
+        onCart: widget.onOpenCart,
+        onBell: widget.onOpenNotifications,
       ),
       body: RefreshIndicator(
         onRefresh: _load,

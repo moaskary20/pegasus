@@ -2,14 +2,18 @@ import 'package:flutter/material.dart';
 import '../widgets/app_header.dart';
 import '../course_detail_screen.dart';
 import '../../api/home_api.dart';
+import '../../api/wishlist_api.dart';
 import '../../api/config.dart';
 import '../../app_theme.dart';
 
 /// تبويب الرئيسية: دورات مميزة أفقياً + أحدث الدورات عمودياً (مطابق للتصميم المطلوب)
 class HomeTab extends StatefulWidget {
-  const HomeTab({super.key, this.onOpenDrawer});
+  const HomeTab({super.key, this.onOpenDrawer, this.onOpenFavorite, this.onOpenCart, this.onOpenNotifications});
 
   final VoidCallback? onOpenDrawer;
+  final VoidCallback? onOpenFavorite;
+  final VoidCallback? onOpenCart;
+  final VoidCallback? onOpenNotifications;
 
   @override
   State<HomeTab> createState() => _HomeTabState();
@@ -50,21 +54,32 @@ class _HomeTabState extends State<HomeTab> {
     });
   }
 
-  void _toggleWishlist(int courseId) {
-    setState(() {
-      if (_wishlistIds.contains(courseId)) {
-        _wishlistIds.remove(courseId);
-      } else {
-        _wishlistIds.add(courseId);
-      }
-    });
-    // TODO: استدعاء API إضافة/إزالة من المفضلة عند توفرها
+  Future<void> _toggleWishlist(int courseId) async {
+    final isIn = _wishlistIds.contains(courseId);
+    final ok = isIn
+        ? await WishlistApi.removeCourse(courseId)
+        : await WishlistApi.addCourse(courseId);
+    if (ok && mounted) {
+      setState(() {
+        if (isIn) {
+          _wishlistIds.remove(courseId);
+        } else {
+          _wishlistIds.add(courseId);
+        }
+      });
+    }
   }
 
   void _openCourseDetail(BuildContext context, CourseItem course) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => CourseDetailScreen(courseSlug: course.slug, courseTitle: course.title),
+        builder: (_) => CourseDetailScreen(
+          courseSlug: course.slug,
+          courseTitle: course.title,
+          initialIsInWishlist: _wishlistIds.contains(course.id),
+          courseId: course.id,
+          onWishlistChanged: () => _load(),
+        ),
       ),
     );
   }
@@ -76,6 +91,9 @@ class _HomeTabState extends State<HomeTab> {
       appBar: AppHeader(
         title: 'أكاديمية بيغاسوس',
         onMenu: widget.onOpenDrawer ?? () => Scaffold.of(context).openDrawer(),
+        onFavorite: widget.onOpenFavorite,
+        onCart: widget.onOpenCart,
+        onBell: widget.onOpenNotifications,
       ),
       body: RefreshIndicator(
         onRefresh: _load,

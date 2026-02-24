@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../api/courses_api.dart';
 import '../api/config.dart';
 import '../api/home_api.dart';
+import '../api/wishlist_api.dart';
 import '../app_theme.dart';
 import 'course_detail_screen.dart';
 
@@ -25,6 +26,7 @@ class CategoryCoursesScreen extends StatefulWidget {
 class _CategoryCoursesScreenState extends State<CategoryCoursesScreen> with SingleTickerProviderStateMixin {
   bool _loading = true;
   List<CourseItem> _courses = [];
+  final Set<int> _wishlistCourseIds = {};
   late AnimationController _animController;
   static const int _staggerMs = 55;
   static const int _animDurationMs = 380;
@@ -39,6 +41,19 @@ class _CategoryCoursesScreenState extends State<CategoryCoursesScreen> with Sing
     _load();
   }
 
+  Future<void> _toggleWishlist(int courseId) async {
+    final isIn = _wishlistCourseIds.contains(courseId);
+    final ok = isIn
+        ? await WishlistApi.removeCourse(courseId)
+        : await WishlistApi.addCourse(courseId);
+    if (ok && mounted) {
+      setState(() {
+        if (isIn) _wishlistCourseIds.remove(courseId);
+        else _wishlistCourseIds.add(courseId);
+      });
+    }
+  }
+
   @override
   void dispose() {
     _animController.dispose();
@@ -47,13 +62,20 @@ class _CategoryCoursesScreenState extends State<CategoryCoursesScreen> with Sing
 
   Future<void> _load() async {
     setState(() => _loading = true);
-    final list = await CoursesApi.getCoursesByCategory(
-      categoryId: widget.categoryId,
-      subCategoryId: widget.subCategoryId,
-    );
+    final results = await Future.wait([
+      CoursesApi.getCoursesByCategory(
+        categoryId: widget.categoryId,
+        subCategoryId: widget.subCategoryId,
+      ),
+      WishlistApi.getWishlist(),
+    ]);
     if (!mounted) return;
+    final list = results[0] as List<CourseItem>;
+    final wishlist = results[1] as WishlistResponse;
     setState(() {
       _courses = list;
+      _wishlistCourseIds.clear();
+      _wishlistCourseIds.addAll(wishlist.courseIds);
       _loading = false;
     });
     _animController.forward(from: 0);
@@ -91,12 +113,17 @@ class _CategoryCoursesScreenState extends State<CategoryCoursesScreen> with Sing
                       course: course,
                       animation: _animController,
                       staggerMs: _staggerMs,
+                      isInWishlist: _wishlistCourseIds.contains(course.id),
+                      onToggleWishlist: () => _toggleWishlist(course.id),
                       onTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute<void>(
                             builder: (_) => CourseDetailScreen(
                               courseSlug: course.slug,
                               courseTitle: course.title,
+                              initialIsInWishlist: _wishlistCourseIds.contains(course.id),
+                              courseId: course.id,
+                              onWishlistChanged: _load,
                             ),
                           ),
                         );
@@ -209,6 +236,8 @@ class _AnimatedCourseTile extends StatelessWidget {
     required this.animation,
     required this.staggerMs,
     required this.onTap,
+    required this.isInWishlist,
+    required this.onToggleWishlist,
   });
 
   final int index;
@@ -216,6 +245,8 @@ class _AnimatedCourseTile extends StatelessWidget {
   final Animation<double> animation;
   final int staggerMs;
   final VoidCallback onTap;
+  final bool isInWishlist;
+  final VoidCallback onToggleWishlist;
 
   @override
   Widget build(BuildContext context) {
@@ -235,7 +266,12 @@ class _AnimatedCourseTile extends StatelessWidget {
             offset: Offset(0, slide),
             child: Padding(
               padding: const EdgeInsets.only(bottom: 14),
-              child: _CourseCard(course: course, onTap: onTap),
+              child: _CourseCard(
+                course: course,
+                onTap: onTap,
+                isInWishlist: isInWishlist,
+                onToggleWishlist: onToggleWishlist,
+              ),
             ),
           ),
         );
@@ -245,10 +281,17 @@ class _AnimatedCourseTile extends StatelessWidget {
 }
 
 class _CourseCard extends StatelessWidget {
-  const _CourseCard({required this.course, required this.onTap});
+  const _CourseCard({
+    required this.course,
+    required this.onTap,
+    required this.isInWishlist,
+    required this.onToggleWishlist,
+  });
 
   final CourseItem course;
   final VoidCallback onTap;
+  final bool isInWishlist;
+  final VoidCallback onToggleWishlist;
 
   @override
   Widget build(BuildContext context) {
@@ -354,6 +397,15 @@ class _CourseCard extends StatelessWidget {
                     ],
                   ),
                 ),
+              ),
+              IconButton(
+                icon: Icon(
+                  isInWishlist ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                  color: isInWishlist ? Colors.redAccent : Colors.grey.shade500,
+                  size: 24,
+                ),
+                onPressed: onToggleWishlist,
+                tooltip: isInWishlist ? 'إزالة من المفضلة' : 'إضافة للمفضلة',
               ),
               Padding(
                 padding: const EdgeInsets.only(top: 14, left: 8),

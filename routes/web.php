@@ -298,6 +298,58 @@ Route::get('/api/courses/{slug}', [\App\Http\Controllers\Api\CoursesController::
     ->middleware(['throttle:60,1'])
     ->name('api.courses.show');
 
+Route::get('/api/wishlist', [\App\Http\Controllers\Api\WishlistController::class, 'index'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.wishlist.index');
+Route::post('/api/wishlist/courses/{id}', [\App\Http\Controllers\Api\WishlistController::class, 'addCourse'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.wishlist.courses.add');
+Route::delete('/api/wishlist/courses/{id}', [\App\Http\Controllers\Api\WishlistController::class, 'removeCourse'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.wishlist.courses.remove');
+Route::post('/api/wishlist/products/{id}', [\App\Http\Controllers\Api\WishlistController::class, 'addProduct'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.wishlist.products.add');
+Route::delete('/api/wishlist/products/{id}', [\App\Http\Controllers\Api\WishlistController::class, 'removeProduct'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.wishlist.products.remove');
+
+Route::get('/api/cart', [\App\Http\Controllers\Api\CartController::class, 'index'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.cart.index');
+Route::post('/api/cart/courses/{id}', [\App\Http\Controllers\Api\CartController::class, 'addCourse'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.cart.courses.add');
+Route::delete('/api/cart/courses/{id}', [\App\Http\Controllers\Api\CartController::class, 'removeCourse'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.cart.courses.remove');
+Route::post('/api/cart/products/{id}', [\App\Http\Controllers\Api\CartController::class, 'addProduct'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.cart.products.add');
+Route::delete('/api/cart/products/{id}', [\App\Http\Controllers\Api\CartController::class, 'removeProduct'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.cart.products.remove');
+
+// Notification API للموبايل (auth:sanctum)
+Route::get('/api/notifications', [NotificationController::class, 'index'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.notifications.index.mobile');
+Route::get('/api/notifications/unread-count', [NotificationController::class, 'unreadCount'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.notifications.unread-count.mobile');
+Route::post('/api/notifications/{id}/read', [NotificationController::class, 'markAsRead'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.notifications.read.mobile');
+Route::post('/api/notifications/read-all', [NotificationController::class, 'markAllAsRead'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.notifications.read-all.mobile');
+Route::delete('/api/notifications/{id}', [NotificationController::class, 'destroy'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.notifications.destroy.mobile');
+Route::delete('/api/notifications/read/clear', [NotificationController::class, 'destroyRead'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.notifications.destroy-read.mobile');
+
 Route::get('/messages', [\App\Http\Controllers\Site\MessagesController::class, 'index'])->name('site.messages');
 Route::get('/messages/new', [\App\Http\Controllers\Site\MessagesController::class, 'newConversation'])->name('site.messages.new');
 Route::post('/messages/start', [\App\Http\Controllers\Site\MessagesController::class, 'startConversation'])->name('site.messages.start');

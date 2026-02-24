@@ -5,16 +5,15 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
 {
     /**
-     * Get paginated notifications for the authenticated user
+     * Get paginated notifications for the authenticated user (session or Sanctum)
      */
     public function index(Request $request): JsonResponse
     {
-        $user = Auth::user();
+        $user = $request->user();
         
         if (!$user) {
             return response()->json(['error' => 'Unauthenticated'], 401);
@@ -53,7 +52,7 @@ class NotificationController extends Controller
      */
     public function unreadCount(): JsonResponse
     {
-        $user = Auth::user();
+        $user = request()->user();
         
         if (!$user) {
             return response()->json(['count' => 0]);
@@ -69,7 +68,7 @@ class NotificationController extends Controller
      */
     public function markAsRead(string $id): JsonResponse
     {
-        $user = Auth::user();
+        $user = request()->user();
         
         if (!$user) {
             return response()->json(['error' => 'Unauthenticated'], 401);
@@ -94,7 +93,7 @@ class NotificationController extends Controller
      */
     public function markAllAsRead(): JsonResponse
     {
-        $user = Auth::user();
+        $user = request()->user();
         
         if (!$user) {
             return response()->json(['error' => 'Unauthenticated'], 401);
@@ -113,7 +112,7 @@ class NotificationController extends Controller
      */
     public function destroy(string $id): JsonResponse
     {
-        $user = Auth::user();
+        $user = request()->user();
         
         if (!$user) {
             return response()->json(['error' => 'Unauthenticated'], 401);
@@ -138,7 +137,7 @@ class NotificationController extends Controller
      */
     public function destroyRead(): JsonResponse
     {
-        $user = Auth::user();
+        $user = request()->user();
         
         if (!$user) {
             return response()->json(['error' => 'Unauthenticated'], 401);

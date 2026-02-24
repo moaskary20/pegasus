@@ -7,9 +7,12 @@ const Color _primary = Color(0xFF2c004d);
 
 /// تبويب حسابي
 class AccountTab extends StatelessWidget {
-  const AccountTab({super.key, this.onOpenDrawer});
+  const AccountTab({super.key, this.onOpenDrawer, this.onOpenFavorite, this.onOpenCart, this.onOpenNotifications});
 
   final VoidCallback? onOpenDrawer;
+  final VoidCallback? onOpenFavorite;
+  final VoidCallback? onOpenCart;
+  final VoidCallback? onOpenNotifications;
 
   @override
   Widget build(BuildContext context) {
@@ -17,6 +20,9 @@ class AccountTab extends StatelessWidget {
       appBar: AppHeader(
         title: 'حسابي',
         onMenu: onOpenDrawer ?? () => Scaffold.of(context).openDrawer(),
+        onFavorite: onOpenFavorite,
+        onCart: onOpenCart,
+        onBell: onOpenNotifications,
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
