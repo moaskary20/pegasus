@@ -18,13 +18,15 @@ class _HomeTabState extends State<HomeTab> {
   bool _loading = true;
   HomeResponse? _data;
   final Set<int> _wishlistIds = {};
-  final PageController _topCoursesPageController = PageController(viewportFraction: 0.88);
+  final PageController _topCoursesPageController = PageController(viewportFraction: 0.98);
+  final PageController _recentCoursesPageController = PageController(viewportFraction: 0.98);
   final PageController _homeSliderPageController = PageController();
   int _homeSliderPage = 0;
 
   @override
   void dispose() {
     _topCoursesPageController.dispose();
+    _recentCoursesPageController.dispose();
     _homeSliderPageController.dispose();
     super.dispose();
   }
@@ -204,6 +206,7 @@ class _HomeTabState extends State<HomeTab> {
         ),
       );
     }
+    final pageCount = (list.length + 1) ~/ 2;
     return SliverToBoxAdapter(
       child: SizedBox(
         height: 300,
@@ -212,17 +215,44 @@ class _HomeTabState extends State<HomeTab> {
           scrollDirection: Axis.horizontal,
           padEnds: true,
           physics: const BouncingScrollPhysics(parent: PageScrollPhysics()),
-          itemCount: list.length,
-          itemBuilder: (context, index) {
+          itemCount: pageCount,
+          itemBuilder: (context, pageIndex) {
+            final i = pageIndex * 2;
             return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: _TopCourseCard(
-                index: index,
-                course: list[index],
-                isBookmarked: _wishlistIds.contains(list[index].id),
-                onBookmark: () => _toggleWishlist(list[index].id),
-                onTap: () {},
-                cardWidth: null,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 4),
+                      child: _TopCourseCard(
+                        index: i,
+                        course: list[i],
+                        isBookmarked: _wishlistIds.contains(list[i].id),
+                        onBookmark: () => _toggleWishlist(list[i].id),
+                        onTap: () {},
+                        cardWidth: null,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: i + 1 < list.length
+                        ? Padding(
+                            padding: const EdgeInsets.only(right: 4),
+                            child: _TopCourseCard(
+                              index: i + 1,
+                              course: list[i + 1],
+                              isBookmarked: _wishlistIds.contains(list[i + 1].id),
+                              onBookmark: () => _toggleWishlist(list[i + 1].id),
+                              onTap: () {},
+                              cardWidth: null,
+                            ),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                ],
               ),
             );
           },
@@ -240,21 +270,57 @@ class _HomeTabState extends State<HomeTab> {
         ),
       );
     }
-    return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-            child: _RecentCourseTile(
-              index: index,
-              course: list[index],
-              isBookmarked: _wishlistIds.contains(list[index].id),
-              onBookmark: () => _toggleWishlist(list[index].id),
-              onTap: () {},
-            ),
-          );
-        },
-        childCount: list.length,
+    final pageCount = (list.length + 1) ~/ 2;
+    return SliverToBoxAdapter(
+      child: SizedBox(
+        height: 300,
+        child: PageView.builder(
+          controller: _recentCoursesPageController,
+          scrollDirection: Axis.horizontal,
+          padEnds: true,
+          physics: const BouncingScrollPhysics(parent: PageScrollPhysics()),
+          itemCount: pageCount,
+          itemBuilder: (context, pageIndex) {
+            final i = pageIndex * 2;
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 4),
+                      child: _TopCourseCard(
+                        index: i,
+                        course: list[i],
+                        isBookmarked: _wishlistIds.contains(list[i].id),
+                        onBookmark: () => _toggleWishlist(list[i].id),
+                        onTap: () {},
+                        cardWidth: null,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: i + 1 < list.length
+                        ? Padding(
+                            padding: const EdgeInsets.only(right: 4),
+                            child: _TopCourseCard(
+                              index: i + 1,
+                              course: list[i + 1],
+                              isBookmarked: _wishlistIds.contains(list[i + 1].id),
+                              onBookmark: () => _toggleWishlist(list[i + 1].id),
+                              onTap: () {},
+                              cardWidth: null,
+                            ),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../login_screen.dart';
 import '../../api/auth_api.dart';
-import '../links_list_screen.dart';
 import '../my_courses_screen.dart';
 import '../my_assignments_screen.dart';
 import '../cart_screen.dart';
@@ -15,54 +14,53 @@ import '../support_screen.dart';
 
 const Color _primary = Color(0xFF2c004d);
 
-/// السايدبار: صورة المستخدم مع تعديل، الاسم، وقائمة الروابط
-class AppDrawer extends StatelessWidget {
-  const AppDrawer({super.key});
+/// محتوى السايدبار (قائمة + هيدر) لاستخدامه داخل Drawer أو داخل overlay 3D
+class AppDrawerContent extends StatelessWidget {
+  const AppDrawerContent({super.key, this.onClose});
+
+  final VoidCallback? onClose;
 
   @override
   Widget build(BuildContext context) {
-    return Drawer(
-      child: Column(
-        children: [
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: [
-                _UserHeader(
-                  userName: 'المستخدم',
-                  userEmail: 'user@example.com',
-                  onEditTap: () => _openEditProfile(context),
-                ),
-                const Divider(height: 1),
-                _DrawerTile(icon: Icons.link_rounded, label: 'قائمة الروابط', onTap: () => _push(context, const LinksListScreen())),
-                _DrawerTile(icon: Icons.school_rounded, label: 'تعلّمي / دوراتي', onTap: () => _push(context, const MyCoursesScreen())),
-                _DrawerTile(icon: Icons.assignment_outlined, label: 'واجباتي', onTap: () => _push(context, const MyAssignmentsScreen())),
-                _DrawerTile(icon: Icons.shopping_cart_outlined, label: 'سلة المشتريات', onTap: () => _push(context, const CartScreen())),
-                _DrawerTile(icon: Icons.favorite_border_rounded, label: 'قائمة الرغبات', onTap: () => _push(context, const WishlistScreen())),
-                _DrawerTile(icon: Icons.notifications_none_rounded, label: 'الإشعارات', onTap: () => _push(context, const NotificationsScreen())),
-                _DrawerTile(icon: Icons.chat_bubble_outline_rounded, label: 'الرسائل', onTap: () => _push(context, const MessagesScreen())),
-                _DrawerTile(icon: Icons.settings_outlined, label: 'إعدادات الحساب', onTap: () => _push(context, const AccountSettingsScreen())),
-                _DrawerTile(icon: Icons.card_membership_outlined, label: 'الاشتراكات', onTap: () => _push(context, const SubscriptionsScreen())),
-                _DrawerTile(icon: Icons.receipt_long_outlined, label: 'سجل المشتريات', onTap: () => _push(context, const PurchaseHistoryScreen())),
-                _DrawerTile(icon: Icons.help_outline_rounded, label: 'المساعدة والدعم', onTap: () => _push(context, const SupportScreen())),
-              ],
-            ),
+    return Column(
+      children: [
+        Expanded(
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              _UserHeader(
+                userName: 'المستخدم',
+                userEmail: 'user@example.com',
+                onEditTap: () => _openEditProfile(context),
+              ),
+              const Divider(height: 1),
+              _DrawerTile(icon: Icons.school_rounded, label: 'تعلّمي / دوراتي', onTap: () => _push(context, const MyCoursesScreen())),
+              _DrawerTile(icon: Icons.assignment_outlined, label: 'واجباتي', onTap: () => _push(context, const MyAssignmentsScreen())),
+              _DrawerTile(icon: Icons.shopping_cart_outlined, label: 'سلة المشتريات', onTap: () => _push(context, const CartScreen())),
+              _DrawerTile(icon: Icons.favorite_border_rounded, label: 'قائمة الرغبات', onTap: () => _push(context, const WishlistScreen())),
+              _DrawerTile(icon: Icons.notifications_none_rounded, label: 'الإشعارات', onTap: () => _push(context, const NotificationsScreen())),
+              _DrawerTile(icon: Icons.chat_bubble_outline_rounded, label: 'الرسائل', onTap: () => _push(context, const MessagesScreen())),
+              _DrawerTile(icon: Icons.settings_outlined, label: 'إعدادات الحساب', onTap: () => _push(context, const AccountSettingsScreen())),
+              _DrawerTile(icon: Icons.card_membership_outlined, label: 'الاشتراكات', onTap: () => _push(context, const SubscriptionsScreen())),
+              _DrawerTile(icon: Icons.receipt_long_outlined, label: 'سجل المشتريات', onTap: () => _push(context, const PurchaseHistoryScreen())),
+              _DrawerTile(icon: Icons.help_outline_rounded, label: 'المساعدة والدعم', onTap: () => _push(context, const SupportScreen())),
+            ],
           ),
-          const Divider(height: 1),
-          _DrawerTile(
-            icon: Icons.logout_rounded,
-            label: 'تسجيل الخروج',
-            onTap: () => _logout(context),
-            color: Colors.red.shade700,
-          ),
-          SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
-        ],
-      ),
+        ),
+        const Divider(height: 1),
+        _DrawerTile(
+          icon: Icons.logout_rounded,
+          label: 'تسجيل الخروج',
+          onTap: () => _logout(context),
+          color: Colors.red.shade700,
+        ),
+        SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
+      ],
     );
   }
 
   void _openEditProfile(BuildContext context) {
-    Navigator.pop(context);
+    onClose?.call();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -72,19 +70,31 @@ class AppDrawer extends StatelessWidget {
   }
 
   void _push(BuildContext context, Widget screen) {
-    Navigator.pop(context);
+    onClose?.call();
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => screen),
     );
   }
 
   Future<void> _logout(BuildContext context) async {
-    Navigator.pop(context);
+    onClose?.call();
     await AuthApi.logout();
     if (!context.mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginScreen()),
       (route) => false,
+    );
+  }
+}
+
+/// السايدبار الافتراضي (للتوافق مع Drawer)
+class AppDrawer extends StatelessWidget {
+  const AppDrawer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      child: AppDrawerContent(onClose: () => Navigator.pop(context)),
     );
   }
 }

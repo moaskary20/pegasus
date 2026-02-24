@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 
 // خدمة ملفات التخزين عبر Laravel (بديل عند فشل الرابط الرمزي أو 403)
+// إضافة CORS حتى تظهر الصور عند فتح التطبيق من Chrome (Flutter Web)
 Route::get('/storage/{path}', function (string $path) {
     $path = trim($path, '/');
     if ($path === '' || str_contains($path, '..')) {
@@ -29,7 +30,10 @@ Route::get('/storage/{path}', function (string $path) {
         abort(404);
     }
     $mime = mime_content_type($fullPath) ?: 'application/octet-stream';
-    return response()->file($fullPath, ['Content-Type' => $mime]);
+    $response = response()->file($fullPath, ['Content-Type' => $mime]);
+    $response->headers->set('Access-Control-Allow-Origin', request()->header('Origin', '*'));
+    $response->headers->set('Access-Control-Allow-Methods', 'GET, HEAD');
+    return $response;
 })->where('path', '.*')->name('storage.serve');
 
 // خدمة صور الأفاتار من /avatars/ (تُخزّن فعلياً في storage/app/public/avatars/)
@@ -43,7 +47,10 @@ Route::get('/avatars/{path}', function (string $path) {
         abort(404);
     }
     $mime = mime_content_type($fullPath) ?: 'application/octet-stream';
-    return response()->file($fullPath, ['Content-Type' => $mime]);
+    $response = response()->file($fullPath, ['Content-Type' => $mime]);
+    $response->headers->set('Access-Control-Allow-Origin', request()->header('Origin', '*'));
+    $response->headers->set('Access-Control-Allow-Methods', 'GET, HEAD');
+    return $response;
 })->where('path', '.*')->name('avatars.serve');
 
 Route::get('/', [\App\Http\Controllers\Site\HomeController::class, '__invoke'])
@@ -266,6 +273,10 @@ Route::prefix('api/auth')->middleware(['throttle:60,1'])->group(function () {
 Route::get('/api/home', [\App\Http\Controllers\Api\HomeController::class, '__invoke'])
     ->middleware(['throttle:60,1'])
     ->name('api.home');
+
+Route::get('/api/store/categories', [\App\Http\Controllers\Api\StoreController::class, 'categories'])
+    ->middleware(['throttle:60,1'])
+    ->name('api.store.categories');
 
 Route::get('/messages', [\App\Http\Controllers\Site\MessagesController::class, 'index'])->name('site.messages');
 Route::get('/messages/new', [\App\Http\Controllers\Site\MessagesController::class, 'newConversation'])->name('site.messages.new');

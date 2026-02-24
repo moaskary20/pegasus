@@ -1,8 +1,9 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:rive_animated_icon/rive_animated_icon.dart';
 import 'tabs/home_tab.dart';
 import 'tabs/my_courses_tab.dart';
-import 'tabs/search_tab.dart';
+import 'tabs/store_tab.dart';
 import 'tabs/account_tab.dart';
 import 'widgets/app_drawer.dart';
 
@@ -11,13 +12,13 @@ const Color _primary = Color(0xFF2c004d);
 enum NavItem {
   home(0, 'الرئيسية', RiveIcon.home),
   courses(1, 'دوراتى', RiveIcon.graduate),
-  search(2, 'البحث', RiveIcon.search),
+  store(2, 'الاستور', null),
   account(3, 'حسابي', RiveIcon.profile);
 
   const NavItem(this.tabIndex, this.label, this.riveIcon);
   final int tabIndex;
   final String label;
-  final RiveIcon riveIcon;
+  final RiveIcon? riveIcon;
 }
 
 /// الهيكل الرئيسي مع شريط تنقل: عند التحديد تظهر دائرة بارزة للأعلى والأيقونة داخلها
@@ -28,13 +29,30 @@ class MainShell extends StatefulWidget {
   State<MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends State<MainShell> {
+class _MainShellState extends State<MainShell> with SingleTickerProviderStateMixin {
   int _currentIndex = 0;
   final _pageController = PageController();
   final _scaffoldKey = GlobalKey<ScaffoldState>();
+  bool _drawerVisible = false;
+  late final AnimationController _drawerController;
+  late final Animation<double> _drawerAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _drawerController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 320),
+    );
+    _drawerAnimation = CurvedAnimation(
+      parent: _drawerController,
+      curve: Curves.easeOutCubic,
+    );
+  }
 
   @override
   void dispose() {
+    _drawerController.dispose();
     _pageController.dispose();
     super.dispose();
   }
@@ -50,28 +68,106 @@ class _MainShellState extends State<MainShell> {
   }
 
   void openDrawer() {
-    _scaffoldKey.currentState?.openDrawer();
+    if (_drawerVisible) return;
+    setState(() => _drawerVisible = true);
+    _drawerController.forward();
+  }
+
+  void _closeDrawer() {
+    _drawerController.reverse().then((_) {
+      if (mounted) setState(() => _drawerVisible = false);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final isRTL = Directionality.of(context) == TextDirection.rtl;
     return Scaffold(
       key: _scaffoldKey,
-      drawer: const AppDrawer(),
-      body: PageView(
-        controller: _pageController,
-        physics: const NeverScrollableScrollPhysics(),
+      body: Stack(
         children: [
-          HomeTab(onOpenDrawer: openDrawer),
-          MyCoursesTab(onOpenDrawer: openDrawer),
-          SearchTab(onOpenDrawer: openDrawer),
-          AccountTab(onOpenDrawer: openDrawer),
+          PageView(
+            controller: _pageController,
+            physics: const NeverScrollableScrollPhysics(),
+            children: [
+              HomeTab(onOpenDrawer: openDrawer),
+              MyCoursesTab(onOpenDrawer: openDrawer),
+              StoreTab(onOpenDrawer: openDrawer),
+              AccountTab(onOpenDrawer: openDrawer),
+            ],
+          ),
+          if (_drawerVisible)
+            AnimatedBuilder(
+              animation: _drawerAnimation,
+              builder: (context, _) {
+                return _Drawer3DOverlay(
+                  value: _drawerAnimation.value,
+                  isRTL: isRTL,
+                  onClose: _closeDrawer,
+                  child: AppDrawerContent(onClose: _closeDrawer),
+                );
+              },
+            ),
         ],
       ),
       bottomNavigationBar: _FloatingCircleNavBar(
         currentIndex: _currentIndex,
         onTap: _onTap,
       ),
+    );
+  }
+}
+
+class _Drawer3DOverlay extends StatelessWidget {
+  const _Drawer3DOverlay({
+    required this.value,
+    required this.isRTL,
+    required this.onClose,
+    required this.child,
+  });
+
+  final double value;
+  final bool isRTL;
+  final VoidCallback onClose;
+  final Widget child;
+
+  static const double _drawerWidth = 300.0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        GestureDetector(
+          onTap: onClose,
+          child: Container(
+            color: Colors.black.withValues(alpha: 0.4 * value),
+          ),
+        ),
+        Align(
+          alignment: isRTL ? Alignment.centerRight : Alignment.centerLeft,
+          child: Transform(
+            alignment: isRTL ? Alignment.centerRight : Alignment.centerLeft,
+            transform: Matrix4.identity()
+              ..setEntry(3, 2, 0.001)
+              ..rotateY((isRTL ? 1 : -1) * (1 - value) * math.pi / 2),
+            child: Container(
+              width: _drawerWidth,
+              height: double.infinity,
+              decoration: BoxDecoration(
+                color: Theme.of(context).drawerTheme.backgroundColor ?? Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 12,
+                    offset: Offset((isRTL ? 1 : -1) * 4, 0),
+                  ),
+                ],
+              ),
+              child: child,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -155,95 +251,80 @@ class _FloatingCircleNavBar extends StatelessWidget {
                             ],
                           ),
                           child: Center(
-                            child: RiveAnimatedIcon(
-                              key: ValueKey('nav_rive_sel_$currentIndex'),
-                              riveIcon: NavItem.values[currentIndex].riveIcon,
-                              width: 28,
-                              height: 28,
-                              color: Colors.white,
-                              strokeWidth: 2,
-                              loopAnimation: true,
-                              onTap: () => onTap(currentIndex),
-                            ),
+                            child: NavItem.values[currentIndex].riveIcon != null
+                                ? RiveAnimatedIcon(
+                                    key: ValueKey('nav_rive_sel_$currentIndex'),
+                                    riveIcon: NavItem.values[currentIndex].riveIcon!,
+                                    width: 28,
+                                    height: 28,
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                    loopAnimation: true,
+                                    onTap: () => onTap(currentIndex),
+                                  )
+                                : Icon(Icons.store_rounded, size: 28, color: Colors.white),
                           ),
                         ),
                       ),
                     ),
                   ),
-                  // كل العناصر: أيقونة + نص للمحدد فقط
+                  // كل العناصر: أيقونة + نص للمحدد فقط (كل عنصر بعرضه فقط لاستقبال الضغط بشكل صحيح)
                   ...List.generate(_itemCount, (index) {
                     final item = NavItem.values[index];
                     final selected = index == currentIndex;
                     final centerX = 16 + itemWidth * (3 - index) + itemWidth / 2;
+                    final itemLeft = centerX - itemWidth / 2;
 
                     return Positioned(
-                      left: 0,
-                      right: 0,
+                      left: itemLeft,
+                      width: itemWidth,
                       bottom: 0,
-                      child: SizedBox(
-                        height: _barHeight + _circleRadius + 8,
-                        child: Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            // منطقة الضغط
-                            Positioned(
-                              left: centerX - itemWidth / 2,
-                              width: itemWidth,
-                              top: 0,
-                              bottom: 0,
-                              child: Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  onTap: () => onTap(index),
-                                  borderRadius: BorderRadius.circular(24),
-                                  child: const SizedBox.expand(),
-                                ),
-                              ),
+                      height: _barHeight + _circleRadius + 8,
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => onTap(index),
+                          borderRadius: BorderRadius.circular(24),
+                          child: SizedBox(
+                            width: itemWidth,
+                            height: _barHeight + _circleRadius + 8,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                if (selected) ...[
+                                  const Spacer(),
+                                  Text(
+                                    item.label,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: _primary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                ] else ...[
+                                  const Spacer(),
+                                  SizedBox(
+                                    width: 28,
+                                    height: 28,
+                                    child: item.riveIcon != null
+                                        ? RiveAnimatedIcon(
+                                            key: ValueKey('nav_rive_$index'),
+                                            riveIcon: item.riveIcon!,
+                                            width: 28,
+                                            height: 28,
+                                            color: Colors.grey.shade500,
+                                            strokeWidth: 2,
+                                            loopAnimation: false,
+                                            onTap: () => onTap(index),
+                                          )
+                                        : Icon(Icons.store_rounded, size: 28, color: Colors.grey.shade500),
+                                  ),
+                                  const SizedBox(height: 14),
+                                ],
+                              ],
                             ),
-                            // محتوى العنصر
-                            Positioned(
-                              left: centerX - itemWidth / 2,
-                              width: itemWidth,
-                              bottom: 0,
-                              child: SizedBox(
-                                height: _barHeight + _circleRadius,
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.end,
-                                  children: [
-                                    if (selected) ...[
-                                      const Spacer(),
-                                      Text(
-                                        item.label,
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w700,
-                                          color: _primary,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 10),
-                                    ] else ...[
-                                      const Spacer(),
-                                      SizedBox(
-                                        width: 28,
-                                        height: 28,
-                                        child: RiveAnimatedIcon(
-                                          key: ValueKey('nav_rive_$index'),
-                                          riveIcon: item.riveIcon,
-                                          width: 28,
-                                          height: 28,
-                                          color: Colors.grey.shade500,
-                                          strokeWidth: 2,
-                                          loopAnimation: false,
-                                          onTap: () => onTap(index),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 14),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ),
                     );

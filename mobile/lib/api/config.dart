@@ -30,3 +30,6 @@ const String apiMessagesUnreadCount = '/api/messages/unread-count';
 
 /// الصفحة الرئيسية (دورات مميزة + أحدث الدورات)
 const String apiHome = '/api/home';
+
+/// تصنيفات المتجر (من إدارة المتجر)
+const String apiStoreCategories = '/api/store/categories';
