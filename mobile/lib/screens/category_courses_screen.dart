@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../api/auth_api.dart';
 import '../api/courses_api.dart';
 import '../api/config.dart';
 import '../api/home_api.dart';
@@ -13,11 +14,14 @@ class CategoryCoursesScreen extends StatefulWidget {
     required this.categoryId,
     required this.categoryName,
     this.subCategoryId,
+    this.onWishlistCountChanged,
   });
 
   final int categoryId;
   final String categoryName;
   final int? subCategoryId;
+  /// لتحديث عداد المفضلة في الهيدر عند الإضافة/الإزالة
+  final void Function(int delta)? onWishlistCountChanged;
 
   @override
   State<CategoryCoursesScreen> createState() => _CategoryCoursesScreenState();
@@ -43,15 +47,43 @@ class _CategoryCoursesScreenState extends State<CategoryCoursesScreen> with Sing
 
   Future<void> _toggleWishlist(int courseId) async {
     final isIn = _wishlistCourseIds.contains(courseId);
-    final ok = isIn
+    final result = isIn
         ? await WishlistApi.removeCourse(courseId)
         : await WishlistApi.addCourse(courseId);
-    if (ok && mounted) {
+    if (result.isSuccess && mounted) {
       setState(() {
         if (isIn) _wishlistCourseIds.remove(courseId);
         else _wishlistCourseIds.add(courseId);
       });
+      widget.onWishlistCountChanged?.call(isIn ? -1 : 1);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(isIn ? 'تمت الإزالة من المفضلة' : 'تم الإضافة في المفضلة'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } else if (mounted) {
+      final message = _wishlistErrorMessage(result);
+      if (message != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+        );
+      }
     }
+  }
+
+  static String? _wishlistErrorMessage(WishlistOpResult result) {
+    if (result.isUnauthorized) {
+      return AuthApi.token != null
+          ? 'انتهت الجلسة، يرجى تسجيل الدخول مرة أخرى'
+          : 'يجب تسجيل الدخول لإضافة الدورة إلى المفضلة';
+    }
+    if (result.isNotFound) return 'الدورة غير متوفرة';
+    if (result.isError) {
+      final code = result.statusCode;
+      return code != null ? 'حدث خطأ ($code)، حاول لاحقاً' : 'حدث خطأ، حاول لاحقاً';
+    }
+    return null;
   }
 
   @override
@@ -124,6 +156,7 @@ class _CategoryCoursesScreenState extends State<CategoryCoursesScreen> with Sing
                               initialIsInWishlist: _wishlistCourseIds.contains(course.id),
                               courseId: course.id,
                               onWishlistChanged: _load,
+                              onWishlistCountChanged: widget.onWishlistCountChanged,
                             ),
                           ),
                         );

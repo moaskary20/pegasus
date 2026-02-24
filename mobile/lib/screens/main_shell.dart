@@ -9,6 +9,7 @@ import 'widgets/app_drawer.dart';
 import 'wishlist_screen.dart';
 import 'cart_screen.dart';
 import 'notifications_screen.dart';
+import '../api/wishlist_api.dart';
 
 const Color _primary = Color(0xFF2c004d);
 
@@ -34,6 +35,7 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> with SingleTickerProviderStateMixin {
   int _currentIndex = 0;
+  int _wishlistCount = 0;
   final _pageController = PageController();
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   bool _drawerVisible = false;
@@ -51,6 +53,24 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
       parent: _drawerController,
       curve: Curves.easeOutCubic,
     );
+    _loadWishlistCount();
+  }
+
+  Future<void> _loadWishlistCount() async {
+    final res = await WishlistApi.getWishlist();
+    if (mounted) {
+      setState(() => _wishlistCount = res.courses.length + res.products.length);
+    }
+  }
+
+  void _openWishlist() {
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const WishlistScreen()))
+        .then((_) => _loadWishlistCount());
+  }
+
+  void _onWishlistCountChanged(int delta) {
+    setState(() => _wishlistCount = (_wishlistCount + delta).clamp(0, 999));
   }
 
   @override
@@ -95,9 +115,9 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
             children: [
               HomeTab(
                 onOpenDrawer: openDrawer,
-                onOpenFavorite: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const WishlistScreen()),
-                ),
+                wishlistCount: _wishlistCount,
+                onWishlistCountChanged: _onWishlistCountChanged,
+                onOpenFavorite: _openWishlist,
                 onOpenCart: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const CartScreen()),
                 ),
@@ -107,9 +127,9 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
               ),
               CoursesTab(
                 onOpenDrawer: openDrawer,
-                onOpenFavorite: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const WishlistScreen()),
-                ),
+                wishlistCount: _wishlistCount,
+                onWishlistCountChanged: _onWishlistCountChanged,
+                onOpenFavorite: _openWishlist,
                 onOpenCart: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const CartScreen()),
                 ),
@@ -119,9 +139,9 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
               ),
               StoreTab(
                 onOpenDrawer: openDrawer,
-                onOpenFavorite: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const WishlistScreen()),
-                ),
+                wishlistCount: _wishlistCount,
+                onWishlistCountChanged: _onWishlistCountChanged,
+                onOpenFavorite: _openWishlist,
                 onOpenCart: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const CartScreen()),
                 ),
@@ -131,9 +151,9 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
               ),
               AccountTab(
                 onOpenDrawer: openDrawer,
-                onOpenFavorite: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const WishlistScreen()),
-                ),
+                wishlistCount: _wishlistCount,
+                onWishlistCountChanged: _onWishlistCountChanged,
+                onOpenFavorite: _openWishlist,
                 onOpenCart: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const CartScreen()),
                 ),

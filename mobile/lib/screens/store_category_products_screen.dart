@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../api/auth_api.dart';
 import '../api/config.dart';
 import '../api/store_api.dart';
 import '../api/wishlist_api.dart';
@@ -32,15 +33,42 @@ class _StoreCategoryProductsScreenState extends State<StoreCategoryProductsScree
 
   Future<void> _toggleWishlist(int productId) async {
     final isIn = _wishlistProductIds.contains(productId);
-    final ok = isIn
+    final result = isIn
         ? await WishlistApi.removeProduct(productId)
         : await WishlistApi.addProduct(productId);
-    if (ok && mounted) {
+    if (result.isSuccess && mounted) {
       setState(() {
         if (isIn) _wishlistProductIds.remove(productId);
         else _wishlistProductIds.add(productId);
       });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(isIn ? 'تمت الإزالة من المفضلة' : 'تم الإضافة في المفضلة'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } else if (mounted) {
+      final message = _wishlistErrorMessage(result);
+      if (message != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+        );
+      }
     }
+  }
+
+  static String? _wishlistErrorMessage(WishlistOpResult result) {
+    if (result.isUnauthorized) {
+      return AuthApi.token != null
+          ? 'انتهت الجلسة، يرجى تسجيل الدخول مرة أخرى'
+          : 'يجب تسجيل الدخول لإضافة المنتج إلى المفضلة';
+    }
+    if (result.isNotFound) return 'المنتج غير متوفر';
+    if (result.isError) {
+      final code = result.statusCode;
+      return code != null ? 'حدث خطأ ($code)، حاول لاحقاً' : 'حدث خطأ، حاول لاحقاً';
+    }
+    return null;
   }
 
   @override

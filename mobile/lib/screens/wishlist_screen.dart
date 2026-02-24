@@ -45,16 +45,30 @@ class _WishlistScreenState extends State<WishlistScreen> {
   }
 
   Future<void> _removeCourse(int courseId) async {
-    final ok = await WishlistApi.removeCourse(courseId);
-    if (ok && mounted) {
+    final result = await WishlistApi.removeCourse(courseId);
+    if (result.isSuccess && mounted) {
       setState(() => _courses = _courses.where((c) => c.id != courseId).toList());
+    } else if (mounted) {
+      final message = result.isUnauthorized
+          ? 'انتهت الجلسة، يرجى تسجيل الدخول مرة أخرى'
+          : 'حدث خطأ، حاول لاحقاً';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+      );
     }
   }
 
   Future<void> _removeProduct(int productId) async {
-    final ok = await WishlistApi.removeProduct(productId);
-    if (ok && mounted) {
+    final result = await WishlistApi.removeProduct(productId);
+    if (result.isSuccess && mounted) {
       setState(() => _products = _products.where((p) => p.id != productId).toList());
+    } else if (mounted) {
+      final message = result.isUnauthorized
+          ? 'انتهت الجلسة، يرجى تسجيل الدخول مرة أخرى'
+          : 'حدث خطأ، حاول لاحقاً';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+      );
     }
   }
 

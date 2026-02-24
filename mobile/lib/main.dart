@@ -1,15 +1,38 @@
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'api/auth_api.dart';
 import 'screens/main_shell.dart';
 import 'screens/login_screen.dart';
 
 void main() {
-  runApp(const MyApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  if (kDebugMode) {
+    FlutterError.onError = (details) {
+      FlutterError.presentError(details);
+      debugPrint('FlutterError: ${details.exception}');
+    };
+  }
+  runZonedGuarded(() {
+    runApp(const MyApp());
+  }, (error, stack) {
+    if (kDebugMode) {
+      debugPrint('Async error: $error');
+      debugPrint('$stack');
+    }
+  });
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+
+  /// ثيم بسيط بدون تحميل خطوط من الشبكة لتفادي شاشة بيضاء على الويب
+  static ThemeData _buildTheme() {
+    return ThemeData(
+      colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2c004d)),
+      useMaterial3: true,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,20 +46,7 @@ class MyApp extends StatelessWidget {
           child: child ?? const SizedBox.shrink(),
         );
       },
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2c004d)),
-        useMaterial3: true,
-        fontFamily: 'Tajawal',
-        textTheme: GoogleFonts.tajawalTextTheme(ThemeData.light().textTheme),
-        primaryTextTheme: GoogleFonts.tajawalTextTheme(ThemeData.light().primaryTextTheme),
-        appBarTheme: AppBarTheme(
-          titleTextStyle: GoogleFonts.tajawal(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-      ),
+      theme: _buildTheme(),
       home: const SplashScreen(),
     );
   }
@@ -54,20 +64,35 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _navigate();
+    // تأجيل التنقّل حتى بعد رسم الإطار الأول لتفادي شاشة بيضاء على الويب
+    WidgetsBinding.instance.addPostFrameCallback((_) => _navigate());
   }
 
   Future<void> _navigate() async {
-    await AuthApi.loadStoredToken();
+    try {
+      await AuthApi.loadStoredToken();
+    } catch (e) {
+      if (kDebugMode) debugPrint('loadStoredToken error: $e');
+    }
     await Future.delayed(const Duration(seconds: 3));
     if (!mounted) return;
-    if (AuthApi.token != null) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => const MainShell(),
-        ),
-      );
-    } else {
+    try {
+      if (AuthApi.token != null) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => const MainShell(),
+          ),
+        );
+      } else {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (_) => const LoginScreen(),
+          ),
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) debugPrint('Navigate error: $e');
+      if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => const LoginScreen(),
@@ -82,12 +107,20 @@ class _SplashScreenState extends State<SplashScreen> {
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
-          color: Color(0xFF2c004d),
-        ),
+        color: const Color(0xFF2c004d),
         child: Image.asset(
           'assets/images/splash.png',
           fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => const Center(
+            child: Text(
+              'أكاديمية بيغاسوس',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
         ),
       ),
     );

@@ -6,9 +6,11 @@ import '../../app_theme.dart';
 
 /// تبويب الدورات: تصنيفات من إدارة الدورات التدريبية بتصميم احترافي
 class CoursesTab extends StatefulWidget {
-  const CoursesTab({super.key, this.onOpenDrawer, this.onOpenFavorite, this.onOpenCart, this.onOpenNotifications});
+  const CoursesTab({super.key, this.onOpenDrawer, this.wishlistCount = 0, this.onWishlistCountChanged, this.onOpenFavorite, this.onOpenCart, this.onOpenNotifications});
 
   final VoidCallback? onOpenDrawer;
+  final int wishlistCount;
+  final void Function(int delta)? onWishlistCountChanged;
   final VoidCallback? onOpenFavorite;
   final VoidCallback? onOpenCart;
   final VoidCallback? onOpenNotifications;
@@ -44,6 +46,7 @@ class _CoursesTabState extends State<CoursesTab> {
       appBar: AppHeader(
         title: 'الدورات',
         onMenu: widget.onOpenDrawer ?? () => Scaffold.of(context).openDrawer(),
+        favoriteCount: widget.wishlistCount,
         onFavorite: widget.onOpenFavorite,
         onCart: widget.onOpenCart,
         onBell: widget.onOpenNotifications,
@@ -81,12 +84,14 @@ class _CoursesTabState extends State<CoursesTab> {
                                 padding: const EdgeInsets.only(bottom: 16),
                                 child: _CourseCategoryCard(
                                   category: cat,
+                                  onWishlistCountChanged: widget.onWishlistCountChanged,
                                   onTap: () {
                                     Navigator.of(context).push(
                                       MaterialPageRoute<void>(
                                         builder: (_) => CategoryCoursesScreen(
                                           categoryId: cat.id,
                                           categoryName: cat.name,
+                                          onWishlistCountChanged: widget.onWishlistCountChanged,
                                         ),
                                       ),
                                     );
@@ -188,10 +193,15 @@ class _CoursesTabState extends State<CoursesTab> {
 }
 
 class _CourseCategoryCard extends StatelessWidget {
-  const _CourseCategoryCard({required this.category, required this.onTap});
+  const _CourseCategoryCard({
+    required this.category,
+    required this.onTap,
+    this.onWishlistCountChanged,
+  });
 
   final CourseCategoryItem category;
   final VoidCallback onTap;
+  final void Function(int delta)? onWishlistCountChanged;
 
   static const List<Color> _cardGradients = [
     Color(0xFF2c004d),
@@ -281,6 +291,7 @@ class _CourseCategoryCard extends StatelessWidget {
                                 categoryId: category.id,
                                 categoryName: child.name,
                                 subCategoryId: child.id,
+                                onWishlistCountChanged: onWishlistCountChanged,
                               ),
                             ),
                           );

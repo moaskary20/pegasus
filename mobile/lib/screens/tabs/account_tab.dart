@@ -7,9 +7,11 @@ const Color _primary = Color(0xFF2c004d);
 
 /// تبويب حسابي
 class AccountTab extends StatelessWidget {
-  const AccountTab({super.key, this.onOpenDrawer, this.onOpenFavorite, this.onOpenCart, this.onOpenNotifications});
+  const AccountTab({super.key, this.onOpenDrawer, this.wishlistCount = 0, this.onWishlistCountChanged, this.onOpenFavorite, this.onOpenCart, this.onOpenNotifications});
 
   final VoidCallback? onOpenDrawer;
+  final int wishlistCount;
+  final void Function(int delta)? onWishlistCountChanged;
   final VoidCallback? onOpenFavorite;
   final VoidCallback? onOpenCart;
   final VoidCallback? onOpenNotifications;
@@ -20,6 +22,7 @@ class AccountTab extends StatelessWidget {
       appBar: AppHeader(
         title: 'حسابي',
         onMenu: onOpenDrawer ?? () => Scaffold.of(context).openDrawer(),
+        favoriteCount: wishlistCount,
         onFavorite: onOpenFavorite,
         onCart: onOpenCart,
         onBell: onOpenNotifications,

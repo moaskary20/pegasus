@@ -37,45 +37,76 @@ class WishlistApi {
     }
   }
 
-  static Future<bool> addCourse(int courseId) async {
+  /// نتيجة عملية المفضلة مع رمز الاستجابة عند الفشل
+  static Future<WishlistOpResult> addCourse(int courseId) async {
     try {
       final uri = Uri.parse('$apiBaseUrl$apiWishlist/courses/$courseId');
       final res = await http.post(uri, headers: _headers);
-      return res.statusCode == 200;
+      if (res.statusCode == 200) return WishlistOpResult.success;
+      if (res.statusCode == 401) return WishlistOpResult.unauthorized;
+      if (res.statusCode == 404) return WishlistOpResult.notFound;
+      return WishlistOpResult.error(statusCode: res.statusCode);
     } catch (_) {
-      return false;
+      return WishlistOpResult.error();
     }
   }
 
-  static Future<bool> removeCourse(int courseId) async {
+  static Future<WishlistOpResult> removeCourse(int courseId) async {
     try {
       final uri = Uri.parse('$apiBaseUrl$apiWishlist/courses/$courseId');
       final res = await http.delete(uri, headers: _headers);
-      return res.statusCode == 200;
+      if (res.statusCode == 200) return WishlistOpResult.success;
+      if (res.statusCode == 401) return WishlistOpResult.unauthorized;
+      if (res.statusCode == 404) return WishlistOpResult.notFound;
+      return WishlistOpResult.error(statusCode: res.statusCode);
     } catch (_) {
-      return false;
+      return WishlistOpResult.error();
     }
   }
 
-  static Future<bool> addProduct(int productId) async {
+  static Future<WishlistOpResult> addProduct(int productId) async {
     try {
       final uri = Uri.parse('$apiBaseUrl$apiWishlist/products/$productId');
       final res = await http.post(uri, headers: _headers);
-      return res.statusCode == 200;
+      if (res.statusCode == 200) return WishlistOpResult.success;
+      if (res.statusCode == 401) return WishlistOpResult.unauthorized;
+      if (res.statusCode == 404) return WishlistOpResult.notFound;
+      return WishlistOpResult.error(statusCode: res.statusCode);
     } catch (_) {
-      return false;
+      return WishlistOpResult.error();
     }
   }
 
-  static Future<bool> removeProduct(int productId) async {
+  static Future<WishlistOpResult> removeProduct(int productId) async {
     try {
       final uri = Uri.parse('$apiBaseUrl$apiWishlist/products/$productId');
       final res = await http.delete(uri, headers: _headers);
-      return res.statusCode == 200;
+      if (res.statusCode == 200) return WishlistOpResult.success;
+      if (res.statusCode == 401) return WishlistOpResult.unauthorized;
+      if (res.statusCode == 404) return WishlistOpResult.notFound;
+      return WishlistOpResult.error(statusCode: res.statusCode);
     } catch (_) {
-      return false;
+      return WishlistOpResult.error();
     }
   }
+}
+
+/// نتيجة عملية المفضلة (مع رمز الاستجابة عند الفشل لتوضيح الخطأ)
+class WishlistOpResult {
+  const WishlistOpResult._(this._kind, [this.statusCode]);
+
+  final int _kind;
+  final int? statusCode;
+
+  static const WishlistOpResult success = WishlistOpResult._(0);
+  static const WishlistOpResult unauthorized = WishlistOpResult._(1);
+  static const WishlistOpResult notFound = WishlistOpResult._(2);
+  static WishlistOpResult error({int? statusCode}) => WishlistOpResult._(3, statusCode);
+
+  bool get isSuccess => _kind == 0;
+  bool get isUnauthorized => _kind == 1;
+  bool get isNotFound => _kind == 2;
+  bool get isError => _kind == 3;
 }
 
 class WishlistResponse {

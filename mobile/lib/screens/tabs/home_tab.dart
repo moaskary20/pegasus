@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/app_header.dart';
 import '../course_detail_screen.dart';
+import '../../api/auth_api.dart';
 import '../../api/home_api.dart';
 import '../../api/wishlist_api.dart';
 import '../../api/config.dart';
@@ -8,9 +9,11 @@ import '../../app_theme.dart';
 
 /// تبويب الرئيسية: دورات مميزة أفقياً + أحدث الدورات عمودياً (مطابق للتصميم المطلوب)
 class HomeTab extends StatefulWidget {
-  const HomeTab({super.key, this.onOpenDrawer, this.onOpenFavorite, this.onOpenCart, this.onOpenNotifications});
+  const HomeTab({super.key, this.onOpenDrawer, this.wishlistCount = 0, this.onWishlistCountChanged, this.onOpenFavorite, this.onOpenCart, this.onOpenNotifications});
 
   final VoidCallback? onOpenDrawer;
+  final int wishlistCount;
+  final void Function(int delta)? onWishlistCountChanged;
   final VoidCallback? onOpenFavorite;
   final VoidCallback? onOpenCart;
   final VoidCallback? onOpenNotifications;
@@ -54,12 +57,12 @@ class _HomeTabState extends State<HomeTab> {
     });
   }
 
-  Future<void> _toggleWishlist(int courseId) async {
+  Future<void> _toggleWishlist(BuildContext context, int courseId) async {
     final isIn = _wishlistIds.contains(courseId);
-    final ok = isIn
+    final result = isIn
         ? await WishlistApi.removeCourse(courseId)
         : await WishlistApi.addCourse(courseId);
-    if (ok && mounted) {
+    if (result.isSuccess && mounted) {
       setState(() {
         if (isIn) {
           _wishlistIds.remove(courseId);
@@ -67,7 +70,37 @@ class _HomeTabState extends State<HomeTab> {
           _wishlistIds.add(courseId);
         }
       });
+      widget.onWishlistCountChanged?.call(isIn ? -1 : 1);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(isIn ? 'تمت الإزالة من المفضلة' : 'تم الإضافة في المفضلة'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } else if (mounted) {
+      final message = _wishlistErrorMessage(result);
+      if (message != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+        );
+      }
     }
+  }
+
+  static String? _wishlistErrorMessage(WishlistOpResult result) {
+    if (result.isUnauthorized) {
+      return AuthApi.token != null
+          ? 'انتهت الجلسة، يرجى تسجيل الدخول مرة أخرى'
+          : 'يجب تسجيل الدخول لإضافة الدورة إلى المفضلة';
+    }
+    if (result.isNotFound) return 'الدورة غير متوفرة';
+    if (result.isError) {
+      final code = result.statusCode;
+      return code != null ? 'حدث خطأ ($code)، حاول لاحقاً' : 'حدث خطأ، حاول لاحقاً';
+    }
+    return null;
   }
 
   void _openCourseDetail(BuildContext context, CourseItem course) {
@@ -79,6 +112,7 @@ class _HomeTabState extends State<HomeTab> {
           initialIsInWishlist: _wishlistIds.contains(course.id),
           courseId: course.id,
           onWishlistChanged: () => _load(),
+          onWishlistCountChanged: widget.onWishlistCountChanged,
         ),
       ),
     );
@@ -91,6 +125,7 @@ class _HomeTabState extends State<HomeTab> {
       appBar: AppHeader(
         title: 'أكاديمية بيغاسوس',
         onMenu: widget.onOpenDrawer ?? () => Scaffold.of(context).openDrawer(),
+        favoriteCount: widget.wishlistCount,
         onFavorite: widget.onOpenFavorite,
         onCart: widget.onOpenCart,
         onBell: widget.onOpenNotifications,
@@ -343,7 +378,7 @@ class _HomeTabState extends State<HomeTab> {
                         index: i,
                         course: list[i],
                         isBookmarked: _wishlistIds.contains(list[i].id),
-                        onBookmark: () => _toggleWishlist(list[i].id),
+                        onBookmark: () => _toggleWishlist(context, list[i].id),
                         onTap: () => _openCourseDetail(context, list[i]),
                         cardWidth: null,
                       ),
@@ -358,7 +393,7 @@ class _HomeTabState extends State<HomeTab> {
                               index: i + 1,
                               course: list[i + 1],
                               isBookmarked: _wishlistIds.contains(list[i + 1].id),
-                              onBookmark: () => _toggleWishlist(list[i + 1].id),
+                              onBookmark: () => _toggleWishlist(context, list[i + 1].id),
                               onTap: () => _openCourseDetail(context, list[i + 1]),
                               cardWidth: null,
                             ),
@@ -407,7 +442,7 @@ class _HomeTabState extends State<HomeTab> {
                         index: i,
                         course: list[i],
                         isBookmarked: _wishlistIds.contains(list[i].id),
-                        onBookmark: () => _toggleWishlist(list[i].id),
+                        onBookmark: () => _toggleWishlist(context, list[i].id),
                         onTap: () => _openCourseDetail(context, list[i]),
                         cardWidth: null,
                       ),
@@ -422,7 +457,7 @@ class _HomeTabState extends State<HomeTab> {
                               index: i + 1,
                               course: list[i + 1],
                               isBookmarked: _wishlistIds.contains(list[i + 1].id),
-                              onBookmark: () => _toggleWishlist(list[i + 1].id),
+                              onBookmark: () => _toggleWishlist(context, list[i + 1].id),
                               onTap: () => _openCourseDetail(context, list[i + 1]),
                               cardWidth: null,
                             ),
@@ -503,7 +538,7 @@ class _HomeTabState extends State<HomeTab> {
                     index: sectionIndex * 10 + i,
                     course: course,
                     isBookmarked: _wishlistIds.contains(course.id),
-                    onBookmark: () => _toggleWishlist(course.id),
+                    onBookmark: () => _toggleWishlist(context, course.id),
                     onTap: () => _openCourseDetail(context, course),
                     cardWidth: 220,
                   ),
@@ -719,9 +754,9 @@ class _TopCourseCard extends StatelessWidget {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Icon(
-                              isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+                              isBookmarked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
                               size: 22,
-                              color: AppTheme.primary,
+                              color: isBookmarked ? Colors.red : AppTheme.primary,
                             ),
                           ),
                         ),
@@ -884,9 +919,9 @@ class _RecentCourseTile extends StatelessWidget {
                               GestureDetector(
                                 onTap: onBookmark,
                                 child: Icon(
-                                  isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+                                  isBookmarked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
                                   size: 22,
-                                  color: isBookmarked ? Colors.black87 : AppTheme.primary,
+                                  color: isBookmarked ? Colors.red : AppTheme.primary,
                                 ),
                               ),
                             ],

@@ -129,6 +129,20 @@ class AuthApi {
     }
   }
 
+  /// جلب بيانات المستخدم الحالي من الـ backend (للسايدبار والملف الشخصي)
+  static Future<Map<String, dynamic>?> getUser() async {
+    if (_token == null) return null;
+    try {
+      final uri = Uri.parse('$apiBaseUrl$apiAuthUser');
+      final res = await http.get(uri, headers: _headers);
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body.toString()) as Map<String, dynamic>?;
+        return data;
+      }
+    } catch (_) {}
+    return null;
+  }
+
   static Future<void> logout() async {
     try {
       if (_token != null) {

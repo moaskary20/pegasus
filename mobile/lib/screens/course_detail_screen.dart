@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../api/courses_api.dart';
 import '../api/config.dart';
+import '../api/auth_api.dart';
 import '../api/wishlist_api.dart';
 import '../api/cart_api.dart';
 import '../app_theme.dart';
@@ -16,6 +17,7 @@ class CourseDetailScreen extends StatefulWidget {
     this.initialIsInWishlist = false,
     this.courseId,
     this.onWishlistChanged,
+    this.onWishlistCountChanged,
   });
 
   final String courseSlug;
@@ -23,6 +25,8 @@ class CourseDetailScreen extends StatefulWidget {
   final bool initialIsInWishlist;
   final int? courseId;
   final VoidCallback? onWishlistChanged;
+  /// يُستدعى عند الإضافة (+1) أو الإزالة (-1) من المفضلة لتحديث عداد الهيدر
+  final void Function(int delta)? onWishlistCountChanged;
 
   @override
   State<CourseDetailScreen> createState() => _CourseDetailScreenState();
@@ -75,13 +79,42 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> with SingleTick
   Future<void> _toggleWishlist() async {
     final id = widget.courseId ?? _course?.id;
     if (id == null) return;
-    final ok = _isBookmarked
+    final wasInWishlist = _isBookmarked;
+    final result = wasInWishlist
         ? await WishlistApi.removeCourse(id)
         : await WishlistApi.addCourse(id);
-    if (ok && mounted) {
+    if (result.isSuccess && mounted) {
       setState(() => _isBookmarked = !_isBookmarked);
       widget.onWishlistChanged?.call();
+      widget.onWishlistCountChanged?.call(wasInWishlist ? -1 : 1);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(wasInWishlist ? 'تمت الإزالة من المفضلة' : 'تم الإضافة في المفضلة'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } else if (mounted) {
+      final message = _wishlistErrorMessage(result);
+      if (message != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
+        );
+      }
     }
+  }
+
+  static String? _wishlistErrorMessage(WishlistOpResult result) {
+    if (result.isUnauthorized) {
+      return AuthApi.token != null
+          ? 'انتهت الجلسة، يرجى تسجيل الدخول مرة أخرى'
+          : 'يجب تسجيل الدخول لإضافة الدورة إلى المفضلة';
+    }
+    if (result.isNotFound) return 'الدورة غير متوفرة';
+    if (result.isError) {
+      final code = result.statusCode;
+      return code != null ? 'حدث خطأ ($code)، حاول لاحقاً' : 'حدث خطأ، حاول لاحقاً';
+    }
+    return null;
   }
 
   Future<void> _openPreviewVideo() async {

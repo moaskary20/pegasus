@@ -14,14 +14,41 @@ import '../support_screen.dart';
 
 const Color _primary = Color(0xFF2c004d);
 
-/// محتوى السايدبار (قائمة + هيدر) لاستخدامه داخل Drawer أو داخل overlay 3D
-class AppDrawerContent extends StatelessWidget {
+/// محتوى السايدبار (قائمة + هيدر) — يجلب اسم المستخدم وصورته وإيميله من الـ backend
+class AppDrawerContent extends StatefulWidget {
   const AppDrawerContent({super.key, this.onClose});
 
   final VoidCallback? onClose;
 
   @override
+  State<AppDrawerContent> createState() => _AppDrawerContentState();
+}
+
+class _AppDrawerContentState extends State<AppDrawerContent> {
+  Map<String, dynamic>? _user;
+  bool _loadingUser = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    final user = await AuthApi.getUser();
+    if (mounted) {
+      setState(() {
+        _user = user;
+        _loadingUser = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final name = _user?['name'] as String?;
+    final email = _user?['email'] as String?;
+    final avatarUrl = _user?['avatar_url'] as String?;
     return Column(
       children: [
         Expanded(
@@ -29,8 +56,9 @@ class AppDrawerContent extends StatelessWidget {
             padding: EdgeInsets.zero,
             children: [
               _UserHeader(
-                userName: 'المستخدم',
-                userEmail: 'user@example.com',
+                userName: name ?? (_loadingUser ? '...' : 'المستخدم'),
+                userEmail: email ?? (_loadingUser ? '' : ''),
+                avatarUrl: avatarUrl,
                 onEditTap: () => _openEditProfile(context),
               ),
               const Divider(height: 1),
@@ -60,7 +88,7 @@ class AppDrawerContent extends StatelessWidget {
   }
 
   void _openEditProfile(BuildContext context) {
-    onClose?.call();
+    widget.onClose?.call();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -70,14 +98,14 @@ class AppDrawerContent extends StatelessWidget {
   }
 
   void _push(BuildContext context, Widget screen) {
-    onClose?.call();
+    widget.onClose?.call();
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => screen),
     );
   }
 
   Future<void> _logout(BuildContext context) async {
-    onClose?.call();
+    widget.onClose?.call();
     await AuthApi.logout();
     if (!context.mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
@@ -103,12 +131,23 @@ class _UserHeader extends StatelessWidget {
   const _UserHeader({
     required this.userName,
     required this.userEmail,
+    this.avatarUrl,
     required this.onEditTap,
   });
 
   final String userName;
   final String userEmail;
+  final String? avatarUrl;
   final VoidCallback onEditTap;
+
+  Widget _avatarPlaceholder() {
+    return Container(
+      width: 88,
+      height: 88,
+      color: _primary.withValues(alpha: 0.2),
+      child: Icon(Icons.person_rounded, size: 48, color: _primary),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -123,10 +162,16 @@ class _UserHeader extends StatelessWidget {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                CircleAvatar(
-                  radius: 44,
-                  backgroundColor: _primary.withValues(alpha: 0.2),
-                  child: Icon(Icons.person_rounded, size: 48, color: _primary),
+                ClipOval(
+                  child: avatarUrl != null && avatarUrl!.isNotEmpty
+                      ? Image.network(
+                          avatarUrl!,
+                          width: 88,
+                          height: 88,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => _avatarPlaceholder(),
+                        )
+                      : _avatarPlaceholder(),
                 ),
                 Positioned(
                   bottom: 0,
@@ -152,13 +197,15 @@ class _UserHeader extends StatelessWidget {
                   color: _primary,
                 ),
           ),
-          const SizedBox(height: 2),
-          Text(
-            userEmail,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Colors.grey.shade600,
-                ),
-          ),
+          if (userEmail.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              userEmail,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.grey.shade600,
+                  ),
+            ),
+          ],
         ],
       ),
     );

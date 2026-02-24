@@ -10,6 +10,7 @@ use App\Models\PlatformSetting;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class HomeController extends Controller
 {
@@ -19,6 +20,8 @@ class HomeController extends Controller
      */
     public function __invoke(Request $request): JsonResponse
     {
+        $this->resolveOptionalSanctumUser($request);
+
         $topCourses = $this->loadTopCourses();
         $recentCourses = $this->loadRecentCourses();
         $categoriesWithCourses = $this->loadCategoriesWithCourses();
@@ -116,6 +119,21 @@ class HomeController extends Controller
         } catch (\Throwable $e) {
             Log::warning('HomeController: loadCategoriesWithCourses failed', ['message' => $e->getMessage()]);
             return [];
+        }
+    }
+
+    /**
+     * عند إرسال Bearer token في الطلب نحدد المستخدم حتى يُرجَع wishlist_ids دون اشتراط middleware.
+     */
+    private function resolveOptionalSanctumUser(Request $request): void
+    {
+        $token = $request->bearerToken();
+        if (empty($token)) {
+            return;
+        }
+        $accessToken = PersonalAccessToken::findToken($token);
+        if ($accessToken) {
+            auth('sanctum')->setUser($accessToken->tokenable);
         }
     }
 
