@@ -34,5 +34,14 @@ const String apiHome = '/api/home';
 /// تصنيفات المتجر (من إدارة المتجر)
 const String apiStoreCategories = '/api/store/categories';
 
+/// قائمة منتجات المتجر (حسب التصنيف: category, sub)
+const String apiStoreProducts = '/api/store/products';
+
+/// تفاصيل منتج واحد
+const String apiStoreProductDetail = '/api/store/product';
+
 /// تصنيفات الدورات (من إدارة الدورات التدريبية)
 const String apiCoursesCategories = '/api/courses/categories';
+
+/// قائمة الدورات (حسب التصنيف: category, sub)
+const String apiCoursesList = '/api/courses';

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/app_header.dart';
+import '../category_courses_screen.dart';
 import '../../api/courses_api.dart';
 import '../../app_theme.dart';
 
@@ -75,7 +76,14 @@ class _CoursesTabState extends State<CoursesTab> {
                                 child: _CourseCategoryCard(
                                   category: cat,
                                   onTap: () {
-                                    // TODO: فتح شاشة دورات التصنيف
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute<void>(
+                                        builder: (_) => CategoryCoursesScreen(
+                                          categoryId: cat.id,
+                                          categoryName: cat.name,
+                                        ),
+                                      ),
+                                    );
                                   },
                                 ),
                               );
@@ -259,18 +267,32 @@ class _CourseCategoryCard extends StatelessWidget {
                     spacing: 8,
                     runSpacing: 8,
                     children: category.children.take(5).map((child) {
-                      return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: color.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          '${child.name} (${child.publishedCoursesCount})',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: color,
-                                fontWeight: FontWeight.w500,
+                      return InkWell(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => CategoryCoursesScreen(
+                                categoryId: category.id,
+                                categoryName: child.name,
+                                subCategoryId: child.id,
                               ),
+                            ),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(20),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            '${child.name} (${child.publishedCoursesCount})',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: color,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                          ),
                         ),
                       );
                     }).toList(),

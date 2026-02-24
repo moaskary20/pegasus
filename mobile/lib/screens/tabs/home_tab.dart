@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/app_header.dart';
+import '../course_detail_screen.dart';
 import '../../api/home_api.dart';
 import '../../api/config.dart';
 import '../../app_theme.dart';
@@ -58,6 +59,14 @@ class _HomeTabState extends State<HomeTab> {
       }
     });
     // TODO: استدعاء API إضافة/إزالة من المفضلة عند توفرها
+  }
+
+  void _openCourseDetail(BuildContext context, CourseItem course) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => CourseDetailScreen(courseSlug: course.slug, courseTitle: course.title),
+      ),
+    );
   }
 
   @override
@@ -231,7 +240,7 @@ class _HomeTabState extends State<HomeTab> {
                         course: list[i],
                         isBookmarked: _wishlistIds.contains(list[i].id),
                         onBookmark: () => _toggleWishlist(list[i].id),
-                        onTap: () {},
+                        onTap: () => _openCourseDetail(context, list[i]),
                         cardWidth: null,
                       ),
                     ),
@@ -246,7 +255,7 @@ class _HomeTabState extends State<HomeTab> {
                               course: list[i + 1],
                               isBookmarked: _wishlistIds.contains(list[i + 1].id),
                               onBookmark: () => _toggleWishlist(list[i + 1].id),
-                              onTap: () {},
+                              onTap: () => _openCourseDetail(context, list[i + 1]),
                               cardWidth: null,
                             ),
                           )
@@ -295,7 +304,7 @@ class _HomeTabState extends State<HomeTab> {
                         course: list[i],
                         isBookmarked: _wishlistIds.contains(list[i].id),
                         onBookmark: () => _toggleWishlist(list[i].id),
-                        onTap: () {},
+                        onTap: () => _openCourseDetail(context, list[i]),
                         cardWidth: null,
                       ),
                     ),
@@ -310,7 +319,7 @@ class _HomeTabState extends State<HomeTab> {
                               course: list[i + 1],
                               isBookmarked: _wishlistIds.contains(list[i + 1].id),
                               onBookmark: () => _toggleWishlist(list[i + 1].id),
-                              onTap: () {},
+                              onTap: () => _openCourseDetail(context, list[i + 1]),
                               cardWidth: null,
                             ),
                           )
@@ -391,7 +400,7 @@ class _HomeTabState extends State<HomeTab> {
                     course: course,
                     isBookmarked: _wishlistIds.contains(course.id),
                     onBookmark: () => _toggleWishlist(course.id),
-                    onTap: () {},
+                    onTap: () => _openCourseDetail(context, course),
                     cardWidth: 220,
                   ),
                 );

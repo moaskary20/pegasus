@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/app_header.dart';
+import '../store_category_products_screen.dart';
 import '../../api/store_api.dart';
 import '../../app_theme.dart';
 
@@ -89,7 +90,14 @@ class _StoreTabState extends State<StoreTab> {
                               return _StoreCategoryCard(
                                 category: cat,
                                 onTap: () {
-                                  // TODO: فتح شاشة منتجات التصنيف عند توفرها
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute<void>(
+                                      builder: (_) => StoreCategoryProductsScreen(
+                                        categoryId: cat.id,
+                                        categoryName: cat.name,
+                                      ),
+                                    ),
+                                  );
                                 },
                               );
                             },

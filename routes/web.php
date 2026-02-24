@@ -278,9 +278,25 @@ Route::get('/api/store/categories', [\App\Http\Controllers\Api\StoreController::
     ->middleware(['throttle:60,1'])
     ->name('api.store.categories');
 
+Route::get('/api/store/products', [\App\Http\Controllers\Api\StoreController::class, 'products'])
+    ->middleware(['throttle:60,1'])
+    ->name('api.store.products');
+
+Route::get('/api/store/product/{slug}', [\App\Http\Controllers\Api\StoreController::class, 'show'])
+    ->middleware(['throttle:60,1'])
+    ->name('api.store.product.show');
+
 Route::get('/api/courses/categories', [\App\Http\Controllers\Api\CoursesController::class, 'categories'])
     ->middleware(['throttle:60,1'])
     ->name('api.courses.categories');
+
+Route::get('/api/courses', [\App\Http\Controllers\Api\CoursesController::class, 'index'])
+    ->middleware(['throttle:60,1'])
+    ->name('api.courses.index');
+
+Route::get('/api/courses/{slug}', [\App\Http\Controllers\Api\CoursesController::class, 'show'])
+    ->middleware(['throttle:60,1'])
+    ->name('api.courses.show');
 
 Route::get('/messages', [\App\Http\Controllers\Site\MessagesController::class, 'index'])->name('site.messages');
 Route::get('/messages/new', [\App\Http\Controllers\Site\MessagesController::class, 'newConversation'])->name('site.messages.new');
