@@ -278,6 +278,10 @@ Route::get('/api/store/categories', [\App\Http\Controllers\Api\StoreController::
     ->middleware(['throttle:60,1'])
     ->name('api.store.categories');
 
+Route::get('/api/courses/categories', [\App\Http\Controllers\Api\CoursesController::class, 'categories'])
+    ->middleware(['throttle:60,1'])
+    ->name('api.courses.categories');
+
 Route::get('/messages', [\App\Http\Controllers\Site\MessagesController::class, 'index'])->name('site.messages');
 Route::get('/messages/new', [\App\Http\Controllers\Site\MessagesController::class, 'newConversation'])->name('site.messages.new');
 Route::post('/messages/start', [\App\Http\Controllers\Site\MessagesController::class, 'startConversation'])->name('site.messages.start');

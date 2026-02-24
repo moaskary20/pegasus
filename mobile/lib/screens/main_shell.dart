@@ -2,7 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:rive_animated_icon/rive_animated_icon.dart';
 import 'tabs/home_tab.dart';
-import 'tabs/my_courses_tab.dart';
+import 'tabs/courses_tab.dart';
 import 'tabs/store_tab.dart';
 import 'tabs/account_tab.dart';
 import 'widgets/app_drawer.dart';
@@ -11,7 +11,7 @@ const Color _primary = Color(0xFF2c004d);
 
 enum NavItem {
   home(0, 'الرئيسية', RiveIcon.home),
-  courses(1, 'دوراتى', RiveIcon.graduate),
+  courses(1, 'الدورات', RiveIcon.graduate),
   store(2, 'الاستور', null),
   account(3, 'حسابي', RiveIcon.profile);
 
@@ -91,7 +91,7 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
             physics: const NeverScrollableScrollPhysics(),
             children: [
               HomeTab(onOpenDrawer: openDrawer),
-              MyCoursesTab(onOpenDrawer: openDrawer),
+              CoursesTab(onOpenDrawer: openDrawer),
               StoreTab(onOpenDrawer: openDrawer),
               AccountTab(onOpenDrawer: openDrawer),
             ],

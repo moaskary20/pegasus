@@ -33,3 +33,6 @@ const String apiHome = '/api/home';
 
 /// تصنيفات المتجر (من إدارة المتجر)
 const String apiStoreCategories = '/api/store/categories';
+
+/// تصنيفات الدورات (من إدارة الدورات التدريبية)
+const String apiCoursesCategories = '/api/courses/categories';
