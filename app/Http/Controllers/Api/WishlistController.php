@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\Wishlist;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class WishlistController extends Controller
 {
@@ -35,7 +36,6 @@ class WishlistController extends Controller
 
         $products = Product::query()
             ->active()
-            ->inStock()
             ->whereIn('id', $productIds)
             ->with('category:id,name')
             ->get()
@@ -59,12 +59,17 @@ class WishlistController extends Controller
         if (!$user) {
             return response()->json(['message' => 'Unauthenticated'], 401);
         }
-        $course = Course::where('id', $id)->where('is_published', true)->first();
-        if (!$course) {
-            return response()->json(['message' => 'Course not found'], 404);
+        try {
+            $course = Course::where('id', $id)->where('is_published', true)->first();
+            if (!$course) {
+                return response()->json(['message' => 'Course not found'], 404);
+            }
+            CourseWishlist::firstOrCreate(['user_id' => $user->id, 'course_id' => $course->id]);
+            return response()->json(['success' => true]);
+        } catch (\Throwable $e) {
+            Log::error('WishlistController::addCourse', ['id' => $id, 'error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return response()->json(['message' => 'Server error', 'error' => $e->getMessage()], 500);
         }
-        CourseWishlist::firstOrCreate(['user_id' => $user->id, 'course_id' => $course->id]);
-        return response()->json(['success' => true]);
     }
 
     public function removeCourse(Request $request, int $id): JsonResponse
@@ -83,12 +88,17 @@ class WishlistController extends Controller
         if (!$user) {
             return response()->json(['message' => 'Unauthenticated'], 401);
         }
-        $product = Product::where('id', $id)->where('is_active', true)->first();
-        if (!$product) {
-            return response()->json(['message' => 'Product not found'], 404);
+        try {
+            $product = Product::where('id', $id)->where('is_active', true)->first();
+            if (!$product) {
+                return response()->json(['message' => 'Product not found'], 404);
+            }
+            Wishlist::firstOrCreate(['user_id' => $user->id, 'product_id' => $product->id]);
+            return response()->json(['success' => true]);
+        } catch (\Throwable $e) {
+            Log::error('WishlistController::addProduct', ['id' => $id, 'error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return response()->json(['message' => 'Server error', 'error' => $e->getMessage()], 500);
         }
-        Wishlist::firstOrCreate(['user_id' => $user->id, 'product_id' => $product->id]);
-        return response()->json(['success' => true]);
     }
 
     public function removeProduct(Request $request, int $id): JsonResponse

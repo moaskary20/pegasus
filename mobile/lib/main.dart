@@ -6,14 +6,14 @@ import 'screens/main_shell.dart';
 import 'screens/login_screen.dart';
 
 void main() {
-  WidgetsFlutterBinding.ensureInitialized();
-  if (kDebugMode) {
-    FlutterError.onError = (details) {
-      FlutterError.presentError(details);
-      debugPrint('FlutterError: ${details.exception}');
-    };
-  }
   runZonedGuarded(() {
+    WidgetsFlutterBinding.ensureInitialized();
+    if (kDebugMode) {
+      FlutterError.onError = (details) {
+        FlutterError.presentError(details);
+        debugPrint('FlutterError: ${details.exception}');
+      };
+    }
     runApp(const MyApp());
   }, (error, stack) {
     if (kDebugMode) {
