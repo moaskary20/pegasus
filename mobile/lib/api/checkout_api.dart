@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'config.dart';
 import 'auth_api.dart';
-import '../utils/error_messages.dart';
 
 class CheckoutApi {
   CheckoutApi._();
@@ -78,8 +77,8 @@ class CheckoutApi {
         coursesSubtotal: (data['courses_subtotal'] as num?)?.toDouble(),
         productsSubtotal: (data['products_subtotal'] as num?)?.toDouble(),
       );
-    } catch (e) {
-      return CouponValidationResult(valid: false, message: ErrorMessages.from(e), discount: 0, total: 0);
+    } catch (_) {
+      return CouponValidationResult(valid: false, message: 'تحقق من الاتصال', discount: 0, total: 0);
     }
   }
 
@@ -136,7 +135,7 @@ class CheckoutApi {
       }
       return CheckoutProcessResult(success: false, message: errMsg ?? 'حدث خطأ');
     } catch (e) {
-      return CheckoutProcessResult(success: false, message: ErrorMessages.from(e));
+      return CheckoutProcessResult(success: false, message: 'تحقق من الاتصال وحاول مرة أخرى');
     }
   }
 }

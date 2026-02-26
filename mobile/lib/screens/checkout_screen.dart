@@ -6,7 +6,6 @@ import '../api/cart_api.dart';
 import '../api/checkout_api.dart';
 import '../api/config.dart';
 import '../app_theme.dart';
-import 'feature_scaffold.dart';
 import 'main_shell.dart';
 
 /// بيانات السلة المرسلة من شاشة السلة كقيمة ابتدائية
@@ -217,8 +216,17 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return FeatureScaffold(
-      title: 'الدفع',
+    return Scaffold(
+      backgroundColor: AppTheme.surface,
+      appBar: AppBar(
+        backgroundColor: AppTheme.primary,
+        foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () => Navigator.maybePop(context),
+        ),
+        title: const Text('الدفع', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+      ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
           : _preview == null || _preview!.needsAuth
@@ -227,6 +235,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   ? _buildEmptyState()
                   : RefreshIndicator(
                       onRefresh: _load,
+                      color: AppTheme.primary,
                       child: SingleChildScrollView(
                         physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
                         padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
