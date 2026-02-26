@@ -84,15 +84,20 @@ class _LessonPlayerScreenState extends State<LessonPlayerScreen> {
   }
 
   void _initPlayer(String url) {
+    final lesson = _lesson!;
+    final initialPosition = lesson.lastPositionSeconds;
+
     final videoId = YoutubePlayer.convertUrlToId(url);
     if (videoId != null) {
       _isYoutube = true;
       _youtubeController = YoutubePlayerController(
         initialVideoId: videoId,
-        flags: const YoutubePlayerFlags(
+        flags: YoutubePlayerFlags(
           autoPlay: true,
           mute: false,
           controlsVisibleAtStart: true,
+          enableCaption: false,
+          startAt: initialPosition,
         ),
       );
     } else {
@@ -100,8 +105,13 @@ class _LessonPlayerScreenState extends State<LessonPlayerScreen> {
       final fullUrl = _fullUrl(url);
       _videoController = VideoPlayerController.networkUrl(Uri.parse(fullUrl))
         ..initialize().then((_) {
-          if (mounted) setState(() {});
-          _videoController!.play();
+          if (mounted && _videoController != null) {
+            if (initialPosition > 0) {
+              _videoController!.seekTo(Duration(seconds: initialPosition));
+            }
+            _videoController!.play();
+            setState(() {});
+          }
         }).catchError((e) {
           if (mounted) setState(() => _error = ErrorMessages.from(e, fallback: 'تعذر تشغيل الفيديو'));
         });
@@ -502,10 +512,37 @@ class _LessonPlayerScreenState extends State<LessonPlayerScreen> {
       if (!_videoController!.value.isInitialized) {
         return const CircularProgressIndicator(color: Colors.white);
       }
-      return AspectRatio(
+      Widget videoWidget = AspectRatio(
         aspectRatio: _videoController!.value.aspectRatio,
         child: VideoPlayer(_videoController!),
       );
+      if (lesson.enableVideoWatermark && lesson.watermarkText != null && lesson.watermarkText!.isNotEmpty) {
+        videoWidget = Stack(
+          fit: StackFit.expand,
+          children: [
+            videoWidget,
+            IgnorePointer(
+              child: Center(
+                child: Opacity(
+                  opacity: 0.4,
+                  child: Text(
+                    lesson.watermarkText!,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      shadows: [
+                        Shadow(color: Colors.black, blurRadius: 4),
+                        Shadow(color: Colors.black, blurRadius: 8),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      }
+      return videoWidget;
     }
 
     return Column(

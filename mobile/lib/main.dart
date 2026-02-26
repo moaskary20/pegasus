@@ -4,15 +4,23 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:video_player/video_player.dart';
 import 'api/auth_api.dart';
+import 'api/app_settings_api.dart';
 import 'screens/main_shell.dart';
 import 'screens/login_screen.dart';
 import 'utils/locale_helper.dart';
 import 'app_locale.dart';
 import 'services/local_notifications_service.dart';
+import 'services/secure_screen_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await LocalNotificationsService.init();
+  try {
+    final settings = await AppSettingsApi.getSettings();
+    if (settings != null && kIsWeb == false) {
+      await SecureScreenService.setSecureFlag(settings.preventScreenCapture);
+    }
+  } catch (_) {}
   if (kDebugMode) {
     FlutterError.onError = (details) {
       FlutterError.presentError(details);

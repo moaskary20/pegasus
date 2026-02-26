@@ -56,6 +56,11 @@ class LessonDetailItem {
     this.contentType,
     this.files = const [],
     this.zoomMeeting,
+    this.lastPositionSeconds = 0,
+    this.requireLessonCompletion = 80,
+    this.enablePlaybackSpeed = true,
+    this.enableVideoWatermark = false,
+    this.watermarkText,
   });
 
   final int id;
@@ -71,6 +76,11 @@ class LessonDetailItem {
   final String? contentType;
   final List<LessonFileItem> files;
   final LessonZoomMeeting? zoomMeeting;
+  final int lastPositionSeconds;
+  final int requireLessonCompletion;
+  final bool enablePlaybackSpeed;
+  final bool enableVideoWatermark;
+  final String? watermarkText;
 
   factory LessonDetailItem.fromJson(Map<String, dynamic> json) {
     PrevNextLesson? prev;
@@ -103,6 +113,11 @@ class LessonDetailItem {
       contentType: json['content_type']?.toString(),
       files: files,
       zoomMeeting: zoom,
+      lastPositionSeconds: (json['last_position_seconds'] as num?)?.toInt() ?? 0,
+      requireLessonCompletion: (json['require_lesson_completion'] as num?)?.toInt() ?? 80,
+      enablePlaybackSpeed: (json['enable_playback_speed'] as bool?) ?? true,
+      enableVideoWatermark: (json['enable_video_watermark'] as bool?) ?? false,
+      watermarkText: json['watermark_text']?.toString(),
     );
   }
 }

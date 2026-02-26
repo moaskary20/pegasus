@@ -121,6 +121,9 @@ const String apiRewardsRedeem = '/api/rewards';
 /// إعدادات التنبيهات (يتطلب مصادقة)
 const String apiReminderSettings = '/api/reminder-settings';
 
+/// إعدادات التطبيق (منع الشاشة، علامة مائية، إلخ)
+const String apiAppSettings = '/api/app-settings';
+
 /// الملف الشخصي للمدرب
 const String apiInstructors = '/api/instructors';
 /// الإدارة المالية للمدرس (يتطلب مصادقة + دور مدرس)

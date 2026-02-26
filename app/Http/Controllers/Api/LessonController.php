@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\Lesson;
+use App\Models\PlatformSetting;
 use App\Models\VideoProgress;
 use App\Services\LessonAccessService;
 use App\Services\PointsService;
@@ -52,6 +53,22 @@ class LessonController extends Controller
 
         if (!$canAccess) {
             return response()->json(['message' => 'Access denied'], 403);
+        }
+
+        if ($user && $isEnrolled) {
+            $progress = VideoProgress::firstOrCreate(
+                ['user_id' => $user->id, 'lesson_id' => $lesson->id],
+                ['last_position_seconds' => 0, 'completed' => false, 'watch_time_minutes' => 0, 'view_count' => 1]
+            );
+            if (!$progress->wasRecentlyCreated) {
+                $progress->increment('view_count');
+            }
+            $maxViews = (int) PlatformSetting::get('max_views_per_lesson', 10);
+            if ($maxViews > 0 && $progress->fresh()->view_count > $maxViews) {
+                return response()->json([
+                    'message' => 'تجاوزت الحد الأقصى لمشاهدات هذا الدرس (' . $maxViews . '). تواصل مع الدعم إذا احتجت مساعدة.',
+                ], 403);
+            }
         }
 
         $course->load([
@@ -116,6 +133,24 @@ class LessonController extends Controller
             ];
         }
 
+        $progress = $user && $isEnrolled
+            ? VideoProgress::where('user_id', $user->id)->where('lesson_id', $lesson->id)->first()
+            : null;
+        $lastPosition = $progress ? (int) $progress->last_position_seconds : 0;
+
+        $requireCompletion = (int) PlatformSetting::get('require_lesson_completion', 80);
+        $enableResume = (bool) PlatformSetting::get('enable_video_resume', true);
+        $enablePlaybackSpeed = (bool) PlatformSetting::get('enable_playback_speed', true);
+        $enableWatermark = (bool) PlatformSetting::get('enable_video_watermark', false);
+        $watermarkText = (string) PlatformSetting::get('watermark_text', '{user_email}');
+        if ($user && $enableWatermark) {
+            $watermarkText = str_replace(
+                ['{user_email}', '{user_name}', '{user_id}'],
+                [$user->email ?? '', $user->name ?? '', (string) $user->id],
+                $watermarkText
+            );
+        }
+
         $data = [
             'id' => $lesson->id,
             'title' => $lesson->title ?? '',
@@ -130,6 +165,11 @@ class LessonController extends Controller
             'content_type' => $contentType ?: null,
             'files' => $files,
             'zoom_meeting' => $zoomMeeting,
+            'last_position_seconds' => $enableResume ? $lastPosition : 0,
+            'require_lesson_completion' => $requireCompletion,
+            'enable_playback_speed' => $enablePlaybackSpeed,
+            'enable_video_watermark' => $enableWatermark,
+            'watermark_text' => $enableWatermark ? $watermarkText : null,
         ];
 
         return response()->json($data);
@@ -170,13 +210,15 @@ class LessonController extends Controller
         $position = (int) ($request->input('position') ?? $request->json('position') ?? 0);
         $duration = (int) ($request->input('duration') ?? $request->json('duration') ?? 0);
 
+        $requireCompletion = (int) PlatformSetting::get('require_lesson_completion', 80);
         $progress = VideoProgress::firstOrCreate(
             ['user_id' => $user->id, 'lesson_id' => $lesson->id],
             ['last_position_seconds' => 0, 'completed' => false, 'watch_time_minutes' => 0]
         );
 
         $wasCompleted = (bool) $progress->completed;
-        $isCompleted = $duration > 0 && $position >= (int) ($duration * 0.9);
+        $threshold = $duration > 0 ? (int) ($duration * $requireCompletion / 100) : 0;
+        $isCompleted = $threshold > 0 && $position >= $threshold;
 
         $progress->update([
             'last_position_seconds' => $position,

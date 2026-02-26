@@ -519,6 +519,17 @@
                     
                     <div class="toggle-group">
                         <div class="toggle-info">
+                            <span class="toggle-label">منع تصوير الشاشة</span>
+                            <span class="toggle-hint">منع التقاط لقطات الشاشة وتسجيل الشاشة في التطبيق</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" wire:model="settings.prevent_screen_capture">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="toggle-group">
+                        <div class="toggle-info">
                             <span class="toggle-label">منع تحميل الفيديوهات</span>
                             <span class="toggle-hint">إخفاء زر التحميل وحماية الروابط</span>
                         </div>

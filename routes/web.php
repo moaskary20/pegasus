@@ -276,6 +276,10 @@ Route::get('/api/home', [\App\Http\Controllers\Api\HomeController::class, '__inv
     ->middleware(['throttle:60,1'])
     ->name('api.home');
 
+Route::get('/api/app-settings', [\App\Http\Controllers\Api\AppSettingsController::class, 'index'])
+    ->middleware(['throttle:60,1'])
+    ->name('api.app-settings');
+
 Route::get('/api/store/categories', [\App\Http\Controllers\Api\StoreController::class, 'categories'])
     ->middleware(['throttle:60,1'])
     ->name('api.store.categories');

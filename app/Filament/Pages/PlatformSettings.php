@@ -93,8 +93,8 @@ class PlatformSettings extends Page
         $keys = [
             'max_devices_per_account', 'max_views_per_lesson', 'enforce_lesson_order',
             'require_lesson_completion', 'enable_video_watermark', 'watermark_text',
-            'prevent_video_download', 'enable_playback_speed', 'default_video_quality',
-            'enable_video_resume'
+            'prevent_video_download', 'prevent_screen_capture', 'enable_playback_speed',
+            'default_video_quality', 'enable_video_resume'
         ];
         
         $this->saveSettingsGroup($keys, 'lessons');

@@ -16,6 +16,7 @@ class VideoProgress extends Model
         'completed',
         'watch_time_minutes',
         'last_watched_at',
+        'view_count',
     ];
 
     protected function casts(): array

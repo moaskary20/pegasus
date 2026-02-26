@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Lesson;
+use App\Models\PlatformSetting;
 use App\Models\User;
 use App\Models\VideoProgress;
 
@@ -22,9 +23,9 @@ class LessonAccessService
         if (!$enrollment) {
             return false;
         }
-        
-        // If lesson allows unlocking without completion, user can access it
-        if ($lesson->can_unlock_without_completion) {
+
+        $enforceOrder = (bool) PlatformSetting::get('enforce_lesson_order', true);
+        if (!$enforceOrder && $lesson->can_unlock_without_completion) {
             return true;
         }
         

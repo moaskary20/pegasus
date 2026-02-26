@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\PlatformSetting;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 
@@ -22,19 +24,55 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
         ]);
 
+        $email = strtolower(trim($validated['email']));
+        $lockoutKey = 'login_lockout:' . md5($email);
+        $attemptsKey = 'login_attempts:' . md5($email);
+
+        if (Cache::has($lockoutKey)) {
+            $mins = (int) PlatformSetting::get('lockout_duration_minutes', 30);
+            return response()->json([
+                'message' => "تم قفل الحساب مؤقتاً بعد عدد كبير من المحاولات الفاشلة. حاول بعد {$mins} دقيقة.",
+                'errors' => ['email' => ['الحساب مقفل مؤقتاً.']],
+            ], 429);
+        }
+
         if (! Auth::attempt([
             'email' => $validated['email'],
             'password' => $validated['password'],
         ])) {
+            $maxAttempts = (int) PlatformSetting::get('max_failed_login_attempts', 5);
+            $attempts = (int) Cache::get($attemptsKey, 0) + 1;
+            Cache::put($attemptsKey, $attempts, now()->addMinutes(30));
+
+            if ($attempts >= $maxAttempts) {
+                $lockoutMins = (int) PlatformSetting::get('lockout_duration_minutes', 30);
+                Cache::put($lockoutKey, true, now()->addMinutes($lockoutMins));
+                Cache::forget($attemptsKey);
+                return response()->json([
+                    'message' => "تم قفل الحساب مؤقتاً بعد {$maxAttempts} محاولات فاشلة. حاول بعد {$lockoutMins} دقيقة.",
+                    'errors' => ['email' => ['تم قفل الحساب مؤقتاً.']],
+                ], 429);
+            }
+
             return response()->json([
                 'message' => 'بيانات الدخول غير صحيحة.',
                 'errors' => ['email' => ['بيانات الدخول غير صحيحة.']],
             ], 422);
         }
 
+        Cache::forget($attemptsKey);
+        Cache::forget($lockoutKey);
+
         $user = Auth::user();
-        $user->tokens()->where('name', 'mobile')->delete();
+        $maxDevices = (int) PlatformSetting::get('max_devices_per_account', 3);
         $token = $user->createToken('mobile')->plainTextToken;
+        $tokens = $user->tokens()->where('name', 'mobile')->orderBy('created_at')->get();
+        if ($tokens->count() > $maxDevices) {
+            $toDelete = $tokens->take($tokens->count() - $maxDevices);
+            foreach ($toDelete as $t) {
+                $t->delete();
+            }
+        }
 
         return response()->json([
             'message' => 'تم تسجيل الدخول بنجاح',
