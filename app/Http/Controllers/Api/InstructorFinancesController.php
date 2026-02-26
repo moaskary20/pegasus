@@ -20,8 +20,8 @@ class InstructorFinancesController extends Controller
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
-        if (! $user || ! $user->hasRole('instructor')) {
-            return response()->json(['message' => 'غير مصرح'], 403);
+        if (! $user || (! $user->hasRole('instructor') && ! $user->hasRole('admin'))) {
+            return response()->json(['message' => 'غير مصرح — يجب أن تكون مدرباً أو مسؤولاً'], 403);
         }
 
         $userId = $user->id;

@@ -13,6 +13,7 @@ class InstructorFinancesApi {
   }
 
   /// جلب بيانات الإدارة المالية للمدرس
+  /// يرجع null عند الفشل، مع [errorMessage] اختياري من الـ API
   static Future<InstructorFinancesResponse?> getFinances() async {
     try {
       await AuthApi.loadStoredToken();
@@ -25,6 +26,23 @@ class InstructorFinancesApi {
       return null;
     } catch (_) {
       return null;
+    }
+  }
+
+  /// نفس getFinances لكن يرجع رسالة الخطأ من الـ API عند الفشل
+  static Future<({InstructorFinancesResponse? data, String? errorMessage})> getFinancesWithError() async {
+    try {
+      await AuthApi.loadStoredToken();
+      final uri = Uri.parse('$apiBaseUrl$apiInstructorFinances');
+      final res = await http.get(uri, headers: _headers);
+      final data = jsonDecode(res.body.toString()) as Map<String, dynamic>? ?? {};
+      if (res.statusCode == 200) {
+        return (data: InstructorFinancesResponse.fromJson(data), errorMessage: null);
+      }
+      final msg = (data['message'] ?? 'تعذر تحميل البيانات').toString();
+      return (data: null, errorMessage: msg);
+    } catch (_) {
+      return (data: null, errorMessage: 'خطأ في الاتصال');
     }
   }
 }

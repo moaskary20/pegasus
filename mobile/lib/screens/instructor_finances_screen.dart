@@ -32,26 +32,26 @@ class _InstructorFinancesScreenState extends State<InstructorFinancesScreen> {
       _needsAuth = false;
     });
     await AuthApi.loadStoredToken();
-    final res = await InstructorFinancesApi.getFinances();
+    final result = await InstructorFinancesApi.getFinancesWithError();
     if (!mounted) return;
-    if (res == null) {
-      if (AuthApi.token == null) {
-        setState(() {
-          _loading = false;
-          _needsAuth = true;
-        });
-      } else {
-        setState(() {
-          _loading = false;
-          _error = 'تعذر تحميل البيانات';
-        });
-      }
+    if (result.data != null) {
+      setState(() {
+        _data = result.data;
+        _loading = false;
+      });
       return;
     }
-    setState(() {
-      _data = res;
-      _loading = false;
-    });
+    if (AuthApi.token == null) {
+      setState(() {
+        _loading = false;
+        _needsAuth = true;
+      });
+    } else {
+      setState(() {
+        _loading = false;
+        _error = result.errorMessage ?? 'تعذر تحميل البيانات';
+      });
+    }
   }
 
   @override

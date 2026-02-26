@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../app_theme.dart';
 import '../api/auth_api.dart';
+import '../app_locale.dart';
 import 'feature_scaffold.dart';
 import 'profile_edit_screen.dart';
 import 'password_change_screen.dart';
@@ -126,14 +127,116 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
                 MaterialPageRoute(builder: (_) => const ReminderSettingsScreen()),
               ),
             ),
-            _AnimatedSettingTile(
-              index: 4,
-              icon: Icons.language_rounded,
-              title: 'اللغة',
-              subtitle: 'العربية',
-              onTap: () {},
-            ),
+            _LanguageSettingTile(index: 4),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LanguageSettingTile extends StatelessWidget {
+  const _LanguageSettingTile({required this.index});
+
+  final int index;
+
+  void _showLanguageDialog(BuildContext context) {
+    final scope = AppLocaleScope.of(context);
+    final currentCode = scope.locale.languageCode;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('اختر اللغة'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Icon(Icons.check_circle, color: currentCode == 'ar' ? AppTheme.primary : Colors.grey),
+              title: const Text('العربية'),
+              onTap: () {
+                scope.setLocale(const Locale('ar'));
+                Navigator.pop(ctx);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.check_circle, color: currentCode == 'en' ? AppTheme.primary : Colors.grey),
+              title: const Text('English'),
+              onTap: () {
+                scope.setLocale(const Locale('en'));
+                Navigator.pop(ctx);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scope = AppLocaleScope.of(context);
+    final currentCode = scope.locale.languageCode;
+    final subtitle = currentCode == 'ar' ? 'العربية' : 'English';
+
+    return TweenAnimationBuilder<double>(
+      tween: AppTheme.fadeInTween(),
+      duration: Duration(milliseconds: 280 + (index * 45)),
+      curve: AppTheme.curveDefault,
+      builder: (context, value, _) => Opacity(
+        opacity: value,
+        child: Transform.translate(
+          offset: Offset(0, 20 * (1 - value)),
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Material(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              elevation: 0,
+              child: InkWell(
+                onTap: () => _showLanguageDialog(context),
+                borderRadius: BorderRadius.circular(16),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Icon(Icons.language_rounded, color: AppTheme.primary, size: 24),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'اللغة',
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.primaryDark,
+                                  ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              subtitle,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Colors.grey.shade600,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Colors.grey.shade400),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),
