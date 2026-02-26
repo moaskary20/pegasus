@@ -14,6 +14,7 @@ class SupportScreen extends StatefulWidget {
 
 class _SupportScreenState extends State<SupportScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final GlobalKey<_MyComplaintsListState> _myComplaintsKey = GlobalKey();
   SupportSettingsResponse? _settings;
   Map<String, dynamic>? _user;
   bool _loadingSettings = true;
@@ -21,7 +22,7 @@ class _SupportScreenState extends State<SupportScreen> with SingleTickerProvider
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _loadData();
   }
 
@@ -82,6 +83,7 @@ class _SupportScreenState extends State<SupportScreen> with SingleTickerProvider
           tabs: const [
             Tab(text: 'شكوى'),
             Tab(text: 'تواصل'),
+            Tab(text: 'سجلي'),
           ],
         ),
       ),
@@ -140,8 +142,21 @@ class _SupportScreenState extends State<SupportScreen> with SingleTickerProvider
             child: TabBarView(
               controller: _tabController,
               children: [
-                _ComplaintForm(initialUser: _user),
-                _ContactForm(initialUser: _user),
+                _ComplaintForm(
+                  initialUser: _user,
+                  onSubmitted: () {
+                    _tabController.animateTo(2);
+                    _myComplaintsKey.currentState?._load();
+                  },
+                ),
+                _ContactForm(
+                  initialUser: _user,
+                  onSubmitted: () {
+                    _tabController.animateTo(2);
+                    _myComplaintsKey.currentState?._load();
+                  },
+                ),
+                _MyComplaintsList(key: _myComplaintsKey),
               ],
             ),
           ),
@@ -152,9 +167,10 @@ class _SupportScreenState extends State<SupportScreen> with SingleTickerProvider
 }
 
 class _ComplaintForm extends StatefulWidget {
-  const _ComplaintForm({this.initialUser});
+  const _ComplaintForm({this.initialUser, this.onSubmitted});
 
   final Map<String, dynamic>? initialUser;
+  final VoidCallback? onSubmitted;
 
   @override
   State<_ComplaintForm> createState() => _ComplaintFormState();
@@ -216,6 +232,7 @@ class _ComplaintFormState extends State<_ComplaintForm> {
         behavior: SnackBarBehavior.floating,
       ),
     );
+    if (result.success) widget.onSubmitted?.call();
   }
 
   @override
@@ -248,7 +265,7 @@ class _ComplaintFormState extends State<_ComplaintForm> {
             _AnimatedField(
               index: 2,
               controller: _phone,
-              label: 'رقم الهاتف (اختياري)',
+              label: 'رقم الهاتف',
               icon: Icons.phone_outlined,
               keyboardType: TextInputType.phone,
             ),
@@ -302,9 +319,10 @@ class _ComplaintFormState extends State<_ComplaintForm> {
 }
 
 class _ContactForm extends StatefulWidget {
-  const _ContactForm({this.initialUser});
+  const _ContactForm({this.initialUser, this.onSubmitted});
 
   final Map<String, dynamic>? initialUser;
+  final VoidCallback? onSubmitted;
 
   @override
   State<_ContactForm> createState() => _ContactFormState();
@@ -366,6 +384,7 @@ class _ContactFormState extends State<_ContactForm> {
         behavior: SnackBarBehavior.floating,
       ),
     );
+    if (result.success) widget.onSubmitted?.call();
   }
 
   @override
@@ -398,7 +417,7 @@ class _ContactFormState extends State<_ContactForm> {
             _AnimatedField(
               index: 2,
               controller: _phone,
-              label: 'رقم الهاتف (اختياري)',
+              label: 'رقم الهاتف',
               icon: Icons.phone_outlined,
               keyboardType: TextInputType.phone,
             ),
@@ -446,6 +465,257 @@ class _ContactFormState extends State<_ContactForm> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _MyComplaintsList extends StatefulWidget {
+  const _MyComplaintsList({super.key});
+
+  @override
+  State<_MyComplaintsList> createState() => _MyComplaintsListState();
+}
+
+class _MyComplaintsListState extends State<_MyComplaintsList> {
+  List<MyComplaintItem> _list = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() => _loading = true);
+    final list = await SupportApi.getMyComplaints();
+    if (mounted) setState(() { _list = list; _loading = false; });
+  }
+
+  void _showDetail(MyComplaintItem item) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(ctx).size.height * 0.7),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: EdgeInsets.only(
+          left: 20,
+          right: 20,
+          top: 20,
+          bottom: MediaQuery.of(ctx).padding.bottom + 20,
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                textDirection: TextDirection.rtl,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: item.type == 'complaint'
+                          ? Colors.red.withValues(alpha: 0.15)
+                          : AppTheme.primary.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      item.typeLabel,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: item.type == 'complaint' ? Colors.red.shade700 : AppTheme.primary,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: item.status == 'resolved'
+                          ? Colors.green.withValues(alpha: 0.15)
+                          : item.status == 'in_progress'
+                              ? Colors.blue.withValues(alpha: 0.15)
+                              : Colors.orange.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      item.statusLabel,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: item.status == 'resolved'
+                            ? Colors.green.shade700
+                            : item.status == 'in_progress'
+                                ? Colors.blue.shade700
+                                : Colors.orange.shade700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              if (item.subject.isNotEmpty)
+                Text(
+                  item.subject,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryDark,
+                      ),
+                  textDirection: TextDirection.rtl,
+                ),
+              const SizedBox(height: 8),
+              Text(
+                item.message,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Colors.grey.shade700,
+                      height: 1.5,
+                    ),
+                textDirection: TextDirection.rtl,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'التاريخ: ${item.createdAt}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+                textDirection: TextDirection.rtl,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator(color: AppTheme.primary));
+    }
+    if (_list.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.inbox_outlined, size: 64, color: Colors.grey.shade400),
+            const SizedBox(height: 16),
+            Text(
+              'لا توجد شكاوى أو استفسارات سابقة',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade600),
+              textAlign: TextAlign.center,
+              textDirection: TextDirection.rtl,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'سجّل الدخول لعرض الشكاوى والاستفسارات المقدمة سابقاً',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey.shade500),
+              textAlign: TextAlign.center,
+              textDirection: TextDirection.rtl,
+            ),
+          ],
+        ),
+      );
+    }
+    return RefreshIndicator(
+      onRefresh: _load,
+      color: AppTheme.primary,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(20),
+        itemCount: _list.length,
+        itemBuilder: (_, i) {
+          final item = _list[i];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Material(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              child: InkWell(
+                onTap: () => _showDetail(item),
+                borderRadius: BorderRadius.circular(16),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        textDirection: TextDirection.rtl,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              item.subject.isEmpty ? 'بدون موضوع' : item.subject,
+                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppTheme.primaryDark,
+                                  ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              textDirection: TextDirection.rtl,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: item.status == 'resolved'
+                                  ? Colors.green.withValues(alpha: 0.15)
+                                  : item.status == 'in_progress'
+                                      ? Colors.blue.withValues(alpha: 0.15)
+                                      : Colors.orange.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              item.statusLabel,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: item.status == 'resolved'
+                                    ? Colors.green.shade700
+                                    : item.status == 'in_progress'
+                                        ? Colors.blue.shade700
+                                        : Colors.orange.shade700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        item.typeLabel,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppTheme.primary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                        textDirection: TextDirection.rtl,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        item.createdAt,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey.shade500),
+                        textDirection: TextDirection.rtl,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

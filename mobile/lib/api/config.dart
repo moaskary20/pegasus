@@ -85,6 +85,7 @@ const String apiSubscriptionsSubscribe = '/api/subscriptions/subscribe';
 const String apiSupport = '/api/support';
 const String apiSupportComplaint = '/api/support/complaint';
 const String apiSupportContact = '/api/support/contact';
+const String apiSupportMyComplaints = '/api/support/my-complaints';
 
 /// دروس الدورة (يتطلب مصادقة)
 const String apiLessonShow = '/api/courses'; // {slug}/lessons/{id}

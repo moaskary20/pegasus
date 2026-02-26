@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../app_theme.dart';
 import '../api/orders_api.dart';
 import '../api/store_orders_api.dart';
-import 'feature_scaffold.dart';
 
 /// عنصر موحد للعرض (دورات أو منتجات)
 class _PurchaseItem {
@@ -101,20 +100,42 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return FeatureScaffold(
-      title: 'سجل المشتريات',
+    return Scaffold(
+      backgroundColor: AppTheme.surface,
+      appBar: AppBar(
+        backgroundColor: AppTheme.primary,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () => Navigator.maybePop(context),
+        ),
+        title: const Text('سجل المشتريات'),
+      ),
       body: RefreshIndicator(
         onRefresh: _load,
         color: AppTheme.primary,
         child: _loading
             ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
             : _needsAuth
-                ? _NeedsAuth(message: 'سجّل الدخول لعرض سجل المشتريات')
+                ? SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height - 150),
+                      child: _NeedsAuth(message: 'سجّل الدخول لعرض سجل المشتريات'),
+                    ),
+                  )
                 : _list.isEmpty
-                    ? _EmptyState(
-                        message: 'سجل المشتريات',
-                        subtitle: 'ستظهر هنا فواتير الطلبات والدفعات',
-                        onRefresh: _load,
+                    ? SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height - 150),
+                          child: _EmptyState(
+                            message: 'سجل المشتريات',
+                            subtitle: 'ستظهر هنا فواتير الطلبات والدفعات',
+                            onRefresh: _load,
+                          ),
+                        ),
                       )
                     : ListView.builder(
                         padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),

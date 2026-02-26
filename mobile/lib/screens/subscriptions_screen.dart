@@ -5,8 +5,6 @@ import 'package:image_picker/image_picker.dart';
 import '../api/auth_api.dart';
 import '../api/subscriptions_api.dart';
 import '../app_theme.dart';
-import 'feature_scaffold.dart';
-
 /// الاشتراكات — الخطط المتاحة + اشتراكاتي + إمكانية الاشتراك
 class SubscriptionsScreen extends StatefulWidget {
   const SubscriptionsScreen({super.key});
@@ -62,8 +60,18 @@ class _SubscriptionsScreenState extends State<SubscriptionsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return FeatureScaffold(
-      title: 'الاشتراكات',
+    return Scaffold(
+      backgroundColor: AppTheme.surface,
+      appBar: AppBar(
+        backgroundColor: AppTheme.primary,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () => Navigator.maybePop(context),
+        ),
+        title: const Text('الاشتراكات'),
+      ),
       body: RefreshIndicator(
         onRefresh: _load,
         color: AppTheme.primary,

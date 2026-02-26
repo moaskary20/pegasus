@@ -482,6 +482,9 @@ Route::post('/api/support/complaint', [\App\Http\Controllers\Api\SupportControll
 Route::post('/api/support/contact', [\App\Http\Controllers\Api\SupportController::class, 'storeContact'])
     ->middleware(['throttle:10,1'])
     ->name('api.support.contact');
+Route::get('/api/support/my-complaints', [\App\Http\Controllers\Api\SupportController::class, 'myComplaints'])
+    ->middleware(['throttle:60,1'])
+    ->name('api.support.my-complaints');
 
 Route::get('/messages', [\App\Http\Controllers\Site\MessagesController::class, 'index'])->name('site.messages');
 Route::get('/messages/new', [\App\Http\Controllers\Site\MessagesController::class, 'newConversation'])->name('site.messages.new');

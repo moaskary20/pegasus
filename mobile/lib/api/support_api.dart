@@ -85,6 +85,57 @@ class SupportApi {
       return SupportSubmitResult(success: false, message: 'تحقق من الاتصال بالإنترنت');
     }
   }
+
+  /// جلب شكاوى واستفسارات المستخدم السابقة
+  static Future<List<MyComplaintItem>> getMyComplaints() async {
+    try {
+      if (AuthApi.token == null) return [];
+      final uri = Uri.parse('$apiBaseUrl$apiSupportMyComplaints');
+      final res = await http.get(uri, headers: _headers);
+      final data = jsonDecode(res.body.toString()) as Map<String, dynamic>? ?? {};
+      if (res.statusCode == 200) {
+        final list = (data['complaints'] as List<dynamic>?) ?? [];
+        return list.map((e) => MyComplaintItem.fromJson(e as Map<String, dynamic>)).toList();
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+}
+
+class MyComplaintItem {
+  MyComplaintItem({
+    required this.id,
+    required this.type,
+    required this.typeLabel,
+    required this.subject,
+    required this.message,
+    required this.status,
+    required this.statusLabel,
+    required this.createdAt,
+  });
+  final int id;
+  final String type;
+  final String typeLabel;
+  final String subject;
+  final String message;
+  final String status;
+  final String statusLabel;
+  final String createdAt;
+
+  factory MyComplaintItem.fromJson(Map<String, dynamic> json) {
+    return MyComplaintItem(
+      id: (json['id'] as num).toInt(),
+      type: (json['type'] ?? '').toString(),
+      typeLabel: (json['type_label'] ?? '').toString(),
+      subject: (json['subject'] ?? '').toString(),
+      message: (json['message'] ?? '').toString(),
+      status: (json['status'] ?? '').toString(),
+      statusLabel: (json['status_label'] ?? '').toString(),
+      createdAt: (json['created_at'] ?? '').toString(),
+    );
+  }
 }
 
 class SupportSettingsResponse {
