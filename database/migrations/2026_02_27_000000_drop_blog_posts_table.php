@@ -8,22 +8,22 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('blog_posts', function (Blueprint $table) {
-            $table->id();
-            $table->string('title');
-            $table->string('slug')->unique();
-            $table->string('excerpt')->nullable();
-            $table->longText('content')->nullable();
-            $table->string('cover_image')->nullable();
-            $table->foreignId('author_id')->nullable()->constrained('users')->onDelete('set null');
-            $table->boolean('is_published')->default(false);
-            $table->timestamp('published_at')->nullable();
-            $table->timestamps();
-        });
+        Schema::dropIfExists('blog_posts');
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('blog_posts');
+        Schema::create('blog_posts', function (Blueprint $table) {
+            $table->id();
+            $table->string('title');
+            $table->string('slug')->unique();
+            $table->text('excerpt')->nullable();
+            $table->longText('content')->nullable();
+            $table->string('cover_image')->nullable();
+            $table->string('status')->default('draft');
+            $table->foreignId('author_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->timestamp('published_at')->nullable();
+            $table->timestamps();
+        });
     }
 };

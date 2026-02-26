@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\SupportComplaints\Tables;
 
+use App\Models\SupportComplaint;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -15,43 +16,69 @@ class SupportComplaintsTable
     {
         return $table
             ->columns([
+                TextColumn::make('id')
+                    ->label('#')
+                    ->sortable()
+                    ->weight('bold')
+                    ->color('primary'),
                 TextColumn::make('name')
                     ->label('الاسم')
-                    ->searchable(),
-                TextColumn::make('email')
-                    ->label('البريد')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable()
+                    ->description(fn ($record) => $record->email),
                 TextColumn::make('type')
                     ->label('النوع')
-                    ->formatStateUsing(fn (string $state) => $state === 'complaint' ? 'شكوى' : 'اتصال')
+                    ->formatStateUsing(fn (string $state) => $state === SupportComplaint::TYPE_COMPLAINT ? 'شكوى' : 'تواصل / استفسار')
                     ->badge()
-                    ->color(fn (string $state) => $state === 'complaint' ? 'danger' : 'info'),
+                    ->color(fn (string $state) => $state === SupportComplaint::TYPE_COMPLAINT ? 'danger' : 'info')
+                    ->sortable(),
                 TextColumn::make('subject')
                     ->label('الموضوع')
                     ->searchable()
-                    ->limit(40),
+                    ->limit(40)
+                    ->placeholder('—'),
+                TextColumn::make('message')
+                    ->label('الرسالة')
+                    ->limit(50)
+                    ->placeholder('—')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('status')
                     ->label('الحالة')
                     ->formatStateUsing(fn (string $state) => match ($state) {
-                        'pending' => 'قيد الانتظار',
-                        'in_progress' => 'قيد المعالجة',
-                        'resolved' => 'تم الحل',
+                        SupportComplaint::STATUS_PENDING => 'قيد الانتظار',
+                        SupportComplaint::STATUS_IN_PROGRESS => 'قيد المعالجة',
+                        SupportComplaint::STATUS_RESOLVED => 'تم الحل',
                         default => $state,
                     })
                     ->badge()
                     ->color(fn (string $state) => match ($state) {
-                        'pending' => 'warning',
-                        'in_progress' => 'info',
-                        'resolved' => 'success',
+                        SupportComplaint::STATUS_PENDING => 'warning',
+                        SupportComplaint::STATUS_IN_PROGRESS => 'info',
+                        SupportComplaint::STATUS_RESOLVED => 'success',
                         default => 'gray',
-                    }),
+                    })
+                    ->sortable(),
                 TextColumn::make('created_at')
                     ->label('التاريخ')
                     ->dateTime('d/m/Y H:i')
+                    ->description(fn ($record) => $record->created_at->diffForHumans())
                     ->sortable(),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
-                //
+                \Filament\Tables\Filters\SelectFilter::make('type')
+                    ->label('النوع')
+                    ->options([
+                        SupportComplaint::TYPE_COMPLAINT => 'شكوى',
+                        SupportComplaint::TYPE_CONTACT => 'تواصل / استفسار',
+                    ]),
+                \Filament\Tables\Filters\SelectFilter::make('status')
+                    ->label('الحالة')
+                    ->options([
+                        SupportComplaint::STATUS_PENDING => 'قيد الانتظار',
+                        SupportComplaint::STATUS_IN_PROGRESS => 'قيد المعالجة',
+                        SupportComplaint::STATUS_RESOLVED => 'تم الحل',
+                    ]),
             ])
             ->recordActions([
                 ViewAction::make(),
@@ -61,6 +88,8 @@ class SupportComplaintsTable
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->striped()
+            ->paginated([10, 25, 50, 100]);
     }
 }

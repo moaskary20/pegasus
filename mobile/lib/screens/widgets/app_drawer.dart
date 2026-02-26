@@ -13,7 +13,6 @@ import '../account_settings_screen.dart';
 import '../subscriptions_screen.dart';
 import '../purchase_history_screen.dart';
 import '../support_screen.dart';
-import '../blog_list_screen.dart';
 
 const Color _primary = Color(0xFF2c004d);
 
@@ -74,7 +73,6 @@ class _AppDrawerContentState extends State<AppDrawerContent> {
               _DrawerTile(icon: Icons.settings_outlined, label: 'إعدادات الحساب', onTap: () => _push(context, const AccountSettingsScreen())),
               _DrawerTile(icon: Icons.card_membership_outlined, label: 'الاشتراكات', onTap: () => _push(context, const SubscriptionsScreen())),
               _DrawerTile(icon: Icons.receipt_long_outlined, label: 'سجل المشتريات', onTap: () => _push(context, const PurchaseHistoryScreen())),
-              _DrawerTile(icon: Icons.article_outlined, label: 'المدونة', onTap: () => _push(context, const BlogListScreen())),
               _DrawerTile(icon: Icons.help_outline_rounded, label: 'المساعدة والدعم', onTap: () => _push(context, const SupportScreen())),
             ],
           ),

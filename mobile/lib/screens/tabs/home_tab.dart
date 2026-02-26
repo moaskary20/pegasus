@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
 import '../widgets/app_header.dart';
 import '../course_detail_screen.dart';
-import '../blog_list_screen.dart';
-import '../blog_post_screen.dart';
 import '../../api/auth_api.dart';
 import '../../api/home_api.dart';
-import '../../api/blog_api.dart';
 import '../../api/config.dart';
 import '../../api/wishlist_api.dart';
-import '../../api/config.dart';
 import '../../app_theme.dart';
 
 /// تبويب الرئيسية: دورات مميزة أفقياً + أحدث الدورات عمودياً (مطابق للتصميم المطلوب)
@@ -181,7 +177,6 @@ class _HomeTabState extends State<HomeTab> {
                     _buildTopCourses(_data!.topCourses),
                     _buildSectionTitle('أحدث الدورات', '⚡'),
                     _buildRecentCourses(_data!.recentCourses),
-                    if (_data!.blogPosts.isNotEmpty) _buildBlogSection(_data!.blogPosts),
                     _buildCategoriesSection(_data!.categories),
                     if (_isHomeFullyEmpty) _buildUnifiedEmptyState(),
                   ] else
@@ -200,7 +195,6 @@ class _HomeTabState extends State<HomeTab> {
     if (_data == null) return false;
     final d = _data!;
     if (d.topCourses.isNotEmpty || d.recentCourses.isNotEmpty) return false;
-    if (d.blogPosts.isNotEmpty) return false;
     if (d.categories.any((c) => c.courses.isNotEmpty)) return false;
     return true;
   }
@@ -210,64 +204,6 @@ class _HomeTabState extends State<HomeTab> {
     if (url.startsWith('http')) return url;
     final base = apiBaseUrl.endsWith('/') ? apiBaseUrl.substring(0, apiBaseUrl.length - 1) : apiBaseUrl;
     return url.startsWith('/') ? '$base$url' : '$base/$url';
-  }
-
-  Widget _buildBlogSection(List<BlogPostItem> posts) {
-    return SliverToBoxAdapter(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Text('📝', style: const TextStyle(fontSize: 22)),
-                    const SizedBox(width: 8),
-                    Text(
-                      'آخر مقالات المدونة',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF333333),
-                          ),
-                    ),
-                  ],
-                ),
-                TextButton(
-                  onPressed: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const BlogListScreen()),
-                  ),
-                  child: const Text('عرض الكل'),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(
-            height: 200,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: posts.length,
-              itemBuilder: (context, index) {
-                final post = posts[index];
-                return _BlogPostCard(
-                  post: post,
-                  fullImageUrl: _fullImageUrl,
-                  onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => BlogPostScreen(slug: post.slug, title: post.title),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          const SizedBox(height: 8),
-        ],
-      ),
-    );
   }
 
   Widget _buildLoadErrorState() {
@@ -773,84 +709,6 @@ class _HomeSliderSlide extends StatelessWidget {
         SnackBar(content: Text('رابط: $url'), duration: const Duration(seconds: 2)),
       );
     }
-  }
-}
-
-class _BlogPostCard extends StatelessWidget {
-  const _BlogPostCard({
-    required this.post,
-    required this.fullImageUrl,
-    required this.onTap,
-  });
-
-  final BlogPostItem post;
-  final String Function(String?) fullImageUrl;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final coverUrl = post.coverImage != null && post.coverImage!.isNotEmpty ? fullImageUrl(post.coverImage) : null;
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 160,
-        margin: const EdgeInsets.only(left: 12),
-        child: Card(
-          elevation: 2,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (coverUrl != null && coverUrl.isNotEmpty)
-                Image.network(
-                  coverUrl,
-                  height: 100,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _placeholder(context),
-                )
-              else
-                _placeholder(context),
-              Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      post.title,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: const Color(0xFF1A1A1A),
-                          ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if (post.formattedDate.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        post.formattedDate,
-                        style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _placeholder(BuildContext context) {
-    return Container(
-      height: 100,
-      width: double.infinity,
-      color: AppTheme.primary.withValues(alpha: 0.1),
-      child: Icon(Icons.article_rounded, size: 32, color: AppTheme.primary.withValues(alpha: 0.4)),
-    );
   }
 }
 

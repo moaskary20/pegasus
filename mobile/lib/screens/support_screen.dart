@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../api/auth_api.dart';
 import '../app_theme.dart';
 import '../api/support_api.dart';
 import 'feature_scaffold.dart';
@@ -15,18 +16,28 @@ class SupportScreen extends StatefulWidget {
 class _SupportScreenState extends State<SupportScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   SupportSettingsResponse? _settings;
+  Map<String, dynamic>? _user;
   bool _loadingSettings = true;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _loadSettings();
+    _loadData();
   }
 
-  Future<void> _loadSettings() async {
-    final res = await SupportApi.getSettings();
-    if (mounted) setState(() { _settings = res; _loadingSettings = false; });
+  Future<void> _loadData() async {
+    final results = await Future.wait([
+      SupportApi.getSettings(),
+      AuthApi.getUser(),
+    ]);
+    if (mounted) {
+      setState(() {
+        _settings = results[0] as SupportSettingsResponse;
+        _user = results[1] as Map<String, dynamic>?;
+        _loadingSettings = false;
+      });
+    }
   }
 
   @override
@@ -141,8 +152,8 @@ class _SupportScreenState extends State<SupportScreen> with SingleTickerProvider
             child: TabBarView(
               controller: _tabController,
               children: [
-                _ComplaintForm(),
-                _ContactForm(),
+                _ComplaintForm(initialUser: _user),
+                _ContactForm(initialUser: _user),
               ],
             ),
           ),
@@ -153,6 +164,10 @@ class _SupportScreenState extends State<SupportScreen> with SingleTickerProvider
 }
 
 class _ComplaintForm extends StatefulWidget {
+  const _ComplaintForm({this.initialUser});
+
+  final Map<String, dynamic>? initialUser;
+
   @override
   State<_ComplaintForm> createState() => _ComplaintFormState();
 }
@@ -165,6 +180,24 @@ class _ComplaintFormState extends State<_ComplaintForm> {
   final _subject = TextEditingController();
   final _message = TextEditingController();
   bool _sending = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fillFromUser(widget.initialUser);
+    });
+  }
+
+  void _fillFromUser(Map<String, dynamic>? user) {
+    if (user == null) return;
+    final name = user['name']?.toString();
+    final email = user['email']?.toString();
+    final phone = user['phone']?.toString();
+    if (name != null && name.isNotEmpty && _name.text.isEmpty) _name.text = name;
+    if (email != null && email.isNotEmpty && _email.text.isEmpty) _email.text = email;
+    if (phone != null && phone.isNotEmpty && _phone.text.isEmpty) _phone.text = phone;
+  }
 
   @override
   void dispose() {
@@ -281,6 +314,10 @@ class _ComplaintFormState extends State<_ComplaintForm> {
 }
 
 class _ContactForm extends StatefulWidget {
+  const _ContactForm({this.initialUser});
+
+  final Map<String, dynamic>? initialUser;
+
   @override
   State<_ContactForm> createState() => _ContactFormState();
 }
@@ -293,6 +330,24 @@ class _ContactFormState extends State<_ContactForm> {
   final _subject = TextEditingController();
   final _message = TextEditingController();
   bool _sending = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fillFromUser(widget.initialUser);
+    });
+  }
+
+  void _fillFromUser(Map<String, dynamic>? user) {
+    if (user == null) return;
+    final name = user['name']?.toString();
+    final email = user['email']?.toString();
+    final phone = user['phone']?.toString();
+    if (name != null && name.isNotEmpty && _name.text.isEmpty) _name.text = name;
+    if (email != null && email.isNotEmpty && _email.text.isEmpty) _email.text = email;
+    if (phone != null && phone.isNotEmpty && _phone.text.isEmpty) _phone.text = phone;
+  }
 
   @override
   void dispose() {

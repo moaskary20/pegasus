@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'config.dart';
 import 'auth_api.dart';
-import 'blog_api.dart';
 import '../utils/error_messages.dart';
 
 class HomeApi {
@@ -26,8 +25,6 @@ class HomeApi {
         final categoriesRaw = (data['categories'] as List<dynamic>?) ?? [];
         final homeSliderRaw = (data['home_slider'] as List<dynamic>?) ?? [];
         final homeSlider = homeSliderRaw.map((e) => HomeSlideItem.fromJson(e as Map<String, dynamic>)).toList();
-        final blogPostsRaw = (data['blog_posts'] as List<dynamic>?) ?? [];
-        final blogPosts = blogPostsRaw.map((e) => BlogPostItem.fromJson(e as Map<String, dynamic>)).toList();
         final categories = categoriesRaw.map((e) {
           final m = e as Map<String, dynamic>;
           final coursesList = (m['courses'] as List<dynamic>?) ?? [];
@@ -44,7 +41,6 @@ class HomeApi {
           topCourses: top.map((e) => CourseItem.fromJson(e as Map<String, dynamic>)).toList(),
           recentCourses: recent.map((e) => CourseItem.fromJson(e as Map<String, dynamic>)).toList(),
           categories: categories,
-          blogPosts: blogPosts,
           wishlistIds: wishlistIds,
           loadError: null,
         );
@@ -54,7 +50,6 @@ class HomeApi {
         topCourses: [],
         recentCourses: [],
         categories: [],
-        blogPosts: [],
         wishlistIds: [],
         loadError: ErrorMessages.from(null, statusCode: res.statusCode, fallback: 'تعذر تحميل البيانات'),
       );
@@ -64,7 +59,6 @@ class HomeApi {
         topCourses: [],
         recentCourses: [],
         categories: [],
-        blogPosts: [],
         wishlistIds: [],
         loadError: ErrorMessages.from(e),
       );
@@ -78,7 +72,6 @@ class HomeResponse {
     required this.topCourses,
     required this.recentCourses,
     required this.categories,
-    required this.blogPosts,
     required this.wishlistIds,
     this.loadError,
   });
@@ -86,7 +79,6 @@ class HomeResponse {
   final List<CourseItem> topCourses;
   final List<CourseItem> recentCourses;
   final List<CategoryWithCourses> categories;
-  final List<BlogPostItem> blogPosts;
   final List<int> wishlistIds;
   /// إن وُجد يعني فشل تحميل البيانات (شبكة أو خادم)
   final String? loadError;

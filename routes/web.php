@@ -276,13 +276,6 @@ Route::get('/api/home', [\App\Http\Controllers\Api\HomeController::class, '__inv
     ->middleware(['throttle:60,1'])
     ->name('api.home');
 
-Route::get('/api/blog', [\App\Http\Controllers\Api\BlogController::class, 'index'])
-    ->middleware(['throttle:60,1'])
-    ->name('api.blog.index');
-Route::get('/api/blog/{slug}', [\App\Http\Controllers\Api\BlogController::class, 'show'])
-    ->middleware(['throttle:60,1'])
-    ->name('api.blog.show');
-
 Route::get('/api/store/categories', [\App\Http\Controllers\Api\StoreController::class, 'categories'])
     ->middleware(['throttle:60,1'])
     ->name('api.store.categories');
@@ -351,6 +344,9 @@ Route::get('/api/courses/{courseSlug}/certificate', [\App\Http\Controllers\Api\C
 Route::get('/api/instructors/{id}', [\App\Http\Controllers\Api\InstructorController::class, 'show'])
     ->middleware(['throttle:60,1'])
     ->name('api.instructors.show');
+Route::get('/api/instructor/finances', [\App\Http\Controllers\Api\InstructorFinancesController::class, 'index'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.instructor.finances');
 Route::post('/api/courses/{courseSlug}/rate', [\App\Http\Controllers\Api\CourseRatingController::class, 'store'])
     ->middleware(['throttle:60,1', 'auth:sanctum'])
     ->name('api.courses.rate');
@@ -1289,25 +1285,6 @@ Route::post('/cart/store/{item}', function (Request $request, \App\Models\StoreC
     }
     return redirect()->route('site.cart')->with('notice', ['type' => 'success', 'message' => 'تمت إزالة المنتج من السلة.']);
 })->name('site.cart.store.remove');
-
-Route::get('/blog', function () {
-    $posts = \App\Models\BlogPost::query()
-        ->published()
-        ->with('author:id,name,avatar')
-        ->orderByDesc('published_at')
-        ->orderByDesc('created_at')
-        ->paginate(12);
-    return view('pages.blog', ['posts' => $posts]);
-})->name('site.blog');
-
-Route::get('/blog/{slug}', function (string $slug) {
-    $post = \App\Models\BlogPost::query()
-        ->published()
-        ->where('slug', $slug)
-        ->with('author:id,name,avatar')
-        ->firstOrFail();
-    return view('pages.blog-post', ['post' => $post]);
-})->name('site.blog.show');
 
 // Search API routes with rate limiting (no 'web' middleware for API/mobile clients with Bearer token)
 Route::prefix('api/search')->middleware(['throttle:60,1'])->group(function () {

@@ -5,6 +5,7 @@ import '../support_screen.dart';
 import '../notifications_reminders_screen.dart';
 import '../subscriptions_screen.dart';
 import '../purchase_history_screen.dart';
+import '../instructor_finances_screen.dart';
 import '../../api/auth_api.dart';
 import '../../api/config.dart';
 import '../widgets/app_header.dart';
@@ -61,6 +62,14 @@ class _AccountTabState extends State<AccountTab> {
         _loadingUser = false;
       });
     }
+  }
+
+  bool get _isInstructor {
+    final roles = _user?['roles'];
+    if (roles is List) {
+      return roles.any((r) => r.toString().toLowerCase() == 'instructor');
+    }
+    return false;
   }
 
   String _avatarUrl() {
@@ -153,6 +162,13 @@ class _AccountTabState extends State<AccountTab> {
               subtitle: 'الملف الشخصي، كلمة المرور، الإشعارات',
               onTap: () => _push(const AccountSettingsScreen()),
             ),
+            if (_isInstructor)
+              _AccountTile(
+                icon: Icons.account_balance_wallet_outlined,
+                title: 'الإدارة المالية',
+                subtitle: 'الأرباح، الرصيد، أرباح الدورات',
+                onTap: () => _push(const InstructorFinancesScreen()),
+              ),
             _AccountTile(
               icon: Icons.card_membership_outlined,
               title: 'الاشتراكات',

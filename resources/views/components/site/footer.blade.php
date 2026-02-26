@@ -110,7 +110,6 @@
                         <a href="{{ route('site.contact') }}" class="text-white/85 hover:text-white transition">الاتصال بنا</a>
                         <a href="{{ url('/courses') }}" class="text-white/85 hover:text-white transition">الدورات</a>
                         <a href="{{ route('site.store') }}" class="text-white/85 hover:text-white transition">المتجر</a>
-                        <a href="{{ url('/blog') }}" class="text-white/85 hover:text-white transition">المدونة</a>
                         <a href="{{ route('site.support') }}" class="text-white/85 hover:text-white transition">الدعم</a>
                         <a href="{{ route('site.account') }}" class="text-white/85 hover:text-white transition">الحساب</a>
                         <a href="{{ route('site.subscriptions') }}" class="text-white/85 hover:text-white transition">الاشتراكات</a>

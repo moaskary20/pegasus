@@ -108,11 +108,10 @@ const String apiSearchClearHistory = '/api/search/clear-history';
 
 /// التنبيهات (يتطلب مصادقة)
 const String apiReminders = '/api/reminders';
-
-/// المدونة
-const String apiBlog = '/api/blog';
 const String apiRemindersCounts = '/api/reminders/counts';
 const String apiRemindersDismiss = '/api/reminders/dismiss';
 
 /// الملف الشخصي للمدرب
 const String apiInstructors = '/api/instructors';
+/// الإدارة المالية للمدرس (يتطلب مصادقة + دور مدرس)
+const String apiInstructorFinances = '/api/instructor/finances';

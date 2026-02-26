@@ -201,6 +201,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> with SingleTick
             _ReviewsTab(course: _course!, onRatingSubmitted: _load),
           ],
         ),
+        ),
       ),
       bottomNavigationBar: _buildCourseBottomBar(),
     );
