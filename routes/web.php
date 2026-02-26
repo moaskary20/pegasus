@@ -268,6 +268,8 @@ Route::prefix('api/auth')->middleware(['throttle:60,1'])->group(function () {
     Route::post('/register', [ApiAuthController::class, 'register'])->name('api.auth.register');
     Route::post('/logout', [ApiAuthController::class, 'logout'])->middleware('auth:sanctum')->name('api.auth.logout');
     Route::get('/user', [ApiAuthController::class, 'user'])->middleware('auth:sanctum')->name('api.auth.user');
+    Route::match(['put', 'post'], '/user', [ApiAuthController::class, 'update'])->middleware('auth:sanctum')->name('api.auth.user.update');
+    Route::put('/password', [ApiAuthController::class, 'updatePassword'])->middleware('auth:sanctum')->name('api.auth.password');
 });
 
 Route::get('/api/home', [\App\Http\Controllers\Api\HomeController::class, '__invoke'])
@@ -285,6 +287,9 @@ Route::get('/api/store/products', [\App\Http\Controllers\Api\StoreController::cl
 Route::get('/api/store/product/{slug}', [\App\Http\Controllers\Api\StoreController::class, 'show'])
     ->middleware(['throttle:60,1'])
     ->name('api.store.product.show');
+Route::post('/api/store/products/{id}/rate', [\App\Http\Controllers\Api\ProductRatingController::class, 'store'])
+    ->middleware(['throttle:30,1', 'auth:sanctum'])
+    ->name('api.store.product.rate');
 
 Route::get('/api/courses/categories', [\App\Http\Controllers\Api\CoursesController::class, 'categories'])
     ->middleware(['throttle:60,1'])
@@ -297,6 +302,39 @@ Route::get('/api/courses', [\App\Http\Controllers\Api\CoursesController::class, 
 Route::get('/api/courses/{slug}', [\App\Http\Controllers\Api\CoursesController::class, 'show'])
     ->middleware(['throttle:60,1'])
     ->name('api.courses.show');
+
+Route::get('/api/courses/{courseSlug}/lessons/{lessonId}', [\App\Http\Controllers\Api\LessonController::class, 'show'])
+    ->middleware(['throttle:60,1'])
+    ->name('api.courses.lessons.show')
+    ->where(['lessonId' => '[0-9]+']);
+Route::post('/api/courses/{courseSlug}/lessons/{lessonId}/save-progress', [\App\Http\Controllers\Api\LessonController::class, 'saveProgress'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.courses.lessons.save-progress')
+    ->where(['lessonId' => '[0-9]+']);
+
+Route::get('/api/courses/{courseSlug}/lessons/{lessonId}/quiz', [\App\Http\Controllers\Api\QuizController::class, 'show'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.courses.quiz.show')
+    ->where(['lessonId' => '[0-9]+']);
+Route::post('/api/courses/{courseSlug}/lessons/{lessonId}/quiz', [\App\Http\Controllers\Api\QuizController::class, 'submit'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.courses.quiz.submit')
+    ->where(['lessonId' => '[0-9]+']);
+Route::post('/api/courses/{courseSlug}/lessons/{lessonId}/quiz/retake', [\App\Http\Controllers\Api\QuizController::class, 'retake'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.courses.quiz.retake')
+    ->where(['lessonId' => '[0-9]+']);
+
+Route::get('/api/courses/{courseSlug}/certificate', [\App\Http\Controllers\Api\CertificateController::class, 'download'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.courses.certificate');
+
+Route::get('/api/instructors/{id}', [\App\Http\Controllers\Api\InstructorController::class, 'show'])
+    ->middleware(['throttle:60,1'])
+    ->name('api.instructors.show');
+Route::post('/api/courses/{courseSlug}/rate', [\App\Http\Controllers\Api\CourseRatingController::class, 'store'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.courses.rate');
 
 Route::get('/api/wishlist', [\App\Http\Controllers\Api\WishlistController::class, 'index'])
     ->middleware(['throttle:60,1', 'auth:sanctum'])
@@ -330,6 +368,16 @@ Route::delete('/api/cart/products/{id}', [\App\Http\Controllers\Api\CartControll
     ->middleware(['throttle:60,1', 'auth:sanctum'])
     ->name('api.cart.products.remove');
 
+Route::get('/api/checkout/preview', [\App\Http\Controllers\Api\CheckoutController::class, 'preview'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.checkout.preview');
+Route::post('/api/checkout/validate-coupon', [\App\Http\Controllers\Api\CheckoutController::class, 'validateCoupon'])
+    ->middleware(['throttle:30,1', 'auth:sanctum'])
+    ->name('api.checkout.validate-coupon');
+Route::post('/api/checkout', [\App\Http\Controllers\Api\CheckoutController::class, 'process'])
+    ->middleware(['throttle:10,1', 'auth:sanctum'])
+    ->name('api.checkout.process');
+
 // Notification API للموبايل (auth:sanctum)
 Route::get('/api/notifications', [NotificationController::class, 'index'])
     ->middleware(['throttle:60,1', 'auth:sanctum'])
@@ -349,6 +397,65 @@ Route::delete('/api/notifications/{id}', [NotificationController::class, 'destro
 Route::delete('/api/notifications/read/clear', [NotificationController::class, 'destroyRead'])
     ->middleware(['throttle:60,1', 'auth:sanctum'])
     ->name('api.notifications.destroy-read.mobile');
+
+// Messages API للموبايل (auth:sanctum) — يُطابق الطلبات التي تحمل Bearer token
+Route::get('/api/messages/unread-count', [\App\Http\Controllers\Api\MessagesController::class, 'unreadCount'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.messages.unread-count.mobile');
+Route::get('/api/messages/recent', [\App\Http\Controllers\Api\MessagesController::class, 'recent'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.messages.recent.mobile');
+Route::get('/api/messages/conversations/{id}', [\App\Http\Controllers\Api\MessagesController::class, 'show'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.messages.conversation.show');
+Route::post('/api/messages/conversations/{id}/send', [\App\Http\Controllers\Api\MessagesController::class, 'send'])
+    ->middleware(['throttle:30,1', 'auth:sanctum'])
+    ->name('api.messages.conversation.send');
+Route::post('/api/messages/start', [\App\Http\Controllers\Api\MessagesController::class, 'start'])
+    ->middleware(['throttle:30,1', 'auth:sanctum'])
+    ->name('api.messages.start');
+Route::get('/api/messages/users', [\App\Http\Controllers\Api\MessagesController::class, 'searchUsers'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.messages.users.search');
+
+// Sidebar / account APIs (auth:sanctum)
+Route::get('/api/my-courses', [\App\Http\Controllers\Api\MyCoursesController::class, 'index'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.my-courses');
+Route::get('/api/my-assignments', [\App\Http\Controllers\Api\MyAssignmentsController::class, 'index'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.my-assignments');
+Route::get('/api/orders', [\App\Http\Controllers\Api\OrdersController::class, 'index'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.orders');
+Route::get('/api/support', [\App\Http\Controllers\Api\SupportController::class, 'index'])
+    ->middleware(['throttle:60,1'])
+    ->name('api.support.index');
+
+Route::get('/api/subscriptions/plans', [\App\Http\Controllers\Api\SubscriptionsController::class, 'plans'])
+    ->middleware(['throttle:60,1'])
+    ->name('api.subscriptions.plans');
+Route::get('/api/subscriptions/my', [\App\Http\Controllers\Api\SubscriptionsController::class, 'my'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.subscriptions.my');
+Route::post('/api/subscriptions/subscribe', [\App\Http\Controllers\Api\SubscriptionsController::class, 'subscribe'])
+    ->middleware(['throttle:10,1', 'auth:sanctum'])
+    ->name('api.subscriptions.subscribe');
+Route::get('/api/reminders', [ReminderController::class, 'index'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.reminders.index.mobile');
+Route::get('/api/reminders/counts', [ReminderController::class, 'counts'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.reminders.counts.mobile');
+Route::post('/api/reminders/dismiss', [ReminderController::class, 'dismiss'])
+    ->middleware(['throttle:30,1', 'auth:sanctum'])
+    ->name('api.reminders.dismiss.mobile');
+Route::post('/api/support/complaint', [\App\Http\Controllers\Api\SupportController::class, 'storeComplaint'])
+    ->middleware(['throttle:10,1'])
+    ->name('api.support.complaint');
+Route::post('/api/support/contact', [\App\Http\Controllers\Api\SupportController::class, 'storeContact'])
+    ->middleware(['throttle:10,1'])
+    ->name('api.support.contact');
 
 Route::get('/messages', [\App\Http\Controllers\Site\MessagesController::class, 'index'])->name('site.messages');
 Route::get('/messages/new', [\App\Http\Controllers\Site\MessagesController::class, 'newConversation'])->name('site.messages.new');
@@ -1119,11 +1226,11 @@ Route::post('/cart/store/{item}', function (Request $request, \App\Models\StoreC
 
 Route::view('/blog', 'pages.blog')->name('site.blog');
 
-// Search API routes with rate limiting
-Route::prefix('api/search')->middleware(['web', 'throttle:60,1'])->group(function () {
+// Search API routes with rate limiting (no 'web' middleware for API/mobile clients with Bearer token)
+Route::prefix('api/search')->middleware(['throttle:60,1'])->group(function () {
     Route::get('/suggestions', [SearchController::class, 'suggestions'])->name('api.search.suggestions');
     Route::get('/results', [SearchController::class, 'search'])->name('api.search.results');
-    Route::post('/clear-history', [SearchController::class, 'clearHistory'])->name('api.search.clear-history')->middleware('auth');
+    Route::post('/clear-history', [SearchController::class, 'clearHistory'])->name('api.search.clear-history')->middleware('auth:sanctum');
 });
 
 // Notification routes

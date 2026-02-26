@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../app_theme.dart';
+import '../api/auth_api.dart';
 import '../api/notifications_api.dart';
 import 'feature_scaffold.dart';
+import 'login_screen.dart';
 
 /// الإشعارات — مربوط بـ api/notifications مع حركات وقائمة تفاعلية
 class NotificationsScreen extends StatefulWidget {
@@ -85,7 +87,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 child: Center(child: CircularProgressIndicator(color: AppTheme.primary)),
               )
             : _needsAuth
-                ? _NeedsAuthNotifications()
+                ? (AuthApi.token != null
+                    ? _SessionExpiredNotifications(onRefresh: () => _load(refresh: true))
+                    : _NeedsAuthNotifications())
                 : _list.isEmpty
                     ? _EmptyNotifications(onRefresh: () => _load(refresh: true))
                     : Padding(
@@ -262,6 +266,67 @@ class _NeedsAuthNotifications extends StatelessWidget {
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
               textAlign: TextAlign.center,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SessionExpiredNotifications extends StatelessWidget {
+  const _SessionExpiredNotifications({required this.onRefresh});
+
+  final VoidCallback onRefresh;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.cloud_off_rounded, size: 72, color: AppTheme.primary.withValues(alpha: 0.6)),
+          const SizedBox(height: 20),
+          Text(
+            'تعذر تحميل الإشعارات',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.primaryDark,
+                ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Text(
+              'تحقق من الاتصال بالإنترنت وجرب التحديث',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey.shade600),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              TextButton.icon(
+                onPressed: () async {
+                  await AuthApi.logout();
+                  if (context.mounted) {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                      (_) => false,
+                    );
+                  }
+                },
+                icon: const Icon(Icons.logout_rounded, size: 20),
+                label: const Text('تسجيل الخروج'),
+              ),
+              const SizedBox(width: 12),
+              TextButton.icon(
+                onPressed: onRefresh,
+                icon: const Icon(Icons.refresh_rounded, size: 20),
+                label: const Text('تحديث'),
+              ),
+            ],
           ),
         ],
       ),

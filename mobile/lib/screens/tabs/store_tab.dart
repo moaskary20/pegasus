@@ -6,14 +6,18 @@ import '../../app_theme.dart';
 
 /// تبويب الاستور: يعرض تصنيفات المتجر من إدارة المتجر (ProductCategory)
 class StoreTab extends StatefulWidget {
-  const StoreTab({super.key, this.onOpenDrawer, this.wishlistCount = 0, this.onWishlistCountChanged, this.onOpenFavorite, this.onOpenCart, this.onOpenNotifications});
+  const StoreTab({super.key, this.onOpenDrawer, this.wishlistCount = 0, this.onWishlistCountChanged, this.onOpenFavorite, this.cartCount = 0, this.notificationsCount = 0, this.messagesCount = 0, this.onOpenCart, this.onOpenNotifications, this.onOpenMessages});
 
   final VoidCallback? onOpenDrawer;
   final int wishlistCount;
   final void Function(int delta)? onWishlistCountChanged;
   final VoidCallback? onOpenFavorite;
+  final int cartCount;
+  final int notificationsCount;
+  final int messagesCount;
   final VoidCallback? onOpenCart;
   final VoidCallback? onOpenNotifications;
+  final VoidCallback? onOpenMessages;
 
   @override
   State<StoreTab> createState() => _StoreTabState();
@@ -48,8 +52,12 @@ class _StoreTabState extends State<StoreTab> {
         onMenu: widget.onOpenDrawer ?? () => Scaffold.of(context).openDrawer(),
         favoriteCount: widget.wishlistCount,
         onFavorite: widget.onOpenFavorite,
+        cartCount: widget.cartCount,
+        notificationsCount: widget.notificationsCount,
+        messagesCount: widget.messagesCount,
         onCart: widget.onOpenCart,
         onBell: widget.onOpenNotifications,
+        onMessages: widget.onOpenMessages,
       ),
       body: RefreshIndicator(
         onRefresh: _load,

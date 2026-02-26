@@ -34,6 +34,9 @@ class _CategoryCoursesScreenState extends State<CategoryCoursesScreen> with Sing
   late AnimationController _animController;
   static const int _staggerMs = 55;
   static const int _animDurationMs = 380;
+  String _sort = 'newest';
+  double? _minRating;
+  String? _priceType;
 
   @override
   void initState() {
@@ -95,9 +98,12 @@ class _CategoryCoursesScreenState extends State<CategoryCoursesScreen> with Sing
   Future<void> _load() async {
     setState(() => _loading = true);
     final results = await Future.wait([
-      CoursesApi.getCoursesByCategory(
+      CoursesApi.getCourses(
         categoryId: widget.categoryId,
         subCategoryId: widget.subCategoryId,
+        minRating: _minRating,
+        priceType: _priceType,
+        sort: _sort,
       ),
       WishlistApi.getWishlist(),
     ]);
@@ -213,31 +219,143 @@ class _CategoryCoursesScreenState extends State<CategoryCoursesScreen> with Sing
   Widget _buildHeader() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: AppTheme.primary.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: AppTheme.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.menu_book_rounded, size: 20, color: AppTheme.primary),
+                    const SizedBox(width: 8),
+                    Text('${_courses.length} دورة', style: TextStyle(fontWeight: FontWeight.w600, color: AppTheme.primary, fontSize: 14)),
+                  ],
+                ),
+              ),
+              _FilterChip(
+                label: _sortLabel(_sort),
+                selected: true,
+                onTap: () => _showSortMenu(),
+              ),
+              GestureDetector(
+                onTap: _showFiltersMenu,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: (_minRating != null || _priceType != null) ? AppTheme.primary.withValues(alpha: 0.15) : Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.tune_rounded, size: 18, color: (_minRating != null || _priceType != null) ? AppTheme.primary : Colors.grey.shade700),
+                      const SizedBox(width: 6),
+                      Text('فلاتر', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: (_minRating != null || _priceType != null) ? AppTheme.primary : Colors.grey.shade700)),
+                    ],
+                  ),
+                ),
+              ),
+              if (_minRating != null)
+                _FilterChip(label: '${_minRating!.toInt()}+ نجمة', selected: true, onTap: () { setState(() { _minRating = null; }); _load(); }),
+              if (_priceType != null)
+                _FilterChip(label: _priceType == 'free' ? 'مجاني' : 'مدفوع', selected: true, onTap: () { setState(() { _priceType = null; }); _load(); }),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _sortLabel(String s) {
+    switch (s) {
+      case 'rating': return 'الأعلى تقييماً';
+      case 'price_asc': return 'السعر: أقل لأعلى';
+      case 'price_desc': return 'السعر: أعلى لأقل';
+      default: return 'الأحدث';
+    }
+  }
+
+  void _showSortMenu() {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(title: const Text('الأحدث'), onTap: () { Navigator.pop(ctx); setState(() => _sort = 'newest'); _load(); }),
+            ListTile(title: const Text('الأعلى تقييماً'), onTap: () { Navigator.pop(ctx); setState(() => _sort = 'rating'); _load(); }),
+            ListTile(title: const Text('السعر: أقل لأعلى'), onTap: () { Navigator.pop(ctx); setState(() => _sort = 'price_asc'); _load(); }),
+            ListTile(title: const Text('السعر: أعلى لأقل'), onTap: () { Navigator.pop(ctx); setState(() => _sort = 'price_desc'); _load(); }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showFiltersMenu() {
+    double? newMinRating = _minRating;
+    String? newPriceType = _priceType;
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) => SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.menu_book_rounded, size: 20, color: AppTheme.primary),
-                const SizedBox(width: 8),
-                Text(
-                  '${_courses.length} دورة',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.primary,
-                    fontSize: 14,
+                Text('التقييم الأدنى', style: Theme.of(context).textTheme.titleSmall),
+                Wrap(
+                  spacing: 8,
+                  children: [4.0, 3.0, 2.0].map((r) {
+                    final sel = newMinRating == r;
+                    return ChoiceChip(
+                      label: Text('$r+ نجوم'),
+                      selected: sel,
+                      onSelected: (_) => setModalState(() => newMinRating = sel ? null : r),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 16),
+                Text('نوع السعر', style: Theme.of(context).textTheme.titleSmall),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    ChoiceChip(label: const Text('الكل'), selected: newPriceType == null, onSelected: (_) => setModalState(() => newPriceType = null)),
+                    ChoiceChip(label: const Text('مجاني'), selected: newPriceType == 'free', onSelected: (_) => setModalState(() => newPriceType = 'free')),
+                    ChoiceChip(label: const Text('مدفوع'), selected: newPriceType == 'paid', onSelected: (_) => setModalState(() => newPriceType = 'paid')),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      setState(() {
+                        _minRating = newMinRating;
+                        _priceType = newPriceType;
+                      });
+                      _load();
+                    },
+                    style: FilledButton.styleFrom(backgroundColor: AppTheme.primary),
+                    child: const Text('تطبيق'),
                   ),
                 ),
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -483,5 +601,24 @@ class _CourseCard extends StatelessWidget {
     if (u.startsWith('/')) return '$base$u';
     if (u.startsWith('storage/')) return '$base/$u';
     return '$base/storage/$u';
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  const _FilterChip({required this.label, required this.selected, required this.onTap});
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return FilterChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: (_) => onTap(),
+      selectedColor: AppTheme.primary.withValues(alpha: 0.2),
+      checkmarkColor: AppTheme.primary,
+    );
   }
 }

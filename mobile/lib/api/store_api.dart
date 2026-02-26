@@ -43,6 +43,32 @@ class StoreApi {
     }
   }
 
+  /// تقييم منتج (1-5 نجوم، تعليق اختياري)
+  static Future<ProductRateResult?> rateProduct(int productId, {required int rating, String? comment}) async {
+    try {
+      await AuthApi.loadStoredToken();
+      if (AuthApi.token == null) return null;
+      final uri = Uri.parse('$apiBaseUrl$apiStoreProductRate/$productId/rate');
+      final body = <String, dynamic>{'rating': rating};
+      if (comment != null && comment.trim().isNotEmpty) body['comment'] = comment.trim();
+      final res = await http.post(
+        uri,
+        headers: {..._headers, 'Content-Type': 'application/json'},
+        body: jsonEncode(body),
+      );
+      if (res.statusCode != 200) return null;
+      final data = jsonDecode(res.body.toString()) as Map<String, dynamic>? ?? {};
+      return ProductRateResult(
+        success: data['success'] == true,
+        message: data['message']?.toString(),
+        averageRating: (data['average_rating'] as num?)?.toDouble(),
+        ratingsCount: (data['ratings_count'] as num?)?.toInt(),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// جلب تصنيفات المتجر من إدارة المتجر (ProductCategory)
   static Future<StoreCategoriesResponse> getCategories() async {
     try {
@@ -61,6 +87,19 @@ class StoreApi {
       return StoreCategoriesResponse(categories: []);
     }
   }
+}
+
+class ProductRateResult {
+  ProductRateResult({
+    required this.success,
+    this.message,
+    this.averageRating,
+    this.ratingsCount,
+  });
+  final bool success;
+  final String? message;
+  final double? averageRating;
+  final int? ratingsCount;
 }
 
 class StoreProductItem {

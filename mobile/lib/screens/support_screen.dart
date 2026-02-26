@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../app_theme.dart';
+import '../api/support_api.dart';
 import 'feature_scaffold.dart';
 
-/// المساعدة والدعم — مطابق للـ backend (support: شكوى + تواصل)
+/// المساعدة والدعم — بيانات وإرسال من الـ backend (GET /api/support، POST complaint/contact)
 class SupportScreen extends StatefulWidget {
   const SupportScreen({super.key});
 
@@ -12,11 +13,19 @@ class SupportScreen extends StatefulWidget {
 
 class _SupportScreenState extends State<SupportScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  SupportSettingsResponse? _settings;
+  bool _loadingSettings = true;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    final res = await SupportApi.getSettings();
+    if (mounted) setState(() { _settings = res; _loadingSettings = false; });
   }
 
   @override
@@ -121,14 +130,19 @@ class _ComplaintFormState extends State<_ComplaintForm> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _sending = true);
-    // TODO: استدعاء API عند توفر endpoint للموبايل
-    await Future.delayed(const Duration(seconds: 1));
+    final result = await SupportApi.submitComplaint(
+      name: _name.text.trim(),
+      email: _email.text.trim(),
+      phone: _phone.text.trim().isEmpty ? null : _phone.text.trim(),
+      subject: _subject.text.trim(),
+      message: _message.text.trim(),
+    );
     if (!mounted) return;
     setState(() => _sending = false);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('تم استلام شكواك. سنتواصل معك قريباً.'),
-        backgroundColor: AppTheme.primary,
+        content: Text(result.message),
+        backgroundColor: result.success ? AppTheme.primary : Colors.red.shade700,
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -244,14 +258,19 @@ class _ContactFormState extends State<_ContactForm> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _sending = true);
-    // TODO: استدعاء API عند توفر endpoint للموبايل
-    await Future.delayed(const Duration(seconds: 1));
+    final result = await SupportApi.submitContact(
+      name: _name.text.trim(),
+      email: _email.text.trim(),
+      phone: _phone.text.trim().isEmpty ? null : _phone.text.trim(),
+      subject: _subject.text.trim(),
+      message: _message.text.trim(),
+    );
     if (!mounted) return;
     setState(() => _sending = false);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('تم استلام رسالتك. سنرد عليك قريباً.'),
-        backgroundColor: AppTheme.primary,
+        content: Text(result.message),
+        backgroundColor: result.success ? AppTheme.primary : Colors.red.shade700,
         behavior: SnackBarBehavior.floating,
       ),
     );

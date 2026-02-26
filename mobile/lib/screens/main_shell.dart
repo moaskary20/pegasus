@@ -9,7 +9,11 @@ import 'widgets/app_drawer.dart';
 import 'wishlist_screen.dart';
 import 'cart_screen.dart';
 import 'notifications_screen.dart';
+import 'messages_screen.dart';
 import '../api/wishlist_api.dart';
+import '../api/cart_api.dart';
+import '../api/notifications_api.dart';
+import '../api/messages_api.dart';
 
 const Color _primary = Color(0xFF2c004d);
 
@@ -36,6 +40,9 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> with SingleTickerProviderStateMixin {
   int _currentIndex = 0;
   int _wishlistCount = 0;
+  int _cartCount = 0;
+  int _notificationsCount = 0;
+  int _messagesCount = 0;
   final _pageController = PageController();
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   bool _drawerVisible = false;
@@ -53,7 +60,16 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
       parent: _drawerController,
       curve: Curves.easeOutCubic,
     );
-    _loadWishlistCount();
+    _loadCounts();
+  }
+
+  Future<void> _loadCounts() async {
+    await Future.wait([
+      _loadWishlistCount(),
+      _loadCartCount(),
+      _loadNotificationsCount(),
+      _loadMessagesCount(),
+    ]);
   }
 
   Future<void> _loadWishlistCount() async {
@@ -66,11 +82,34 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
   void _openWishlist() {
     Navigator.of(context)
         .push(MaterialPageRoute(builder: (_) => const WishlistScreen()))
-        .then((_) => _loadWishlistCount());
+        .then((_) => _loadCounts());
   }
 
   void _onWishlistCountChanged(int delta) {
     setState(() => _wishlistCount = (_wishlistCount + delta).clamp(0, 999));
+  }
+
+  Future<void> _loadCartCount() async {
+    try {
+      final res = await CartApi.getCart();
+      if (mounted && !res.needsAuth) {
+        setState(() => _cartCount = res.courses.length + res.cartProducts.length);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _loadNotificationsCount() async {
+    try {
+      final n = await NotificationsApi.getUnreadCount();
+      if (mounted) setState(() => _notificationsCount = n);
+    } catch (_) {}
+  }
+
+  Future<void> _loadMessagesCount() async {
+    try {
+      final n = await MessagesApi.getUnreadCount();
+      if (mounted) setState(() => _messagesCount = n);
+    } catch (_) {}
   }
 
   @override
@@ -118,48 +157,72 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
                 wishlistCount: _wishlistCount,
                 onWishlistCountChanged: _onWishlistCountChanged,
                 onOpenFavorite: _openWishlist,
+                cartCount: _cartCount,
+                notificationsCount: _notificationsCount,
+                messagesCount: _messagesCount,
                 onOpenCart: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const CartScreen()),
-                ),
+                ).then((_) => _loadCounts()),
                 onOpenNotifications: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-                ),
+                ).then((_) => _loadCounts()),
+                onOpenMessages: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const MessagesScreen()),
+                ).then((_) => _loadCounts()),
               ),
               CoursesTab(
                 onOpenDrawer: openDrawer,
                 wishlistCount: _wishlistCount,
                 onWishlistCountChanged: _onWishlistCountChanged,
                 onOpenFavorite: _openWishlist,
+                cartCount: _cartCount,
+                notificationsCount: _notificationsCount,
+                messagesCount: _messagesCount,
                 onOpenCart: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const CartScreen()),
-                ),
+                ).then((_) => _loadCounts()),
                 onOpenNotifications: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-                ),
+                ).then((_) => _loadCounts()),
+                onOpenMessages: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const MessagesScreen()),
+                ).then((_) => _loadCounts()),
               ),
               StoreTab(
                 onOpenDrawer: openDrawer,
                 wishlistCount: _wishlistCount,
                 onWishlistCountChanged: _onWishlistCountChanged,
                 onOpenFavorite: _openWishlist,
+                cartCount: _cartCount,
+                notificationsCount: _notificationsCount,
+                messagesCount: _messagesCount,
                 onOpenCart: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const CartScreen()),
-                ),
+                ).then((_) => _loadCounts()),
                 onOpenNotifications: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-                ),
+                ).then((_) => _loadCounts()),
+                onOpenMessages: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const MessagesScreen()),
+                ).then((_) => _loadCounts()),
               ),
               AccountTab(
                 onOpenDrawer: openDrawer,
                 wishlistCount: _wishlistCount,
                 onWishlistCountChanged: _onWishlistCountChanged,
                 onOpenFavorite: _openWishlist,
+                cartCount: _cartCount,
+                notificationsCount: _notificationsCount,
+                messagesCount: _messagesCount,
                 onOpenCart: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const CartScreen()),
-                ),
+                ).then((_) => _loadCounts()),
                 onOpenNotifications: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-                ),
+                ).then((_) => _loadCounts()),
+                onOpenMessages: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const MessagesScreen()),
+                ).then((_) => _loadCounts()),
               ),
             ],
           ),

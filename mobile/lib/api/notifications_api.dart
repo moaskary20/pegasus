@@ -18,6 +18,7 @@ class NotificationsApi {
     bool? unreadOnly,
   }) async {
     try {
+      await AuthApi.loadStoredToken();
       var path = '$apiBaseUrl$apiNotifications?page=$page&per_page=$perPage';
       if (unreadOnly == true) path += '&unread=1';
       final uri = Uri.parse(path);

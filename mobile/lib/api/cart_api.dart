@@ -49,10 +49,12 @@ class CartApi {
     }
   }
 
-  static Future<bool> addCourse(int courseId) async {
+  static Future<bool> addCourse(int courseId, {String subscriptionType = 'once'}) async {
     try {
       final uri = Uri.parse('$apiBaseUrl$apiCart/courses/$courseId');
-      final res = await http.post(uri, headers: _headers);
+      final headers = {..._headers, 'Content-Type': 'application/json'};
+      final body = jsonEncode({'subscription_type': subscriptionType});
+      final res = await http.post(uri, headers: headers, body: body);
       return res.statusCode == 200;
     } catch (_) {
       return false;
@@ -117,6 +119,7 @@ class CartCourseItem {
     required this.price,
     this.originalPrice,
     this.coverImage,
+    this.subscriptionType,
     this.category,
     this.instructor,
   });
@@ -127,8 +130,18 @@ class CartCourseItem {
   final double price;
   final double? originalPrice;
   final String? coverImage;
+  /// once | monthly | daily
+  final String? subscriptionType;
   final CategoryRef? category;
   final InstructorRef? instructor;
+
+  String get subscriptionTypeLabel {
+    switch (subscriptionType ?? 'once') {
+      case 'monthly': return 'شهري';
+      case 'daily': return 'يومي';
+      default: return 'مرة واحدة';
+    }
+  }
 
   factory CartCourseItem.fromJson(Map<String, dynamic> json) {
     return CartCourseItem(
@@ -138,6 +151,7 @@ class CartCourseItem {
       price: (json['price'] as num?)?.toDouble() ?? 0,
       originalPrice: json['original_price'] != null ? (json['original_price'] as num).toDouble() : null,
       coverImage: json['cover_image']?.toString(),
+      subscriptionType: json['subscription_type']?.toString(),
       category: json['category'] != null ? CategoryRef.fromJson(json['category'] as Map<String, dynamic>) : null,
       instructor: json['instructor'] != null ? InstructorRef.fromJson(json['instructor'] as Map<String, dynamic>) : null,
     );

@@ -16,12 +16,16 @@ class StudentSubscription extends Model
         'end_date',
         'status',
         'final_price',
+        'manual_receipt_path',
+        'manual_receipt_original_name',
+        'manual_receipt_uploaded_at',
     ];
 
     protected $casts = [
         'start_date' => 'datetime',
         'end_date' => 'datetime',
         'final_price' => 'float',
+        'manual_receipt_uploaded_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

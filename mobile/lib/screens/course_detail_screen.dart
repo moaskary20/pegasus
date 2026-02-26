@@ -5,8 +5,12 @@ import '../api/config.dart';
 import '../api/auth_api.dart';
 import '../api/wishlist_api.dart';
 import '../api/cart_api.dart';
+import '../api/course_rating_api.dart';
+import '../api/home_api.dart';
 import '../app_theme.dart';
 import 'cart_screen.dart';
+import 'lesson_player_screen.dart';
+import 'instructor_profile_screen.dart';
 
 /// شاشة تفاصيل الدورة التدريبية — تصميم احترافي مع تبويبات وحركات (مشابه للصورة المرجعية)
 class CourseDetailScreen extends StatefulWidget {
@@ -186,12 +190,12 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> with SingleTick
             ),
           ),
         ],
-        body: TabBarView(
+          body: TabBarView(
           controller: _tabController,
           children: [
             _AboutTab(course: _course!),
             _LessonsTab(course: _course!),
-            _ReviewsTab(course: _course!),
+            _ReviewsTab(course: _course!, onRatingSubmitted: _load),
           ],
         ),
       ),
@@ -201,6 +205,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> with SingleTick
 
   Widget _buildCourseBottomBar() {
     final c = _course!;
+    final isEnrolled = c.isEnrolled;
     return Container(
       padding: EdgeInsets.fromLTRB(20, 12, 20, 12 + MediaQuery.of(context).padding.bottom),
       decoration: BoxDecoration(
@@ -208,28 +213,100 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> with SingleTick
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, -4))],
       ),
       child: SafeArea(
-        child: FilledButton(
-          onPressed: () => _addCourseToCart(c),
-          style: FilledButton.styleFrom(
-            backgroundColor: AppTheme.primary,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          ),
-          child: const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.shopping_cart_rounded),
-              SizedBox(width: 8),
-              Text('إضافة إلى السلة', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            ],
-          ),
-        ),
+        child: isEnrolled
+            ? FilledButton(
+                onPressed: () => _continueLearning(c),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.play_circle_filled_rounded),
+                    SizedBox(width: 8),
+                    Text('متابعة التعلم', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              )
+            : FilledButton(
+                onPressed: () => _showAddToCartModal(c),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppTheme.primary,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.shopping_cart_rounded),
+                    SizedBox(width: 8),
+                    Text('إضافة إلى السلة', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
       ),
     );
   }
 
-  Future<void> _addCourseToCart(CourseDetailItem c) async {
-    final ok = await CartApi.addCourse(c.id);
+  void _continueLearning(CourseDetailItem c) {
+    final sections = c.sections;
+    for (final section in sections) {
+      for (final lesson in section.lessons) {
+        final progress = c.lessonProgressMap[lesson.id];
+        if (progress == null || !progress.completed) {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => LessonPlayerScreen(
+                courseSlug: c.slug,
+                courseTitle: c.title,
+                lessonId: lesson.id,
+                lessonTitle: lesson.title,
+              ),
+            ),
+          ).then((_) => _load());
+          return;
+        }
+      }
+    }
+    if (sections.isNotEmpty && sections.first.lessons.isNotEmpty) {
+      final first = sections.first.lessons.first;
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => LessonPlayerScreen(
+            courseSlug: c.slug,
+            courseTitle: c.title,
+            lessonId: first.id,
+            lessonTitle: first.title,
+          ),
+        ),
+      ).then((_) => _load());
+    }
+  }
+
+  void _showAddToCartModal(CourseDetailItem c) {
+    final hasMultiplePrices = (c.priceOnce != null && c.priceMonthly != null) || (c.priceDaily != null);
+    if (!hasMultiplePrices) {
+      _addCourseToCart(c, 'once');
+      return;
+    }
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => _SubscriptionTypeSelector(
+        course: c,
+        onSelect: (type) {
+          Navigator.pop(ctx);
+          _addCourseToCart(c, type);
+        },
+      ),
+    );
+  }
+
+  Future<void> _addCourseToCart(CourseDetailItem c, String subscriptionType) async {
+    final ok = await CartApi.addCourse(c.id, subscriptionType: subscriptionType);
     if (!mounted) return;
     if (ok) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -388,43 +465,55 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> with SingleTick
             ),
             if (c.instructor != null) ...[
               const SizedBox(height: 14),
-              Row(
-                textDirection: TextDirection.rtl,
-                children: [
-                  CircleAvatar(
-                    radius: 20,
-                    backgroundColor: AppTheme.primary.withValues(alpha: 0.12),
-                    backgroundImage: c.instructor!.avatar != null && c.instructor!.avatar!.isNotEmpty
-                        ? NetworkImage(_fullImageUrl(c.instructor!.avatar) ?? '')
-                        : null,
-                    child: c.instructor!.avatar == null || c.instructor!.avatar!.isEmpty
-                        ? Text(
-                            c.instructor!.name.isNotEmpty ? c.instructor!.name.substring(0, 1).toUpperCase() : '?',
-                            style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold),
-                          )
-                        : null,
+              InkWell(
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => InstructorProfileScreen(instructorId: c.instructor!.id),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'المدرب',
-                          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                ),
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    textDirection: TextDirection.rtl,
+                    children: [
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: AppTheme.primary.withValues(alpha: 0.12),
+                        backgroundImage: c.instructor!.avatar != null && c.instructor!.avatar!.isNotEmpty
+                            ? NetworkImage(_fullImageUrl(c.instructor!.avatar) ?? '')
+                            : null,
+                        child: c.instructor!.avatar == null || c.instructor!.avatar!.isEmpty
+                            ? Text(
+                                c.instructor!.name.isNotEmpty ? c.instructor!.name.substring(0, 1).toUpperCase() : '?',
+                                style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold),
+                              )
+                            : null,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'المدرب',
+                              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                            ),
+                            Text(
+                              c.instructor!.name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 15,
+                                color: Color(0xFF1A1A1A),
+                              ),
+                            ),
+                          ],
                         ),
-                        Text(
-                          c.instructor!.name,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 15,
-                            color: Color(0xFF1A1A1A),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                      Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Colors.grey.shade500),
+                    ],
                   ),
-                ],
+                ),
               ),
             ],
             const SizedBox(height: 16),
@@ -678,9 +767,158 @@ class _AboutTabState extends State<_AboutTab> with SingleTickerProviderStateMixi
                 textDirection: TextDirection.rtl,
               ),
             ],
+            if (c.relatedCourses.isNotEmpty) ...[
+              const SizedBox(height: 28),
+              Text(
+                'دورات ذات صلة',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF1A1A1A),
+                    ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 140,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: c.relatedCourses.length,
+                  itemBuilder: (context, i) {
+                    final rc = c.relatedCourses[i];
+                    return Padding(
+                      padding: const EdgeInsets.only(left: 12),
+                      child: _RelatedCourseCard(
+                        course: rc,
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => CourseDetailScreen(courseSlug: rc.slug, courseTitle: rc.title),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
           ],
         ),
       ),
+    );
+  }
+}
+
+class _RelatedCourseCard extends StatelessWidget {
+  const _RelatedCourseCard({required this.course, required this.onTap});
+
+  final CourseItem course;
+  final VoidCallback onTap;
+
+  static String _fullUrlForImage(String url) {
+    if (url.startsWith('http')) return url;
+    final base = apiBaseUrl.endsWith('/') ? apiBaseUrl.substring(0, apiBaseUrl.length - 1) : apiBaseUrl;
+    return url.startsWith('/') ? '$base$url' : '$base/$url';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: SizedBox(
+          width: 200,
+          child: Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Colors.grey.shade200)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (course.coverImage != null && course.coverImage!.isNotEmpty)
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                    child: Image.network(
+                      _fullUrlForImage(course.coverImage!),
+                      height: 90,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(height: 90, color: Colors.grey.shade200, child: Icon(Icons.school_rounded, color: Colors.grey)),
+                    ),
+                  ),
+                Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Text(
+                    course.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SubscriptionTypeSelector extends StatelessWidget {
+  const _SubscriptionTypeSelector({required this.course, required this.onSelect});
+
+  final CourseDetailItem course;
+  final void Function(String type) onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('اختر نوع الاشتراك', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 16),
+          _OptionTile(
+            title: 'اشتراك واحد (120 يوم)',
+            price: course.priceOnce ?? course.price,
+            onTap: () => onSelect('once'),
+          ),
+          if (course.priceMonthly != null)
+            _OptionTile(
+              title: 'اشتراك شهري',
+              price: course.priceMonthly!,
+              onTap: () => onSelect('monthly'),
+            ),
+          if (course.priceDaily != null)
+            _OptionTile(
+              title: 'اشتراك يومي (درس واحد)',
+              price: course.priceDaily!,
+              onTap: () => onSelect('daily'),
+            ),
+          const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+}
+
+class _OptionTile extends StatelessWidget {
+  const _OptionTile({required this.title, required this.price, required this.onTap});
+
+  final String title;
+  final double price;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      title: Text(title, textDirection: TextDirection.rtl),
+      trailing: Text('${price.toStringAsFixed(0)} ر.س', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary)),
+      onTap: onTap,
     );
   }
 }
@@ -780,7 +1018,24 @@ class _LessonsTab extends StatelessWidget {
                     color: Colors.transparent,
                     child: InkWell(
                       onTap: () {
-                        // TODO: فتح الدرس عند توفر شاشة المشاهدة
+                        final canAccess = course.isEnrolled ||
+                            lesson.isFreePreview;
+                        if (!canAccess) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('يجب الاشتراك في الدورة لمشاهدة هذا الدرس')),
+                          );
+                          return;
+                        }
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => LessonPlayerScreen(
+                              courseSlug: course.slug,
+                              courseTitle: course.title,
+                              lessonId: lesson.id,
+                              lessonTitle: lesson.title,
+                            ),
+                          ),
+                        );
                       },
                       borderRadius: BorderRadius.circular(14),
                       child: Padding(
@@ -860,36 +1115,162 @@ class _LessonsTab extends StatelessWidget {
   }
 }
 
-class _ReviewsTab extends StatelessWidget {
-  const _ReviewsTab({required this.course});
+class _ReviewsTab extends StatefulWidget {
+  const _ReviewsTab({required this.course, required this.onRatingSubmitted});
 
   final CourseDetailItem course;
+  final VoidCallback onRatingSubmitted;
+
+  @override
+  State<_ReviewsTab> createState() => _ReviewsTabState();
+}
+
+class _ReviewsTabState extends State<_ReviewsTab> {
+  int _selectedStars = 0;
+  final _reviewController = TextEditingController();
+  bool _submitting = false;
+
+  @override
+  void dispose() {
+    _reviewController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submitRating() async {
+    if (_selectedStars < 1) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('اختر عدد النجوم')));
+      return;
+    }
+    setState(() => _submitting = true);
+    final res = await CourseRatingApi.rateCourse(
+      widget.course.slug,
+      _selectedStars,
+      review: _reviewController.text.trim().isEmpty ? null : _reviewController.text.trim(),
+    );
+    if (!mounted) return;
+    setState(() => _submitting = false);
+    if (res?.success == true) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(res!.message)));
+      widget.onRatingSubmitted();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تعذر إرسال التقييم')));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Center(
+    final c = widget.course;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.star_rounded, size: 64, color: Colors.orange.shade300),
-          const SizedBox(height: 16),
-          Text(
-            '${course.rating} من 5',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.star_rounded, size: 48, color: Colors.orange.shade400),
+              const SizedBox(width: 12),
+              Column(
+                children: [
+                  Text('${c.rating} من 5', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                  Text('${c.reviewsCount} تقييم', style: TextStyle(color: Colors.grey.shade600)),
+                ],
+              ),
+            ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            '${course.reviewsCount} تقييم',
-            style: TextStyle(color: Colors.grey.shade600),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'التقييمات ستُعرض هنا عند ربطها بالـ API',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
-          ),
+          if (c.isEnrolled) ...[
+            const SizedBox(height: 28),
+            Text('أضف تقييمك', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(5, (i) {
+                final star = i + 1;
+                return IconButton(
+                  icon: Icon(
+                    star <= _selectedStars ? Icons.star_rounded : Icons.star_border_rounded,
+                    color: Colors.orange,
+                    size: 36,
+                  ),
+                  onPressed: () => setState(() => _selectedStars = star),
+                );
+              }),
+            ),
+            TextField(
+              controller: _reviewController,
+              textDirection: TextDirection.rtl,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                hintText: 'اكتب مراجعتك (اختياري)',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: _submitting ? null : _submitRating,
+                style: FilledButton.styleFrom(backgroundColor: AppTheme.primary),
+                child: _submitting ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Text('إرسال التقييم'),
+              ),
+            ),
+          ],
+          const SizedBox(height: 28),
+          Text('التقييمات', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          if (c.ratings.isEmpty)
+            Text('لا توجد تقييمات حتى الآن', style: TextStyle(color: Colors.grey.shade600))
+          else
+            ...c.ratings.map((r) => Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Card(
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: Colors.grey.shade200)),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            textDirection: TextDirection.rtl,
+                            children: [
+                              CircleAvatar(
+                                radius: 20,
+                                backgroundColor: AppTheme.primary.withValues(alpha: 0.12),
+                                backgroundImage: r.avatar != null && r.avatar!.isNotEmpty ? NetworkImage(_fullUrlForImage(r.avatar!)) : null,
+                                child: r.avatar == null || r.avatar!.isEmpty ? Text(r.userName.isNotEmpty ? r.userName[0] : '?', style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold)) : null,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(r.userName, style: const TextStyle(fontWeight: FontWeight.w600)),
+                                    Row(
+                                      children: List.generate(5, (i) => Icon(i < r.stars ? Icons.star_rounded : Icons.star_border_rounded, size: 16, color: Colors.orange)),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (r.review != null && r.review!.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Text(r.review!, textDirection: TextDirection.rtl, style: TextStyle(color: Colors.grey.shade700)),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                )),
         ],
       ),
     );
+  }
+
+  static String _fullUrlForImage(String url) {
+    if (url.startsWith('http')) return url;
+    final base = apiBaseUrl.endsWith('/') ? apiBaseUrl.substring(0, apiBaseUrl.length - 1) : apiBaseUrl;
+    return url.startsWith('/') ? '$base$url' : '$base/$url';
   }
 }

@@ -9,16 +9,19 @@ class FeatureScaffold extends StatelessWidget {
     required this.body,
     this.onBack,
     this.actions,
+    this.floatingActionButton,
   });
 
   final String title;
   final Widget body;
   final VoidCallback? onBack;
   final List<Widget>? actions;
+  final Widget? floatingActionButton;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      floatingActionButton: floatingActionButton,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(

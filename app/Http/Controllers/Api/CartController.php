@@ -28,21 +28,23 @@ class CartController extends Controller
             ], 200);
         }
 
-        $courseIds = CourseCartItem::where('user_id', $user->id)->pluck('course_id')->all();
-        $courses = Course::query()
-            ->where('is_published', true)
-            ->whereIn('id', $courseIds)
-            ->with(['instructor:id,name', 'category:id,name'])
+        $cartItems = CourseCartItem::where('user_id', $user->id)
+            ->with(['course' => fn ($q) => $q->where('is_published', true)->with(['instructor:id,name', 'category:id,name'])])
             ->get()
-            ->sortBy(fn ($c) => array_search($c->id, $courseIds))
-            ->values();
+            ->filter(fn ($item) => $item->course !== null);
+
+        $courseList = [];
+        $coursesSubtotal = 0.0;
+        foreach ($cartItems as $item) {
+            $c = $item->course;
+            $subType = $item->subscription_type ?? 'once';
+            $price = (float) $c->getPriceForSubscriptionType($subType);
+            $coursesSubtotal += $price;
+            $courseList[] = $this->formatCourseWithSubscription($c, $subType, $price);
+        }
 
         $storeCart = StoreCart::with('product.category')->where('user_id', $user->id)->get();
-
-        $courseList = $courses->map(fn (Course $c) => $this->formatCourse($c))->all();
         $cartProductsList = $storeCart->map(fn (StoreCart $item) => $this->formatCartProduct($item))->all();
-
-        $coursesSubtotal = (float) $courses->sum(fn ($c) => (float) ($c->offer_price ?? $c->price ?? 0));
         $productsSubtotal = (float) $storeCart->sum(fn ($item) => $item->total);
         $total = $coursesSubtotal + $productsSubtotal;
 
@@ -65,7 +67,17 @@ class CartController extends Controller
         if (!$course) {
             return response()->json(['message' => 'Course not found'], 404);
         }
-        CourseCartItem::firstOrCreate(['user_id' => $user->id, 'course_id' => $course->id]);
+
+        $subscriptionType = $request->input('subscription_type', 'once');
+        $allowed = ['once', 'monthly', 'daily'];
+        if (!in_array($subscriptionType, $allowed, true)) {
+            $subscriptionType = 'once';
+        }
+
+        $item = CourseCartItem::firstOrNew(['user_id' => $user->id, 'course_id' => $course->id]);
+        $item->subscription_type = $subscriptionType;
+        $item->save();
+
         return response()->json(['success' => true]);
     }
 
@@ -146,6 +158,21 @@ class CartController extends Controller
             'slug' => $course->slug,
             'price' => round($price, 2),
             'original_price' => $hasDiscount ? round($originalPrice, 2) : null,
+            'cover_image' => $coverImage,
+            'category' => $course->category ? ['id' => $course->category->id, 'name' => $course->category->name] : null,
+            'instructor' => $course->instructor ? ['id' => $course->instructor->id, 'name' => $course->instructor->name] : null,
+        ];
+    }
+
+    private function formatCourseWithSubscription(Course $course, string $subscriptionType, float $price): array
+    {
+        $coverImage = $this->absoluteUrl($course->getRawOriginal('cover_image') ? 'storage/' . ltrim($course->getRawOriginal('cover_image'), '/') : $course->cover_image);
+        return [
+            'id' => $course->id,
+            'title' => $course->title,
+            'slug' => $course->slug,
+            'price' => round($price, 2),
+            'subscription_type' => $subscriptionType,
             'cover_image' => $coverImage,
             'category' => $course->category ? ['id' => $course->category->id, 'name' => $course->category->name] : null,
             'instructor' => $course->instructor ? ['id' => $course->instructor->id, 'name' => $course->instructor->name] : null,

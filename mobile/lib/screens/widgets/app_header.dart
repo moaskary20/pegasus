@@ -8,21 +8,30 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
     super.key,
     this.title,
     this.onCart,
+    this.cartCount = 0,
     this.onBell,
+    this.notificationsCount = 0,
     this.onFavorite,
     this.favoriteCount = 0,
     this.onMessages,
+    this.messagesCount = 0,
     this.onMenu,
   });
 
   /// النص في المنتصف (افتراضي: أكاديمية بيغاسوس)
   final String? title;
   final VoidCallback? onCart;
+  /// عدد عناصر السلة (يُظهر بالأحمر فوق الأيقونة)
+  final int cartCount;
   final VoidCallback? onBell;
+  /// عدد الإشعارات غير المقروءة (يُظهر بالأحمر فوق الأيقونة)
+  final int notificationsCount;
   final VoidCallback? onFavorite;
   /// عدد عناصر المفضلة (يُظهر فوق القلب ويُلوّن القلب بالأحمر عند > 0)
   final int favoriteCount;
   final VoidCallback? onMessages;
+  /// عدد الرسائل غير المقروءة (يُظهر بالأحمر فوق الأيقونة)
+  final int messagesCount;
   final VoidCallback? onMenu;
 
   @override
@@ -54,8 +63,9 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
               onPressed: onMenu ?? () {},
               tooltip: 'القائمة',
             ),
-            IconButton(
+            _IconWithBadge(
               icon: const Icon(Icons.chat_bubble_outline_rounded),
+              count: messagesCount,
               onPressed: onMessages ?? () {},
               tooltip: 'الرسائل',
             ),
@@ -79,36 +89,83 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
               Positioned(
                 top: 4,
                 left: 4,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                  constraints: const BoxConstraints(minWidth: 18),
-                  decoration: BoxDecoration(
-                    color: Colors.red,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: _primary, width: 1),
-                  ),
-                  child: Text(
-                    favoriteCount > 99 ? '99+' : '$favoriteCount',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
+                child: _Badge(count: favoriteCount),
               ),
           ],
         ),
-        IconButton(
+        _IconWithBadge(
           icon: const Icon(Icons.notifications_none_rounded),
+          count: notificationsCount,
           onPressed: onBell ?? () {},
           tooltip: 'الإشعارات',
         ),
-        IconButton(
+        _IconWithBadge(
           icon: const Icon(Icons.shopping_cart_outlined),
+          count: cartCount,
           onPressed: onCart ?? () {},
           tooltip: 'السلة',
         ),
+      ],
+    );
+  }
+}
+
+class _Badge extends StatelessWidget {
+  const _Badge({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      constraints: const BoxConstraints(minWidth: 18),
+      decoration: BoxDecoration(
+        color: Colors.red,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: _primary, width: 1),
+      ),
+      child: Text(
+        count > 99 ? '99+' : '$count',
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
+}
+
+class _IconWithBadge extends StatelessWidget {
+  const _IconWithBadge({
+    required this.icon,
+    required this.count,
+    required this.onPressed,
+    required this.tooltip,
+  });
+
+  final Widget icon;
+  final int count;
+  final VoidCallback onPressed;
+  final String tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        IconButton(
+          icon: icon,
+          onPressed: onPressed,
+          tooltip: tooltip,
+        ),
+        if (count > 0)
+          Positioned(
+            top: 4,
+            left: 4,
+            child: _Badge(count: count),
+          ),
       ],
     );
   }

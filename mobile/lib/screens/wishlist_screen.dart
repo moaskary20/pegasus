@@ -81,98 +81,112 @@ class _WishlistScreenState extends State<WishlistScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final minHeight = MediaQuery.sizeOf(context).height -
+        (kToolbarHeight + MediaQuery.paddingOf(context).top + 8);
     return FeatureScaffold(
       title: 'المفضلة',
-      body: RefreshIndicator(
-        onRefresh: _load,
-        child: _loading
-            ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
-            : _courses.isEmpty && _products.isEmpty
-                ? _buildEmptyState()
-                : CustomScrollView(
-                    slivers: [
-                      if (_courses.isNotEmpty) ...[
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-                            child: Row(
-                              textDirection: TextDirection.rtl,
-                              children: [
-                                Icon(Icons.school_rounded, color: AppTheme.primary, size: 22),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'دوراتي المفضلة (${_courses.length})',
-                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: AppTheme.primaryDark,
-                                      ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (_, i) => _WishlistCourseTile(
-                              course: _courses[i],
-                              imageUrl: _fullImageUrl(_courses[i].coverImage),
-                              onTap: () => Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => CourseDetailScreen(
-                                    courseSlug: _courses[i].slug,
-                                    courseTitle: _courses[i].title,
-                                  ),
-                                ),
+      body: SizedBox(
+        height: minHeight,
+        child: RefreshIndicator(
+          onRefresh: _load,
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+            slivers: [
+            if (_loading)
+              const SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(child: CircularProgressIndicator(color: AppTheme.primary)),
+              )
+            else if (_courses.isEmpty && _products.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: _buildEmptyState(),
+              )
+            else ...[
+              if (_courses.isNotEmpty) ...[
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                    child: Row(
+                      textDirection: TextDirection.rtl,
+                      children: [
+                        Icon(Icons.school_rounded, color: AppTheme.primary, size: 22),
+                        const SizedBox(width: 8),
+                        Text(
+                          'دوراتي المفضلة (${_courses.length})',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primaryDark,
                               ),
-                              onRemove: () => _removeCourse(_courses[i].id),
-                            ),
-                            childCount: _courses.length,
-                          ),
                         ),
-                        const SliverToBoxAdapter(child: SizedBox(height: 24)),
                       ],
-                      if (_products.isNotEmpty) ...[
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-                            child: Row(
-                              textDirection: TextDirection.rtl,
-                              children: [
-                                Icon(Icons.shopping_bag_rounded, color: AppTheme.primary, size: 22),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'منتجاتي المفضلة (${_products.length})',
-                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: AppTheme.primaryDark,
-                                      ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        SliverList(
-                          delegate: SliverChildBuilderDelegate(
-                            (_, i) => _WishlistProductTile(
-                              product: _products[i],
-                              imageUrl: _fullImageUrl(_products[i].mainImage),
-                              onTap: () => Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => ProductDetailScreen(
-                                    productSlug: _products[i].slug,
-                                    productName: _products[i].name,
-                                  ),
-                                ),
-                              ),
-                              onRemove: () => _removeProduct(_products[i].id),
-                            ),
-                            childCount: _products.length,
-                          ),
-                        ),
-                        const SliverToBoxAdapter(child: SizedBox(height: 32)),
-                      ],
-                    ],
+                    ),
                   ),
+                ),
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (_, i) => _WishlistCourseTile(
+                      course: _courses[i],
+                      imageUrl: _fullImageUrl(_courses[i].coverImage),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => CourseDetailScreen(
+                            courseSlug: _courses[i].slug,
+                            courseTitle: _courses[i].title,
+                          ),
+                        ),
+                      ),
+                      onRemove: () => _removeCourse(_courses[i].id),
+                    ),
+                    childCount: _courses.length,
+                  ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+              ],
+              if (_products.isNotEmpty) ...[
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+                    child: Row(
+                      textDirection: TextDirection.rtl,
+                      children: [
+                        Icon(Icons.shopping_bag_rounded, color: AppTheme.primary, size: 22),
+                        const SizedBox(width: 8),
+                        Text(
+                          'منتجاتي المفضلة (${_products.length})',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.primaryDark,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (_, i) => _WishlistProductTile(
+                      product: _products[i],
+                      imageUrl: _fullImageUrl(_products[i].mainImage),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => ProductDetailScreen(
+                            productSlug: _products[i].slug,
+                            productName: _products[i].name,
+                          ),
+                        ),
+                      ),
+                      onRemove: () => _removeProduct(_products[i].id),
+                    ),
+                    childCount: _products.length,
+                  ),
+                ),
+                const SliverToBoxAdapter(child: SizedBox(height: 32)),
+              ],
+            ],
+          ],
+        ),
+        ),
       ),
     );
   }

@@ -26,11 +26,25 @@ class CoursesApi {
     }
   }
 
-  /// قائمة الدورات حسب التصنيف (categoryId واختياري subCategoryId للفرعي)
-  static Future<List<CourseItem>> getCoursesByCategory({required int categoryId, int? subCategoryId}) async {
+  /// قائمة الدورات حسب التصنيف مع فلاتر اختيارية
+  static Future<List<CourseItem>> getCourses({
+    required int categoryId,
+    int? subCategoryId,
+    double? minRating,
+    String? priceType,
+    double? minPrice,
+    double? maxPrice,
+    String? sort,
+  }) async {
     try {
       final query = <String, String>{'category': categoryId.toString()};
       if (subCategoryId != null && subCategoryId > 0) query['sub'] = subCategoryId.toString();
+      if (minRating != null && minRating > 0) query['min_rating'] = minRating.toString();
+      if (priceType != null && priceType.isNotEmpty) query['price_type'] = priceType;
+      if (minPrice != null) query['min_price'] = minPrice.toString();
+      if (maxPrice != null) query['max_price'] = maxPrice.toString();
+      if (sort != null && sort.isNotEmpty) query['sort'] = sort;
+
       final uri = Uri.parse('$apiBaseUrl$apiCoursesList').replace(queryParameters: query);
       final res = await http.get(uri, headers: _headers);
       final data = jsonDecode(res.body.toString()) as Map<String, dynamic>? ?? {};
@@ -43,6 +57,10 @@ class CoursesApi {
       return [];
     }
   }
+
+  /// قائمة الدورات حسب التصنيف (توافق مع الاستدعاءات القديمة)
+  static Future<List<CourseItem>> getCoursesByCategory({required int categoryId, int? subCategoryId}) =>
+      getCourses(categoryId: categoryId, subCategoryId: subCategoryId);
 
   /// جلب تصنيفات الدورات من إدارة الدورات التدريبية (Category)
   static Future<CourseCategoriesResponse> getCategories() async {
@@ -122,6 +140,9 @@ class CourseDetailItem {
     this.previewVideoUrl,
     required this.price,
     this.originalPrice,
+    this.priceOnce,
+    this.priceMonthly,
+    this.priceDaily,
     required this.rating,
     required this.reviewsCount,
     required this.studentsCount,
@@ -131,6 +152,12 @@ class CourseDetailItem {
     this.subCategory,
     this.instructor,
     this.sections = const [],
+    this.isEnrolled = false,
+    this.progressPercentage = 0,
+    this.lessonProgressMap = const {},
+    this.relatedCourses = const [],
+    this.ratings = const [],
+    this.completedAt,
   });
 
   final int id;
@@ -145,6 +172,9 @@ class CourseDetailItem {
   final String? previewVideoUrl;
   final double price;
   final double? originalPrice;
+  final double? priceOnce;
+  final double? priceMonthly;
+  final double? priceDaily;
   final double rating;
   final int reviewsCount;
   final int studentsCount;
@@ -154,6 +184,12 @@ class CourseDetailItem {
   final CategoryRef? subCategory;
   final InstructorDetailRef? instructor;
   final List<CourseSectionItem> sections;
+  final bool isEnrolled;
+  final double progressPercentage;
+  final Map<int, LessonProgress> lessonProgressMap;
+  final List<CourseItem> relatedCourses;
+  final List<CourseRatingItem> ratings;
+  final String? completedAt;
 
   bool get hasDiscount => originalPrice != null && originalPrice! > price;
 
@@ -162,6 +198,28 @@ class CourseDetailItem {
     final sections = sectionsRaw
         .map((e) => CourseSectionItem.fromJson(e as Map<String, dynamic>))
         .toList();
+
+    Map<int, LessonProgress> lessonProgressMap = {};
+    final lpRaw = json['lesson_progress_map'];
+    if (lpRaw is Map) {
+      for (final e in lpRaw.entries) {
+        final k = int.tryParse(e.key.toString()) ?? 0;
+        if (k > 0 && e.value is Map) {
+          final v = e.value as Map<String, dynamic>;
+          lessonProgressMap[k] = LessonProgress(
+            completed: (v['completed'] as bool?) ?? false,
+            lastPosition: (v['last_position'] as num?)?.toInt() ?? 0,
+          );
+        }
+      }
+    }
+
+    final relatedRaw = (json['related_courses'] as List<dynamic>?) ?? [];
+    final relatedCourses = relatedRaw.map((e) => CourseItem.fromJson(e as Map<String, dynamic>)).toList();
+
+    final ratingsRaw = (json['ratings'] as List<dynamic>?) ?? [];
+    final ratings = ratingsRaw.map((e) => CourseRatingItem.fromJson(e as Map<String, dynamic>)).toList();
+
     return CourseDetailItem(
       id: (json['id'] as num?)?.toInt() ?? 0,
       title: (json['title'] ?? '').toString(),
@@ -175,6 +233,9 @@ class CourseDetailItem {
       previewVideoUrl: json['preview_video_url']?.toString(),
       price: (json['price'] as num?)?.toDouble() ?? 0,
       originalPrice: json['original_price'] != null ? (json['original_price'] as num).toDouble() : null,
+      priceOnce: json['price_once'] != null ? (json['price_once'] as num).toDouble() : null,
+      priceMonthly: json['price_monthly'] != null ? (json['price_monthly'] as num).toDouble() : null,
+      priceDaily: json['price_daily'] != null ? (json['price_daily'] as num).toDouble() : null,
       rating: (json['rating'] as num?)?.toDouble() ?? 0,
       reviewsCount: (json['reviews_count'] as num?)?.toInt() ?? 0,
       studentsCount: (json['students_count'] as num?)?.toInt() ?? 0,
@@ -184,6 +245,43 @@ class CourseDetailItem {
       subCategory: json['sub_category'] != null ? CategoryRef.fromJson(json['sub_category'] as Map<String, dynamic>) : null,
       instructor: json['instructor'] != null ? InstructorDetailRef.fromJson(json['instructor'] as Map<String, dynamic>) : null,
       sections: sections,
+      isEnrolled: (json['is_enrolled'] as bool?) ?? false,
+      progressPercentage: (json['progress_percentage'] as num?)?.toDouble() ?? 0,
+      lessonProgressMap: lessonProgressMap,
+      relatedCourses: relatedCourses,
+      ratings: ratings,
+      completedAt: json['completed_at']?.toString(),
+    );
+  }
+}
+
+class LessonProgress {
+  LessonProgress({required this.completed, required this.lastPosition});
+  final bool completed;
+  final int lastPosition;
+}
+
+class CourseRatingItem {
+  CourseRatingItem({
+    required this.userName,
+    required this.stars,
+    this.review,
+    this.createdAt,
+    this.avatar,
+  });
+  final String userName;
+  final int stars;
+  final String? review;
+  final String? createdAt;
+  final String? avatar;
+
+  factory CourseRatingItem.fromJson(Map<String, dynamic> json) {
+    return CourseRatingItem(
+      userName: (json['user_name'] ?? 'مستخدم').toString(),
+      stars: (json['stars'] as num?)?.toInt() ?? 0,
+      review: json['review']?.toString(),
+      createdAt: json['created_at']?.toString(),
+      avatar: json['avatar']?.toString(),
     );
   }
 }

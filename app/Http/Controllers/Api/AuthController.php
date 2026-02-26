@@ -121,7 +121,82 @@ class AuthController extends Controller
             'phone' => $user->phone,
             'avatar' => $user->avatar,
             'avatar_url' => $user->avatar_url,
+            'city' => $user->city,
+            'job' => $user->job,
             'roles' => $user->getRoleNames(),
+        ]);
+    }
+
+    /**
+     * تحديث الملف الشخصي (اسم، بريد، هاتف، مدينة، عمل، صورة)
+     */
+    public function update(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'phone' => ['nullable', 'string', 'max:20'],
+            'city' => ['nullable', 'string', 'max:100'],
+            'job' => ['nullable', 'string', 'max:100'],
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,gif,png', 'max:2048'],
+        ]);
+
+        $updateData = [
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'] ?? $user->phone,
+            'city' => $validated['city'] ?? $user->city,
+            'job' => $validated['job'] ?? $user->job,
+        ];
+
+        if ($request->hasFile('avatar')) {
+            $avatarPath = $request->file('avatar')->store('avatars', 'public');
+            $updateData['avatar'] = $avatarPath;
+        }
+
+        $user->update($updateData);
+
+        return response()->json([
+            'message' => 'تم تحديث البيانات بنجاح',
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'avatar' => $user->avatar,
+                'avatar_url' => $user->fresh()->avatar_url,
+                'city' => $user->city,
+                'job' => $user->job,
+                'roles' => $user->getRoleNames(),
+            ],
+        ]);
+    }
+
+    /**
+     * تغيير كلمة المرور
+     */
+    public function updatePassword(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'current_password' => [
+                'required',
+                function ($attribute, $value, $fail) use ($user) {
+                    if (! Hash::check($value, $user->password)) {
+                        $fail('كلمة المرور الحالية غير صحيحة.');
+                    }
+                },
+            ],
+            'password' => ['required', 'string', 'min:8', 'confirmed', Password::defaults()],
+        ]);
+
+        $user->update(['password' => Hash::make($validated['password'])]);
+
+        return response()->json([
+            'message' => 'تم تحديث كلمة المرور بنجاح',
         ]);
     }
 }

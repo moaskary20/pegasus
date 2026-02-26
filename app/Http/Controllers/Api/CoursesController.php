@@ -7,16 +7,24 @@ use App\Models\Category;
 use App\Models\Course;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CoursesController extends Controller
 {
     /**
-     * قائمة الدورات حسب التصنيف (category_id واختياري sub للفرعي)
+     * قائمة الدورات حسب التصنيف. Query params: min_rating, price_type (free/paid), min_price, max_price, sort (newest/rating/price_asc/price_desc)
      */
     public function index(Request $request): JsonResponse
     {
         $categoryId = (int) $request->query('category', 0);
         $subCategoryId = (int) $request->query('sub', 0);
+        $minRating = (float) $request->query('min_rating', 0);
+        $priceType = (string) $request->query('price_type', '');
+        $minPrice = $request->filled('min_price') ? (float) $request->query('min_price') : null;
+        $maxPrice = $request->filled('max_price') ? (float) $request->query('max_price') : null;
+        $sort = (string) $request->query('sort', 'newest');
+
+        $priceExpr = DB::raw('COALESCE(offer_price, price)');
 
         $query = Course::query()
             ->where('is_published', true)
@@ -36,7 +44,34 @@ class CoursesController extends Controller
             });
         }
 
-        $courses = $query->orderByDesc('rating')->orderByDesc('reviews_count')->latest()->get();
+        if ($minRating > 0) {
+            $query->minRating($minRating);
+        }
+
+        if ($priceType === 'free') {
+            $query->where($priceExpr, '<=', 0);
+        } elseif ($priceType === 'paid') {
+            $query->where($priceExpr, '>', 0);
+        }
+
+        if ($minPrice !== null) {
+            $query->where($priceExpr, '>=', $minPrice);
+        }
+        if ($maxPrice !== null) {
+            $query->where($priceExpr, '<=', $maxPrice);
+        }
+
+        if ($sort === 'rating') {
+            $query->orderByDesc('rating')->orderByDesc('reviews_count');
+        } elseif ($sort === 'price_asc') {
+            $query->orderBy($priceExpr);
+        } elseif ($sort === 'price_desc') {
+            $query->orderByDesc($priceExpr);
+        } else {
+            $query->latest();
+        }
+
+        $courses = $query->get();
 
         $list = $courses->map(fn (Course $c) => $this->formatCourse($c))->values()->all();
 
@@ -46,8 +81,9 @@ class CoursesController extends Controller
     /**
      * تفاصيل دورة واحدة بالـ slug (لشاشة تفاصيل الدورة)
      * يشمل: التصنيف الفرعي، الإعلان، المستوى، الأقسام والدروس
+     * عندما المستخدم مسجّل: is_enrolled, progress_percentage, lesson_progress_map, related_courses, ratings
      */
-    public function show(string $slug): JsonResponse
+    public function show(Request $request, string $slug): JsonResponse
     {
         $course = Course::query()
             ->where('is_published', true)
@@ -114,6 +150,9 @@ class CoursesController extends Controller
             'preview_video_url' => $previewUrl,
             'price' => round($price, 2),
             'original_price' => $hasDiscount ? round($originalPrice, 2) : null,
+            'price_once' => $course->price_once !== null ? round((float) $course->price_once, 2) : null,
+            'price_monthly' => $course->price_monthly !== null ? round((float) $course->price_monthly, 2) : null,
+            'price_daily' => $course->price_daily !== null ? round((float) $course->price_daily, 2) : null,
             'rating' => round((float) ($course->rating ?? 0), 1),
             'reviews_count' => (int) ($course->reviews_count ?? 0),
             'students_count' => (int) ($course->students_count ?? 0),
@@ -128,6 +167,60 @@ class CoursesController extends Controller
             ] : null,
             'sections' => $sections,
         ];
+
+        $user = $request->user('sanctum');
+        if ($user) {
+            $enrollment = $course->enrollments()->where('user_id', $user->id)->first();
+            $data['is_enrolled'] = $enrollment !== null;
+            $data['progress_percentage'] = $enrollment ? (float) ($enrollment->progress_percentage ?? 0) : 0;
+            $data['completed_at'] = $enrollment?->completed_at?->toIso8601String();
+
+            $lessonIds = $lessons->pluck('id')->all();
+            $progresses = \App\Models\VideoProgress::where('user_id', $user->id)
+                ->whereIn('lesson_id', $lessonIds)
+                ->get()
+                ->keyBy('lesson_id');
+
+            $lessonProgressMap = [];
+            foreach ($progresses as $lessonId => $vp) {
+                $lessonProgressMap[$lessonId] = [
+                    'completed' => (bool) $vp->completed,
+                    'last_position' => (int) ($vp->last_position_seconds ?? 0),
+                ];
+            }
+            $data['lesson_progress_map'] = $lessonProgressMap;
+
+            $relatedCourses = Course::query()
+                ->where('is_published', true)
+                ->where('id', '!=', $course->id)
+                ->when($course->category_id, fn ($q) => $q->where('category_id', $course->category_id))
+                ->with(['instructor:id,name', 'category:id,name'])
+                ->orderByDesc('rating')
+                ->limit(6)
+                ->get();
+
+            $data['related_courses'] = $relatedCourses->map(fn (Course $c) => $this->formatCourse($c))->values()->all();
+
+            $ratings = $course->ratings()
+                ->latest()
+                ->with('user:id,name,avatar')
+                ->limit(20)
+                ->get();
+
+            $data['ratings'] = $ratings->map(function ($r) {
+                $avatar = null;
+                if ($r->user && $r->user->avatar) {
+                    $avatar = asset('storage/' . ltrim($r->user->avatar, '/'));
+                }
+                return [
+                    'user_name' => $r->user?->name ?? 'مستخدم',
+                    'stars' => (int) $r->stars,
+                    'review' => $r->review ?? null,
+                    'created_at' => $r->created_at?->toIso8601String(),
+                    'avatar' => $avatar,
+                ];
+            })->values()->all();
+        }
 
         return response()->json($data);
     }

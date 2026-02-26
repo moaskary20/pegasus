@@ -9,7 +9,7 @@ class CourseCartItem extends Model
 {
     protected $table = 'course_cart_items';
 
-    protected $fillable = ['user_id', 'course_id'];
+    protected $fillable = ['user_id', 'course_id', 'subscription_type'];
 
     public function user(): BelongsTo
     {

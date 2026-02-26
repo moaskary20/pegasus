@@ -196,7 +196,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> with SingleTi
           children: [
             _DescriptionTab(product: p),
             _SpecsTab(product: p),
-            _ReviewsTab(product: p),
+            _ReviewsTab(product: p, onRated: _load),
           ],
         ),
       ),
@@ -626,29 +626,138 @@ class _SpecRow {
   final String value;
 }
 
-class _ReviewsTab extends StatelessWidget {
-  const _ReviewsTab({required this.product});
+class _ReviewsTab extends StatefulWidget {
+  const _ReviewsTab({required this.product, required this.onRated});
+
   final StoreProductDetail product;
+  final VoidCallback onRated;
+
+  @override
+  State<_ReviewsTab> createState() => _ReviewsTabState();
+}
+
+class _ReviewsTabState extends State<_ReviewsTab> {
+  int _selectedStars = 0;
+  final _commentController = TextEditingController();
+  bool _submitting = false;
+  double? _avgRating;
+  int? _ratingsCount;
+
+  @override
+  void initState() {
+    super.initState();
+    _avgRating = widget.product.averageRating;
+    _ratingsCount = widget.product.ratingsCount;
+  }
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submitRating() async {
+    if (_selectedStars < 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('اختر عدد النجوم'), behavior: SnackBarBehavior.floating),
+      );
+      return;
+    }
+    setState(() => _submitting = true);
+    final res = await StoreApi.rateProduct(
+      widget.product.id,
+      rating: _selectedStars,
+      comment: _commentController.text.trim().isEmpty ? null : _commentController.text.trim(),
+    );
+    if (!mounted) return;
+    setState(() => _submitting = false);
+    if (res != null && res.success) {
+      setState(() {
+        _avgRating = res.averageRating ?? widget.product.averageRating;
+        _ratingsCount = res.ratingsCount ?? widget.product.ratingsCount;
+        _selectedStars = 0;
+        _commentController.clear();
+      });
+      widget.onRated();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(res.message ?? 'تم إضافة تقييمك'), behavior: SnackBarBehavior.floating),
+      );
+    } else if (res != null && !res.success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(res.message ?? 'حدث خطأ'), behavior: SnackBarBehavior.floating),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('يجب تسجيل الدخول لتقييم المنتج'), behavior: SnackBarBehavior.floating),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Center(
+    final avg = _avgRating ?? widget.product.averageRating;
+    final count = _ratingsCount ?? widget.product.ratingsCount;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Icon(Icons.star_rounded, size: 64, color: Colors.orange.shade300),
-          const SizedBox(height: 16),
-          Text(
-            '${product.averageRating} من 5',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          Center(
+            child: Column(
+              children: [
+                Icon(Icons.star_rounded, size: 64, color: Colors.amber.shade400),
+                const SizedBox(height: 8),
+                Text(
+                  '$avg من 5',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                Text('$count تقييم', style: TextStyle(color: Colors.grey.shade600)),
+              ],
+            ),
           ),
-          const SizedBox(height: 4),
-          Text('${product.ratingsCount} تقييم', style: TextStyle(color: Colors.grey.shade600)),
           const SizedBox(height: 24),
           Text(
-            'قائمة التقييمات ستُعرض هنا عند ربطها بالـ API',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+            'أضف تقييمك',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+            textDirection: TextDirection.rtl,
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(5, (i) {
+              final star = i + 1;
+              return IconButton(
+                icon: Icon(
+                  _selectedStars >= star ? Icons.star_rounded : Icons.star_outline_rounded,
+                  size: 36,
+                  color: Colors.amber.shade700,
+                ),
+                onPressed: () => setState(() => _selectedStars = star),
+              );
+            }),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _commentController,
+            decoration: InputDecoration(
+              hintText: 'تعليقك (اختياري)',
+              hintTextDirection: TextDirection.rtl,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            textDirection: TextDirection.rtl,
+            maxLines: 3,
+          ),
+          const SizedBox(height: 16),
+          FilledButton(
+            onPressed: _submitting ? null : _submitRating,
+            style: FilledButton.styleFrom(backgroundColor: AppTheme.primary),
+            child: _submitting
+                ? const SizedBox(
+                    height: 24,
+                    width: 24,
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                  )
+                : const Text('إرسال التقييم'),
           ),
         ],
       ),
