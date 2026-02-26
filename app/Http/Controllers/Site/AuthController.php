@@ -73,7 +73,7 @@ class AuthController extends Controller
         Auth::login($user);
         $request->session()->regenerate();
 
-        return redirect()->intended(url('/admin'))->with('notice', [
+        return redirect()->intended(route('site.home'))->with('notice', [
             'type' => 'success',
             'message' => 'تم إنشاء حسابك بنجاح. مرحباً بك!',
         ]);

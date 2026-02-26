@@ -25,11 +25,12 @@ class CourseForm
                     ->preload(),
                 FileUpload::make('preview_video_path')
                     ->label('فيديو معاينة الدورة')
+                    ->disk('public')
                     ->acceptedFileTypes(['video/mp4', 'video/webm', 'video/quicktime'])
                     ->directory('courses/preview-videos')
                     ->visibility('public')
-                    ->maxSize(51200)
-                    ->helperText('فيديو قصير للمعاينة يظهر عند الضغط على "معاينة الدورة"'),
+                    ->maxSize(204800)
+                    ->helperText('فيديو قصير للمعاينة (حد أقصى 200 ميجا)'),
                 TextInput::make('preview_youtube_url')
                     ->label('رابط يوتيوب لمعاينة الدورة')
                     ->placeholder('https://www.youtube.com/watch?v=... أو https://youtu.be/...')
