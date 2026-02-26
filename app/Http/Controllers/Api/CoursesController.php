@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Models\Certificate;
 use App\Models\Course;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -182,6 +183,9 @@ class CoursesController extends Controller
             $data['is_enrolled'] = $enrollment !== null;
             $data['progress_percentage'] = $enrollment ? (float) ($enrollment->progress_percentage ?? 0) : 0;
             $data['completed_at'] = $enrollment?->completed_at?->toIso8601String();
+            $hasCert = $enrollment?->completed_at
+                && Certificate::where('user_id', $user->id)->where('course_id', $course->id)->exists();
+            $data['has_certificate'] = $hasCert;
 
             $lessonIds = $lessons->pluck('id')->all();
             $progresses = \App\Models\VideoProgress::where('user_id', $user->id)

@@ -92,12 +92,39 @@ class SubscriptionsController extends Controller
         }
 
         $gateway = (string) $request->input('payment_gateway', '');
-        $allowed = ['kashier', 'manual'];
+        $voucherCode = strtoupper(trim((string) $request->input('voucher_code', '')));
+        $voucherId = null;
+        $voucher = null;
+        if ($voucherCode !== '') {
+            $voucher = Voucher::where('code', $voucherCode)->first();
+            if ($voucher && $voucher->isValid()) {
+                $voucherId = $voucher->id;
+            }
+        }
+
+        $allowed = ['kashier', 'manual', 'voucher'];
         if (!in_array($gateway, $allowed, true)) {
             return response()->json([
                 'message' => 'يرجى اختيار طريقة دفع صحيحة.',
                 'errors' => ['payment_gateway' => ['طريقة الدفع غير صحيحة.']],
             ], 422);
+        }
+
+        if ($gateway === 'voucher') {
+            if ($voucherCode === '' || !$voucher || !$voucherId) {
+                return response()->json([
+                    'message' => 'أدخل كود Voucher صالح للاشتراك بدون دفع.',
+                    'errors' => ['voucher_code' => ['الكود مطلوب وصالح ويجب أن يغطي كامل المبلغ.']],
+                ], 422);
+            }
+            $service = app(SubscriptionService::class);
+            $finalPrice = $service->getFinalPrice((float) $plan->price, $voucherId);
+            if ($finalPrice > 0) {
+                return response()->json([
+                    'message' => 'الكود لا يغطي كامل مبلغ الاشتراك. المتبقي: ' . number_format($finalPrice, 1) . ' ر.س — اختر طريقة دفع أخرى.',
+                    'errors' => ['voucher_code' => ['الكود لا يغطي كامل المبلغ.']],
+                ], 422);
+            }
         }
 
         if ($gateway === 'manual') {
@@ -108,15 +135,6 @@ class SubscriptionsController extends Controller
                 'manual_receipt.mimes' => 'صيغة الإيصال يجب أن تكون JPG/PNG/PDF.',
                 'manual_receipt.max' => 'حجم الإيصال كبير جداً (الحد 5MB).',
             ]);
-        }
-
-        $voucherCode = strtoupper(trim((string) $request->input('voucher_code', '')));
-        $voucherId = null;
-        if ($voucherCode !== '') {
-            $voucher = Voucher::where('code', $voucherCode)->first();
-            if ($voucher && $voucher->isValid()) {
-                $voucherId = $voucher->id;
-            }
         }
 
         try {

@@ -158,6 +158,7 @@ class CourseDetailItem {
     this.relatedCourses = const [],
     this.ratings = const [],
     this.completedAt,
+    this.hasCertificate = false,
   });
 
   final int id;
@@ -190,6 +191,7 @@ class CourseDetailItem {
   final List<CourseItem> relatedCourses;
   final List<CourseRatingItem> ratings;
   final String? completedAt;
+  final bool hasCertificate;
 
   bool get hasDiscount => originalPrice != null && originalPrice! > price;
 
@@ -251,6 +253,7 @@ class CourseDetailItem {
       relatedCourses: relatedCourses,
       ratings: ratings,
       completedAt: json['completed_at']?.toString(),
+      hasCertificate: (json['has_certificate'] as bool?) ?? false,
     );
   }
 }

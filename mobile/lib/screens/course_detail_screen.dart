@@ -8,6 +8,7 @@ import '../api/wishlist_api.dart';
 import '../api/cart_api.dart';
 import '../api/course_rating_api.dart';
 import '../api/home_api.dart';
+import '../api/certificate_api.dart';
 import '../app_theme.dart';
 import 'cart_screen.dart';
 import 'lesson_player_screen.dart';
@@ -747,6 +748,10 @@ class _AboutTabState extends State<_AboutTab> with SingleTickerProviderStateMixi
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (c.hasCertificate) ...[
+              _CertificateCard(courseSlug: c.slug),
+              const SizedBox(height: 24),
+            ],
             if (c.announcement != null && c.announcement!.trim().isNotEmpty) ...[
               Container(
                 width: double.infinity,
@@ -858,6 +863,118 @@ class _AboutTabState extends State<_AboutTab> with SingleTickerProviderStateMixi
               ),
             ],
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CertificateCard extends StatefulWidget {
+  const _CertificateCard({required this.courseSlug});
+
+  final String courseSlug;
+
+  @override
+  State<_CertificateCard> createState() => _CertificateCardState();
+}
+
+class _CertificateCardState extends State<_CertificateCard> {
+  bool _loading = false;
+
+  Future<void> _openCertificate() async {
+    if (_loading) return;
+    setState(() => _loading = true);
+    final result = await CertificateApi.getCertificateUrl(widget.courseSlug);
+    if (!mounted) return;
+    setState(() => _loading = false);
+    if (result != null && result.url.isNotEmpty) {
+      final uri = Uri.parse(result.url);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('تعذر فتح الشهادة')),
+          );
+        }
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('لم يتم العثور على الشهادة')),
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.primary.withValues(alpha: 0.12),
+            AppTheme.primary.withValues(alpha: 0.06),
+          ],
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.primary.withValues(alpha: 0.25)),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _loading ? null : _openCertificate,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              textDirection: TextDirection.rtl,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.card_membership_rounded, size: 28, color: AppTheme.primary),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    textDirection: TextDirection.rtl,
+                    children: [
+                      Text(
+                        'شهادة إتمام الدورة',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF1A1A1A),
+                            ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _loading ? 'جاري التحميل...' : 'اضغط لتحميل أو عرض الشهادة',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey.shade700,
+                        ),
+                        textDirection: TextDirection.rtl,
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  _loading ? Icons.hourglass_empty_rounded : Icons.download_rounded,
+                  color: AppTheme.primary,
+                  size: 24,
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

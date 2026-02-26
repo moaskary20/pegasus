@@ -468,6 +468,12 @@ class _SubscribeSheetState extends State<_SubscribeSheet> {
       );
       return;
     }
+    if (_method == 'voucher' && _voucherController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('أدخل كود Voucher — يجب أن يغطي كامل مبلغ الاشتراك')),
+      );
+      return;
+    }
 
     setState(() => _submitting = true);
     final result = await widget.onSubscribe(
@@ -524,14 +530,25 @@ class _SubscribeSheetState extends State<_SubscribeSheet> {
               textDirection: TextDirection.rtl,
             ),
             const SizedBox(height: 20),
+            Text(
+              'كود الخصم / Voucher',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primaryDark,
+                  ),
+              textDirection: TextDirection.rtl,
+            ),
+            const SizedBox(height: 8),
             TextField(
               controller: _voucherController,
               decoration: InputDecoration(
-                labelText: 'كود الخصم (اختياري)',
+                hintText: 'أدخل الكود (اختياري لخصم، مطلوب للاشتراك بالكوبون)',
+                hintTextDirection: TextDirection.rtl,
                 prefixIcon: const Icon(Icons.confirmation_number_outlined),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                 filled: true,
               ),
+              textDirection: TextDirection.rtl,
               onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 16),
@@ -556,6 +573,37 @@ class _SubscribeSheetState extends State<_SubscribeSheet> {
               groupValue: _method,
               onTap: () => setState(() => _method = 'manual'),
             ),
+            _PaymentOption(
+              label: 'الاشتراك بالكوبون (Voucher)',
+              value: 'voucher',
+              groupValue: _method,
+              onTap: () => setState(() => _method = 'voucher'),
+            ),
+            if (_method == 'voucher') ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.primary.withValues(alpha: 0.2)),
+                ),
+                child: Row(
+                  textDirection: TextDirection.rtl,
+                  children: [
+                    Icon(Icons.info_outline_rounded, color: AppTheme.primary, size: 22),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'أدخل كود Voucher يغطي كامل مبلغ الاشتراك — لن يتم خصم أي مبلغ منك',
+                        style: TextStyle(fontSize: 13, color: AppTheme.primaryDark),
+                        textDirection: TextDirection.rtl,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             if (_method == 'manual') ...[
               const SizedBox(height: 12),
               if (_receipt != null)
@@ -641,7 +689,11 @@ class _PaymentOption extends StatelessWidget {
               textDirection: TextDirection.rtl,
               children: [
                 Icon(
-                  value == 'kashier' ? Icons.credit_card_rounded : Icons.receipt_long_rounded,
+                  value == 'kashier'
+                      ? Icons.credit_card_rounded
+                      : value == 'voucher'
+                          ? Icons.local_offer_rounded
+                          : Icons.receipt_long_rounded,
                   color: selected ? AppTheme.primary : Colors.grey.shade600,
                   size: 24,
                 ),
