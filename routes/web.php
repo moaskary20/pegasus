@@ -18,6 +18,16 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 
+// فحص حدود رفع الملفات (للتشخيص)
+Route::get('/upload-limits', function () {
+    return response()->json([
+        'upload_max_filesize' => ini_get('upload_max_filesize'),
+        'post_max_size' => ini_get('post_max_size'),
+        'max_execution_time' => (int) ini_get('max_execution_time'),
+        'required' => '220M للحصول على رفع حتى 200 ميجا',
+    ]);
+})->name('upload.limits');
+
 // خدمة ملفات التخزين عبر Laravel (بديل عند فشل الرابط الرمزي أو 403)
 // إضافة CORS حتى تظهر الصور عند فتح التطبيق من Chrome (Flutter Web)
 Route::get('/storage/{path}', function (string $path) {
