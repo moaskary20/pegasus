@@ -1,5 +1,5 @@
 /// عنوان الـ API الأساسي للربط مع الباكند (Laravel).
-/// الافتراضي: الدومين الرسمي أكاديمية بيغاسوس.
+/// الافتراضي: الدومين الرسميPegasus Academy.
 /// للتطوير المحلي: flutter run --dart-define=API_BASE_URL=http://عنوان_الخادم
 const String apiBaseUrl = String.fromEnvironment(
   'API_BASE_URL',

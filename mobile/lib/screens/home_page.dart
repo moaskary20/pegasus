@@ -15,7 +15,7 @@ class HomePage extends StatelessWidget {
         title: Text(title),
       ),
       body: const Center(
-        child: Text('مرحباً بك في أكاديمية بيغاسوس'),
+        child: Text('مرحباً بك فيPegasus Academy'),
       ),
     );
   }

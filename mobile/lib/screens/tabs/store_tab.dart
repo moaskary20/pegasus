@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/app_header.dart';
+import '../../widgets/skeleton_loading.dart';
 import '../store_category_products_screen.dart';
 import '../../api/store_api.dart';
 import '../../app_theme.dart';
@@ -63,7 +64,7 @@ class _StoreTabState extends State<StoreTab> {
         onRefresh: _load,
         color: AppTheme.primary,
         child: _loading
-            ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
+            ? const SkeletonCategoriesPage()
             : _categories.isEmpty
                 ? Center(
                     child: Column(

@@ -261,41 +261,46 @@ class _LessonPlayerScreenState extends State<LessonPlayerScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 color: Colors.black87,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    OutlinedButton.icon(
-                      onPressed: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => CourseQuestionsScreen(
-                            courseSlug: widget.courseSlug,
-                            courseTitle: widget.courseTitle,
-                            lessonId: widget.lessonId,
-                            lessonTitle: lesson.title,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  reverse: Directionality.of(context) == TextDirection.rtl,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => CourseQuestionsScreen(
+                              courseSlug: widget.courseSlug,
+                              courseTitle: widget.courseTitle,
+                              lessonId: widget.lessonId,
+                              lessonTitle: lesson.title,
+                            ),
                           ),
                         ),
+                        icon: const Icon(Icons.contact_support_rounded, size: 20),
+                        label: const Text('أسئلة وأجوبة'),
+                        style: OutlinedButton.styleFrom(foregroundColor: Colors.white70, side: const BorderSide(color: Colors.white38)),
                       ),
-                      icon: const Icon(Icons.contact_support_rounded, size: 20),
-                      label: const Text('أسئلة وأجوبة'),
-                      style: OutlinedButton.styleFrom(foregroundColor: Colors.white70, side: const BorderSide(color: Colors.white38)),
-                    ),
-                    if (lesson.hasQuiz) ...[
-                      const SizedBox(width: 12),
-                      FilledButton.icon(
-                        onPressed: _checkQuizAndNavigate,
-                        icon: const Icon(Icons.quiz_rounded),
-                        label: const Text('اختبار الدرس'),
-                        style: FilledButton.styleFrom(backgroundColor: AppTheme.primary),
-                      ),
+                      if (lesson.hasQuiz) ...[
+                        const SizedBox(width: 12),
+                        FilledButton.icon(
+                          onPressed: _checkQuizAndNavigate,
+                          icon: const Icon(Icons.quiz_rounded),
+                          label: const Text('اختبار الدرس'),
+                          style: FilledButton.styleFrom(backgroundColor: AppTheme.primary),
+                        ),
+                      ],
+                      if (lesson.hasQuiz) const SizedBox(width: 12),
+                      if (lesson.nextLesson != null)
+                        TextButton.icon(
+                          onPressed: _onExit,
+                          icon: const Icon(Icons.check_circle_outline_rounded, color: Colors.white70),
+                          label: Text('إنهاء والمتابعة', style: TextStyle(color: Colors.white70)),
+                        ),
                     ],
-                    if (lesson.hasQuiz) const SizedBox(width: 12),
-                    if (lesson.nextLesson != null)
-                      TextButton.icon(
-                        onPressed: _onExit,
-                        icon: const Icon(Icons.check_circle_outline_rounded, color: Colors.white70),
-                        label: Text('إنهاء والمتابعة', style: TextStyle(color: Colors.white70)),
-                      ),
-                  ],
+                  ),
                 ),
               ),
             ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/app_header.dart';
+import '../../widgets/skeleton_loading.dart';
 import '../course_detail_screen.dart';
 import '../../api/auth_api.dart';
 import '../../api/home_api.dart';
@@ -142,7 +143,7 @@ class _HomeTabState extends State<HomeTab> {
         onRefresh: _load,
         color: AppTheme.primary,
         child: _loading
-            ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
+            ? const SkeletonHomePage()
             : _data?.loadError != null
                 ? _buildLoadErrorState()
                 : CustomScrollView(

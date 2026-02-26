@@ -1,4 +1,4 @@
-package com.pegasus.academy.pegasus_academy
+package com.pegasus.academy.Pegasus Academy
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.pegasus.academy" "\0"
-            VALUE "FileDescription", "pegasus_academy" "\0"
+            VALUE "FileDescription", "Pegasus Academy" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "pegasus_academy" "\0"
+            VALUE "InternalName", "Pegasus Academy" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 com.pegasus.academy. All rights reserved." "\0"
-            VALUE "OriginalFilename", "pegasus_academy.exe" "\0"
-            VALUE "ProductName", "pegasus_academy" "\0"
+            VALUE "OriginalFilename", "Pegasus Academy.exe" "\0"
+            VALUE "ProductName", "Pegasus Academy" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

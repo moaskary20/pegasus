@@ -1,6 +1,6 @@
 {
-    "name": "pegasus_academy",
-    "short_name": "pegasus_academy",
+    "name": "Pegasus Academy",
+    "short_name": "Pegasus Academy",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

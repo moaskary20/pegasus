@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../api/auth_api.dart';
 import '../api/reminders_api.dart';
+import '../services/local_notifications_service.dart';
 import '../app_theme.dart';
 import 'course_detail_screen.dart';
 import 'feature_scaffold.dart';
@@ -40,6 +41,20 @@ class _RemindersScreenState extends State<RemindersScreen> {
       _needsAuth = res.needsAuth;
       _loading = false;
     });
+    // جدولة تنبيهات محلية للتذكير
+    if (!res.needsAuth && res.reminders.isNotEmpty) {
+      for (var i = 0; i < res.reminders.length && i < 5; i++) {
+        final r = res.reminders[i];
+        final id = (r.type.hashCode + (r.remindableId ?? 0)) & 0x7FFFFFFF;
+        LocalNotificationsService.scheduleReminder(
+          id: id > 0 ? id : i + 1000,
+          title: r.title,
+          body: r.message,
+          minutesFromNow: 30 + (i * 15),
+          payload: r.courseSlug != null ? 'course:${r.courseSlug}' : null,
+        ).ignore();
+      }
+    }
   }
 
   Future<void> _dismiss(ReminderItem item) async {

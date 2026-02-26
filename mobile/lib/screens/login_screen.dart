@@ -92,7 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'مرحباً بك في أكاديمية بيغاسوس',
+                  'مرحباً بك فيPegasus Academy',
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: Colors.grey.shade600,
                       ),

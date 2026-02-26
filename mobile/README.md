@@ -1,6 +1,6 @@
 # Pegasus Academy - تطبيق الموبايل
 
-تطبيق Flutter لتطبيق أكاديمية بيغاسوس على Android و iOS.
+تطبيق Flutter لتطبيقPegasus Academy على Android و iOS.
 
 ## المتطلبات
 

@@ -48,10 +48,14 @@ class _AppDrawerContentState extends State<AppDrawerContent> {
     }
   }
 
+  /// يظهر الإدارة المالية للمدرس أو الأدمن
   bool get _isInstructor {
     final roles = _user?['roles'];
     if (roles is List) {
-      return roles.any((r) => r.toString().toLowerCase() == 'instructor');
+      return roles.any((r) {
+        final role = r.toString().toLowerCase();
+        return role == 'instructor' || role == 'admin';
+      });
     }
     return false;
   }

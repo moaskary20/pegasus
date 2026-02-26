@@ -6,26 +6,58 @@ import 'package:video_player/video_player.dart';
 import 'api/auth_api.dart';
 import 'screens/main_shell.dart';
 import 'screens/login_screen.dart';
+import 'utils/locale_helper.dart';
+import 'app_locale.dart';
+import 'services/local_notifications_service.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await LocalNotificationsService.init();
   if (kDebugMode) {
     FlutterError.onError = (details) {
       FlutterError.presentError(details);
       debugPrint('FlutterError: ${details.exception}');
     };
   }
-  runApp(const MyApp());
+  final locale = await LocaleHelper.getLocale();
+  runApp(MyApp(initialLocale: locale));
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class MyApp extends StatefulWidget {
+  const MyApp({super.key, this.initialLocale = const Locale('ar')});
+
+  final Locale initialLocale;
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late Locale _locale;
+
+  @override
+  void initState() {
+    super.initState();
+    _locale = widget.initialLocale;
+  }
+
+  void setLocale(Locale locale) {
+    LocaleHelper.setLocale(locale.languageCode);
+    setState(() => _locale = locale);
+  }
 
   /// ثيم باستخدام خط Tajawal من Google Fonts لجميع النصوص في التطبيق
   static ThemeData _buildTheme() {
+    const primary = Color(0xFF2c004d);
     final base = ThemeData(
-      colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2c004d)),
+      colorScheme: ColorScheme.fromSeed(seedColor: primary),
       useMaterial3: true,
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: _SlideUpwardsPageTransitionsBuilder(),
+          TargetPlatform.iOS: _SlideUpwardsPageTransitionsBuilder(),
+        },
+      ),
     );
     return base.copyWith(
       textTheme: GoogleFonts.tajawalTextTheme(base.textTheme),
@@ -36,21 +68,45 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = _buildTheme();
+    final isArabic = _locale.languageCode == 'ar';
     return MaterialApp(
       title: 'أكاديمية بيغاسوس',
       debugShowCheckedModeBanner: false,
-      locale: const Locale('ar'),
+      locale: _locale,
       builder: (context, child) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: DefaultTextStyle(
-            style: GoogleFonts.tajawal(),
-            child: child ?? const SizedBox.shrink(),
+        return AppLocaleScope(
+          locale: _locale,
+          setLocale: setLocale,
+          child: Directionality(
+            textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+            child: DefaultTextStyle(
+              style: GoogleFonts.tajawal(),
+              child: child ?? const SizedBox.shrink(),
+            ),
           ),
         );
       },
       theme: theme,
       home: const SplashScreen(),
+    );
+  }
+}
+
+class _SlideUpwardsPageTransitionsBuilder extends PageTransitionsBuilder {
+  const _SlideUpwardsPageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    final curved = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+    return SlideTransition(
+      position: Tween<Offset>(begin: const Offset(0, 0.05), end: Offset.zero).animate(curved),
+      child: FadeTransition(opacity: curved, child: child),
     );
   }
 }
@@ -80,6 +136,7 @@ class _SplashScreenState extends State<SplashScreen> {
     try {
       await _controller!.initialize();
       if (!mounted) return;
+      _controller!.setVolume(0); // عرض بدون صوت
       _controller!.setLooping(false);
       _controller!.addListener(_onVideoStatus);
       await _controller!.play();

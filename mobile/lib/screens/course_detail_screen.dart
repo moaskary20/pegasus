@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:share_plus/share_plus.dart';
 import '../api/courses_api.dart';
 import '../api/config.dart';
 import '../api/auth_api.dart';
@@ -11,6 +12,7 @@ import '../app_theme.dart';
 import 'cart_screen.dart';
 import 'lesson_player_screen.dart';
 import 'instructor_profile_screen.dart';
+import '../widgets/skeleton_loading.dart';
 
 /// شاشة تفاصيل الدورة التدريبية — تصميم احترافي مع تبويبات وحركات (مشابه للصورة المرجعية)
 class CourseDetailScreen extends StatefulWidget {
@@ -150,7 +152,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> with SingleTick
             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
           ),
         ),
-        body: const Center(child: CircularProgressIndicator(color: AppTheme.primary)),
+        body: const SkeletonCourseDetail(),
       );
     }
 
@@ -340,6 +342,17 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> with SingleTick
       ),
       actions: [
         IconButton(
+          icon: const Icon(Icons.share_rounded, color: Colors.white),
+          onPressed: () {
+            final base = apiBaseUrl.endsWith('/') ? apiBaseUrl.substring(0, apiBaseUrl.length - 1) : apiBaseUrl;
+            Share.share(
+              '$base/courses/${_course!.slug}',
+              subject: _course!.title,
+            );
+          },
+          tooltip: 'مشاركة الدورة',
+        ),
+        IconButton(
           icon: Icon(
             _isBookmarked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
             color: _isBookmarked ? Colors.redAccent : Colors.white,
@@ -403,8 +416,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> with SingleTick
     final c = _course!;
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-      transform: Matrix4.translationValues(0, -24, 0),
+      margin: const EdgeInsets.fromLTRB(16, 20, 16, 0),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),

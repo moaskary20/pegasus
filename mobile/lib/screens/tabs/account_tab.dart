@@ -6,8 +6,10 @@ import '../notifications_reminders_screen.dart';
 import '../subscriptions_screen.dart';
 import '../purchase_history_screen.dart';
 import '../instructor_finances_screen.dart';
+import '../learning_progress_screen.dart';
 import '../../api/auth_api.dart';
 import '../../api/config.dart';
+import '../../app_locale.dart';
 import '../widgets/app_header.dart';
 
 const Color _primary = Color(0xFF2c004d);
@@ -64,10 +66,14 @@ class _AccountTabState extends State<AccountTab> {
     }
   }
 
+  /// يظهر الإدارة المالية للمدرس أو الأدمن
   bool get _isInstructor {
     final roles = _user?['roles'];
     if (roles is List) {
-      return roles.any((r) => r.toString().toLowerCase() == 'instructor');
+      return roles.any((r) {
+        final role = r.toString().toLowerCase();
+        return role == 'instructor' || role == 'admin';
+      });
     }
     return false;
   }
@@ -156,6 +162,13 @@ class _AccountTabState extends State<AccountTab> {
               ),
             ],
             const SizedBox(height: 32),
+            _LanguageTile(),
+            _AccountTile(
+              icon: Icons.trending_up_rounded,
+              title: 'تتبع التقدم',
+              subtitle: 'إحصائيات التعلم، ساعات، إنجازات',
+              onTap: () => _push(const LearningProgressScreen()),
+            ),
             _AccountTile(
               icon: Icons.person_outline,
               title: 'إعدادات الحساب',
@@ -227,6 +240,108 @@ class _AccountTabState extends State<AccountTab> {
         shape: BoxShape.circle,
       ),
       child: Icon(Icons.person_rounded, size: 56, color: _primary),
+    );
+  }
+}
+
+class _LanguageTile extends StatelessWidget {
+  const _LanguageTile();
+
+  @override
+  Widget build(BuildContext context) {
+    final scope = AppLocaleScope.of(context);
+    final isArabic = scope.locale.languageCode == 'ar';
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            textDirection: TextDirection.rtl,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: _primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.language_rounded, color: _primary, size: 24),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isArabic ? 'اللغة' : 'Language',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: _primary,
+                          ),
+                      textDirection: TextDirection.rtl,
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _LangChip(
+                          label: 'عربي',
+                          isSelected: isArabic,
+                          onTap: () => scope.setLocale(const Locale('ar')),
+                        ),
+                        const SizedBox(width: 8),
+                        _LangChip(
+                          label: 'English',
+                          isSelected: !isArabic,
+                          onTap: () => scope.setLocale(const Locale('en')),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _LangChip extends StatelessWidget {
+  const _LangChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: isSelected ? _primary : Colors.grey.shade200,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? Colors.white : Colors.grey.shade700,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              fontSize: 14,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

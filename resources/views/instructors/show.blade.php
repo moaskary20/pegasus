@@ -5,7 +5,7 @@
 @push('head')
 <meta name="description" content="{{ Str::limit(strip_tags($instructor->academic_history ?? $instructor->job ?? ''), 160) }}">
 <meta property="og:title" content="{{ $instructor->name }}">
-<meta property="og:description" content="مدرب في أكاديمية بيغاسوس - {{ $instructor->coursesCount }} دورة">
+<meta property="og:description" content="مدرب فيPegasus Academy - {{ $instructor->coursesCount }} دورة">
 <meta property="og:image" content="{{ $instructor->avatar_url ?? asset('images/og-default.png') }}">
 <meta property="og:url" content="{{ url()->current() }}">
 <meta property="og:type" content="profile">

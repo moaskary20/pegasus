@@ -18,7 +18,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
     this.onMenu,
   });
 
-  /// النص في المنتصف (افتراضي: أكاديمية بيغاسوس)
+  /// النص في المنتصف (افتراضي:Pegasus Academy)
   final String? title;
   final VoidCallback? onCart;
   /// عدد عناصر السلة (يُظهر بالأحمر فوق الأيقونة)
