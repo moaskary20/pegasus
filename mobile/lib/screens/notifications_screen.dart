@@ -62,6 +62,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     _load(refresh: true);
   }
 
+  Future<void> _deleteOne(AppNotification n) async {
+    final ok = await NotificationsApi.delete(n.id);
+    if (ok && mounted) _load(refresh: true);
+  }
+
   @override
   Widget build(BuildContext context) {
     return FeatureScaffold(
@@ -130,6 +135,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               index: index,
                               notification: n,
                               onTap: () => _markAsRead(n),
+                              onDelete: () => _deleteOne(n),
                             );
                           },
                         ),
@@ -151,11 +157,13 @@ class _NotificationTile extends StatelessWidget {
     required this.index,
     required this.notification,
     required this.onTap,
+    this.onDelete,
   });
 
   final int index;
   final AppNotification notification;
   final VoidCallback onTap;
+  final VoidCallback? onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -227,6 +235,12 @@ class _NotificationTile extends StatelessWidget {
                           ],
                         ),
                       ),
+                      if (onDelete != null)
+                        IconButton(
+                          icon: Icon(Icons.delete_outline_rounded, size: 22, color: Colors.grey.shade600),
+                          onPressed: onDelete,
+                          tooltip: 'حذف',
+                        ),
                     ],
                   ),
                 ),

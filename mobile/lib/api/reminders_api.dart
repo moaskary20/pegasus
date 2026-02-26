@@ -95,6 +95,8 @@ class ReminderItem {
     this.actionLabel,
     this.remindableType,
     this.remindableId,
+    this.courseSlug,
+    this.lessonId,
   });
 
   final String type;
@@ -106,6 +108,10 @@ class ReminderItem {
   final String? actionLabel;
   final String? remindableType;
   final int? remindableId;
+  /// للموبايل: للتنقل إلى الدورة أو الاختبار
+  final String? courseSlug;
+  /// للموبايل: للتنقل إلى اختبار الدرس (نوع quiz فقط)
+  final int? lessonId;
 
   factory ReminderItem.fromJson(Map<String, dynamic> json) {
     return ReminderItem(
@@ -118,6 +124,8 @@ class ReminderItem {
       actionLabel: json['action_label']?.toString(),
       remindableType: json['remindable_type']?.toString(),
       remindableId: (json['remindable_id'] as num?)?.toInt(),
+      courseSlug: json['course_slug']?.toString(),
+      lessonId: (json['lesson_id'] as num?)?.toInt(),
     );
   }
 }

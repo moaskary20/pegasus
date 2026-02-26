@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import '../api/reminders_api.dart';
 import '../app_theme.dart';
+import 'course_detail_screen.dart';
 import 'feature_scaffold.dart';
 import 'login_screen.dart';
+import 'messages_screen.dart';
+import 'my_courses_screen.dart';
+import 'quiz_screen.dart';
 
 /// شاشة التنبيهات — اختبارات، رسائل، دروس، كوبونات، إلخ
 class RemindersScreen extends StatefulWidget {
@@ -39,6 +43,50 @@ class _RemindersScreenState extends State<RemindersScreen> {
     if (ok && mounted) await _load();
   }
 
+  void _onReminderTap(ReminderItem item) {
+    switch (item.type) {
+      case 'quiz':
+        if (item.courseSlug != null && item.courseSlug!.isNotEmpty && item.lessonId != null) {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => QuizScreen(
+                courseSlug: item.courseSlug!,
+                courseTitle: item.title,
+                lessonId: item.lessonId!,
+              ),
+            ),
+          ).then((_) => _load());
+        }
+        break;
+      case 'message':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const MessagesScreen()),
+        ).then((_) => _load());
+        break;
+      case 'lesson':
+      case 'rating':
+        if (item.courseSlug != null && item.courseSlug!.isNotEmpty) {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => CourseDetailScreen(courseSlug: item.courseSlug!, courseTitle: item.title),
+            ),
+          ).then((_) => _load());
+        }
+        break;
+      case 'certificate':
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const MyCoursesScreen()),
+        ).then((_) => _load());
+        break;
+      case 'coupon':
+      case 'question':
+        // للإدارة/المدربين — لا تنقل ضمن التطبيق
+        break;
+      default:
+        break;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return FeatureScaffold(
@@ -58,9 +106,7 @@ class _RemindersScreenState extends State<RemindersScreen> {
                         itemBuilder: (_, i) => _ReminderTile(
                           item: _reminders[i],
                           onDismiss: () => _dismiss(_reminders[i]),
-                          onTap: () {
-                            // يمكن فتح action_url لاحقاً
-                          },
+                          onTap: () => _onReminderTap(_reminders[i]),
                         ),
                       ),
       ),

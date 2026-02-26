@@ -60,6 +60,18 @@ class _SearchTabState extends State<SearchTab> {
     if (mounted) setState(() => _suggestions = res);
   }
 
+  Future<void> _clearSearchHistory() async {
+    final ok = await SearchApi.clearHistory();
+    if (mounted) {
+      setState(() => _suggestions = SearchSuggestionsResult(suggestions: [], recent: []));
+      if (ok) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('تم مسح سجل البحث'), behavior: SnackBarBehavior.floating),
+        );
+      }
+    }
+  }
+
   Future<void> _doSearch(String q) async {
     if (q.trim().length < 2) return;
     setState(() => _searching = true);
@@ -157,7 +169,18 @@ class _SearchTabState extends State<SearchTab> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       children: [
         if (showRecent) ...[
-          Text('عمليات بحث حديثة', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.grey.shade700)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('عمليات بحث حديثة', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.grey.shade700)),
+              TextButton.icon(
+                onPressed: _clearSearchHistory,
+                icon: const Icon(Icons.delete_sweep_outlined, size: 18),
+                label: const Text('مسح السجل'),
+                style: TextButton.styleFrom(foregroundColor: Colors.grey.shade600),
+              ),
+            ],
+          ),
           const SizedBox(height: 8),
           ...recent.map((q) => ListTile(
                 leading: const Icon(Icons.history_rounded, color: Colors.grey),

@@ -97,9 +97,11 @@ class ReminderService
         }
         
         // Find quizzes in enrolled courses that haven't been attempted or not passed
-        $quizzes = Quiz::whereHas('lesson.section', function ($q) use ($enrolledCourseIds) {
-            $q->whereIn('course_id', $enrolledCourseIds);
-        })->get();
+        $quizzes = Quiz::with(['lesson.section.course'])
+            ->whereHas('lesson.section', function ($q) use ($enrolledCourseIds) {
+                $q->whereIn('course_id', $enrolledCourseIds);
+            })
+            ->get();
         
         foreach ($quizzes as $quiz) {
             $attempt = QuizAttempt::where('user_id', $user->id)
@@ -108,6 +110,7 @@ class ReminderService
                 ->first();
             
             if (!$attempt) {
+                $course = $quiz->lesson?->section?->course;
                 $reminders->push([
                     'type' => Reminder::TYPE_QUIZ,
                     'title' => 'اختبار في انتظارك',
@@ -119,6 +122,8 @@ class ReminderService
                     'remindable_type' => Quiz::class,
                     'remindable_id' => $quiz->id,
                     'priority' => 8,
+                    'course_slug' => $course?->slug,
+                    'lesson_id' => $quiz->lesson_id,
                 ]);
             }
         }
@@ -194,6 +199,7 @@ class ReminderService
                     'remindable_type' => Enrollment::class,
                     'remindable_id' => $enrollment->id,
                     'priority' => 7,
+                    'course_slug' => $enrollment->course?->slug,
                 ]);
             }
         }
@@ -265,6 +271,7 @@ class ReminderService
                 'remindable_type' => Enrollment::class,
                 'remindable_id' => $enrollment->id,
                 'priority' => 5,
+                'course_slug' => $enrollment->course?->slug,
             ]);
         }
         
@@ -299,6 +306,7 @@ class ReminderService
                 'remindable_type' => Enrollment::class,
                 'remindable_id' => $enrollment->id,
                 'priority' => 4,
+                'course_slug' => $enrollment->course?->slug,
             ]);
         }
         

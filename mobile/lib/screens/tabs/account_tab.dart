@@ -21,9 +21,11 @@ class AccountTab extends StatefulWidget {
     this.onOpenFavorite,
     this.cartCount = 0,
     this.notificationsCount = 0,
+    this.remindersCount = 0,
     this.messagesCount = 0,
     this.onOpenCart,
     this.onOpenNotifications,
+    this.onOpenReminders,
     this.onOpenMessages,
   });
 
@@ -33,9 +35,11 @@ class AccountTab extends StatefulWidget {
   final VoidCallback? onOpenFavorite;
   final int cartCount;
   final int notificationsCount;
+  final int remindersCount;
   final int messagesCount;
   final VoidCallback? onOpenCart;
   final VoidCallback? onOpenNotifications;
+  final VoidCallback? onOpenReminders;
   final VoidCallback? onOpenMessages;
 
   @override
@@ -91,9 +95,11 @@ class _AccountTabState extends State<AccountTab> {
         onFavorite: widget.onOpenFavorite,
         cartCount: widget.cartCount,
         notificationsCount: widget.notificationsCount,
+        remindersCount: widget.remindersCount,
         messagesCount: widget.messagesCount,
         onCart: widget.onOpenCart,
         onBell: widget.onOpenNotifications,
+        onReminders: widget.onOpenReminders,
         onMessages: widget.onOpenMessages,
       ),
       body: RefreshIndicator(

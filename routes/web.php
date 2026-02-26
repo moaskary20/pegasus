@@ -290,6 +290,9 @@ Route::get('/api/store/product/{slug}', [\App\Http\Controllers\Api\StoreControll
 Route::post('/api/store/products/{id}/rate', [\App\Http\Controllers\Api\ProductRatingController::class, 'store'])
     ->middleware(['throttle:30,1', 'auth:sanctum'])
     ->name('api.store.product.rate');
+Route::get('/api/store/products/{id}/reviews', [\App\Http\Controllers\Api\StoreController::class, 'reviews'])
+    ->middleware(['throttle:60,1'])
+    ->name('api.store.product.reviews');
 
 Route::get('/api/courses/categories', [\App\Http\Controllers\Api\CoursesController::class, 'categories'])
     ->middleware(['throttle:60,1'])
@@ -425,9 +428,20 @@ Route::get('/api/my-courses', [\App\Http\Controllers\Api\MyCoursesController::cl
 Route::get('/api/my-assignments', [\App\Http\Controllers\Api\MyAssignmentsController::class, 'index'])
     ->middleware(['throttle:60,1', 'auth:sanctum'])
     ->name('api.my-assignments');
+Route::get('/api/my-assignments/{id}', [\App\Http\Controllers\Api\MyAssignmentsController::class, 'show'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.my-assignments.show')
+    ->whereNumber('id');
+Route::post('/api/my-assignments/{id}/submit', [\App\Http\Controllers\Api\MyAssignmentsController::class, 'submit'])
+    ->middleware(['throttle:30,1', 'auth:sanctum'])
+    ->name('api.my-assignments.submit')
+    ->whereNumber('id');
 Route::get('/api/orders', [\App\Http\Controllers\Api\OrdersController::class, 'index'])
     ->middleware(['throttle:60,1', 'auth:sanctum'])
     ->name('api.orders');
+Route::get('/api/store-orders', [\App\Http\Controllers\Api\StoreOrdersController::class, 'index'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.store-orders');
 Route::get('/api/support', [\App\Http\Controllers\Api\SupportController::class, 'index'])
     ->middleware(['throttle:60,1'])
     ->name('api.support.index');

@@ -62,22 +62,33 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    _initVideo();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _startNavigateTimer());
+    _prepareAndPlayVideo();
   }
 
-  Future<void> _initVideo() async {
+  Future<void> _prepareAndPlayVideo() async {
+    // لا يُعرض شيء سوى الفيديو — شاشة سوداء حتى جاهزية الفيديو
     _controller = VideoPlayerController.asset('assets/images/spalsh.mp4');
     try {
       await _controller!.initialize();
       if (!mounted) return;
       _controller!.setLooping(false);
-      _controller!.play();
       _controller!.addListener(_onVideoStatus);
-      setState(() {}); // إعادة الرسم لعرض الفيديو بدل النص
+      await _controller!.play();
+      if (!mounted) return;
+      setState(() {});
+      // تعبئة التوكن في الخلفية للتنقل
+      AuthApi.loadStoredToken().catchError((e) {
+        if (kDebugMode) debugPrint('loadStoredToken error: $e');
+      });
+      // حد أقصى 8 ثوانٍ في حال فشل الفيديو أو لم ينتهِ
+      _navigateTimer = Timer(const Duration(seconds: 8), _navigate);
     } catch (e) {
       if (kDebugMode) debugPrint('Splash video init error: $e');
-      if (mounted) setState(() {});
+      if (mounted) {
+        AuthApi.loadStoredToken().catchError((_) {});
+        _navigateTimer = Timer(const Duration(seconds: 2), _navigate);
+        setState(() {});
+      }
     }
   }
 
@@ -89,20 +100,14 @@ class _SplashScreenState extends State<SplashScreen> {
     }
   }
 
-  void _startNavigateTimer() async {
-    try {
-      await AuthApi.loadStoredToken();
-    } catch (e) {
-      if (kDebugMode) debugPrint('loadStoredToken error: $e');
-    }
-    _navigateTimer = Timer(const Duration(seconds: 4), _navigate);
-  }
-
-  void _navigate() {
+  Future<void> _navigate() async {
     if (_navigated) return;
     _navigated = true;
     _navigateTimer?.cancel();
     _controller?.removeListener(_onVideoStatus);
+    try {
+      await AuthApi.loadStoredToken();
+    } catch (_) {}
     if (!mounted) return;
     try {
       if (AuthApi.token != null) {
@@ -146,19 +151,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   child: VideoPlayer(_controller!),
                 ),
               )
-            : Container(
-                color: const Color(0xFF2c004d),
-                child: const Center(
-                  child: Text(
-                    'أكاديمية بيغاسوس',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
+            : Container(color: Colors.black),
       ),
     );
   }

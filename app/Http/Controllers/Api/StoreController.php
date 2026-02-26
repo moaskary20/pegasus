@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\ProductReview;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -98,6 +99,48 @@ class StoreController extends Controller
         ];
 
         return response()->json($data);
+    }
+
+    /**
+     * قائمة تقييمات المنتج
+     * GET /api/store/products/{id}/reviews
+     */
+    public function reviews(int $id): JsonResponse
+    {
+        $product = Product::where('id', $id)->where('is_active', true)->first();
+        if (!$product) {
+            return response()->json(['message' => 'Product not found'], 404);
+        }
+
+        $reviews = ProductReview::query()
+            ->where('product_id', $product->id)
+            ->approved()
+            ->with('user:id,name,avatar')
+            ->latest()
+            ->limit(50)
+            ->get();
+
+        $list = $reviews->map(function (ProductReview $r) {
+            $avatar = null;
+            if ($r->user && $r->user->avatar) {
+                $avatar = asset('storage/' . ltrim($r->user->avatar, '/'));
+            }
+            return [
+                'id' => $r->id,
+                'user_name' => $r->user?->name ?? 'مستخدم',
+                'avatar' => $avatar,
+                'rating' => (int) $r->rating,
+                'comment' => $r->comment ?? null,
+                'is_verified_purchase' => (bool) $r->is_verified_purchase,
+                'created_at' => $r->created_at->toIso8601String(),
+            ];
+        })->all();
+
+        return response()->json([
+            'reviews' => $list,
+            'average_rating' => round((float) ($product->average_rating ?? 0), 1),
+            'ratings_count' => (int) ($product->ratings_count ?? 0),
+        ]);
     }
 
     private function productImageUrl(?string $path): ?string

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../app_theme.dart';
 import '../api/support_api.dart';
 import 'feature_scaffold.dart';
@@ -41,6 +42,54 @@ class _SupportScreenState extends State<SupportScreen> with SingleTickerProvider
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (_settings != null && (_settings!.supportEmail.isNotEmpty || _settings!.supportPhone.isNotEmpty)) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+              child: TweenAnimationBuilder<double>(
+                tween: AppTheme.fadeInTween(),
+                duration: AppTheme.animNormal,
+                builder: (context, value, _) => Opacity(
+                  opacity: value,
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primary.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('تواصل معنا', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: AppTheme.primaryDark)),
+                        const SizedBox(height: 12),
+                        if (_settings!.supportEmail.isNotEmpty)
+                          _ContactRow(
+                            icon: Icons.email_outlined,
+                            label: _settings!.supportEmail,
+                            onTap: () => launchUrl(Uri.parse('mailto:${_settings!.supportEmail}')),
+                          ),
+                        if (_settings!.supportPhone.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          _ContactRow(
+                            icon: Icons.phone_outlined,
+                            label: _settings!.supportPhone,
+                            onTap: () => launchUrl(Uri.parse('tel:${_settings!.supportPhone}')),
+                          ),
+                        ],
+                        if (_settings!.supportPhone2.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          _ContactRow(
+                            icon: Icons.phone_outlined,
+                            label: _settings!.supportPhone2,
+                            onTap: () => launchUrl(Uri.parse('tel:${_settings!.supportPhone2}')),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: TweenAnimationBuilder<double>(
@@ -352,6 +401,33 @@ class _ContactFormState extends State<_ContactForm> {
                 ),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ContactRow extends StatelessWidget {
+  const _ContactRow({required this.icon, required this.label, required this.onTap});
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: AppTheme.primary),
+            const SizedBox(width: 12),
+            Expanded(child: Text(label, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.primaryDark))),
+            Icon(Icons.open_in_new_rounded, size: 18, color: Colors.grey.shade500),
           ],
         ),
       ),

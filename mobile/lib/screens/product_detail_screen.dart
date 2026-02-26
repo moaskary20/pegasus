@@ -640,6 +640,8 @@ class _ReviewsTabState extends State<_ReviewsTab> {
   int _selectedStars = 0;
   final _commentController = TextEditingController();
   bool _submitting = false;
+  bool _loadingReviews = true;
+  List<ProductReviewItem> _reviews = [];
   double? _avgRating;
   int? _ratingsCount;
 
@@ -648,12 +650,25 @@ class _ReviewsTabState extends State<_ReviewsTab> {
     super.initState();
     _avgRating = widget.product.averageRating;
     _ratingsCount = widget.product.ratingsCount;
+    _loadReviews();
   }
 
   @override
   void dispose() {
     _commentController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadReviews() async {
+    setState(() => _loadingReviews = true);
+    final res = await StoreApi.getProductReviews(widget.product.id);
+    if (!mounted) return;
+    setState(() {
+      _reviews = res?.reviews ?? [];
+      _avgRating = res?.averageRating ?? _avgRating ?? widget.product.averageRating;
+      _ratingsCount = res?.ratingsCount ?? _ratingsCount ?? widget.product.ratingsCount;
+      _loadingReviews = false;
+    });
   }
 
   Future<void> _submitRating() async {
@@ -679,6 +694,7 @@ class _ReviewsTabState extends State<_ReviewsTab> {
         _commentController.clear();
       });
       widget.onRated();
+      _loadReviews();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(res.message ?? 'تم إضافة تقييمك'), behavior: SnackBarBehavior.floating),
       );
@@ -758,6 +774,113 @@ class _ReviewsTabState extends State<_ReviewsTab> {
                     child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                   )
                 : const Text('إرسال التقييم'),
+          ),
+          const SizedBox(height: 32),
+          if (_loadingReviews)
+            const Padding(
+              padding: EdgeInsets.all(24),
+              child: Center(child: CircularProgressIndicator(color: AppTheme.primary)),
+            )
+          else if (_reviews.isNotEmpty) ...[
+            Text(
+              'التقييمات (${_reviews.length})',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+              textDirection: TextDirection.rtl,
+            ),
+            const SizedBox(height: 12),
+            ..._reviews.map((r) => _ProductReviewTile(review: r)),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ProductReviewTile extends StatelessWidget {
+  const _ProductReviewTile({required this.review});
+
+  final ProductReviewItem review;
+
+  String _fullUrl(String? path) {
+    if (path == null || path.isEmpty) return '';
+    if (path.startsWith('http')) return path;
+    return path;
+  }
+
+  String _formatDate(String iso) {
+    try {
+      final dt = DateTime.tryParse(iso);
+      if (dt == null) return iso;
+      return '${dt.day}/${dt.month}/${dt.year}';
+    } catch (_) {
+      return iso;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        textDirection: TextDirection.rtl,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: AppTheme.primary.withValues(alpha: 0.2),
+            backgroundImage: review.avatar != null && review.avatar!.isNotEmpty
+                ? NetworkImage(_fullUrl(review.avatar))
+                : null,
+            child: review.avatar == null || review.avatar!.isEmpty
+                ? Text(
+                    review.userName.isNotEmpty ? review.userName.substring(0, 1).toUpperCase() : '?',
+                    style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold),
+                  )
+                : null,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      review.userName,
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      textDirection: TextDirection.rtl,
+                    ),
+                    if (review.isVerifiedPurchase) ...[
+                      const SizedBox(width: 8),
+                      Icon(Icons.verified_rounded, size: 16, color: Colors.green.shade700),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: List.generate(5, (i) => Icon(
+                    i < review.rating ? Icons.star_rounded : Icons.star_outline_rounded,
+                    size: 16,
+                    color: Colors.amber.shade700,
+                  )),
+                ),
+                if (review.comment != null && review.comment!.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    review.comment!,
+                    style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+                    textDirection: TextDirection.rtl,
+                    maxLines: 4,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+                const SizedBox(height: 4),
+                Text(
+                  _formatDate(review.createdAt),
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                ),
+              ],
+            ),
           ),
         ],
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../app_theme.dart';
 import '../api/my_assignments_api.dart';
+import 'assignment_submit_screen.dart';
 import 'feature_scaffold.dart';
 
 /// واجباتي — بيانات من الـ backend (GET /api/my-assignments)
@@ -76,7 +77,20 @@ class _MyAssignmentsScreenState extends State<MyAssignmentsScreen> {
                             delegate: SliverChildBuilderDelegate(
                               (_, i) {
                                 final a = _list[i];
-                                return _AssignmentTile(assignment: a);
+                                return _AssignmentTile(
+                                  assignment: a,
+                                  onTap: () async {
+                                    final canSubmit = a.status == 'pending' || a.status == 'resubmit_requested';
+                                    if (canSubmit) {
+                                      final done = await Navigator.of(context).push<bool>(
+                                        MaterialPageRoute(
+                                          builder: (_) => AssignmentSubmitScreen(assignmentId: a.id),
+                                        ),
+                                      );
+                                      if (done == true) _load();
+                                    }
+                                  },
+                                );
                               },
                               childCount: _list.length,
                             ),
@@ -110,9 +124,10 @@ class _StatChip extends StatelessWidget {
 }
 
 class _AssignmentTile extends StatelessWidget {
-  const _AssignmentTile({required this.assignment});
+  const _AssignmentTile({required this.assignment, this.onTap});
 
   final MyAssignmentItem assignment;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -135,9 +150,12 @@ class _AssignmentTile extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         elevation: 0,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
@@ -171,6 +189,7 @@ class _AssignmentTile extends StatelessWidget {
                 Text('الدرجة: ${assignment.score}', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: AppTheme.primary)),
               ],
             ],
+            ),
           ),
         ),
       ),

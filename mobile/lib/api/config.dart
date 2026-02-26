@@ -47,6 +47,7 @@ const String apiStoreProducts = '/api/store/products';
 /// تفاصيل منتج واحد
 const String apiStoreProductDetail = '/api/store/product';
 const String apiStoreProductRate = '/api/store/products';
+const String apiStoreProductReviews = '/api/store/products';
 
 /// المفضلة (دورات + منتجات، يتطلب مصادقة)
 const String apiWishlist = '/api/wishlist';
@@ -73,6 +74,7 @@ const String apiMyAssignments = '/api/my-assignments';
 
 /// سجل الطلبات/المشتريات (يتطلب مصادقة)
 const String apiOrders = '/api/orders';
+const String apiStoreOrders = '/api/store-orders';
 
 /// الاشتراكات (خطط + اشتراكاتي + اشتراك)
 const String apiSubscriptionsPlans = '/api/subscriptions/plans';

@@ -9,7 +9,7 @@ import '../../app_theme.dart';
 
 /// تبويب الرئيسية: دورات مميزة أفقياً + أحدث الدورات عمودياً (مطابق للتصميم المطلوب)
 class HomeTab extends StatefulWidget {
-  const HomeTab({super.key, this.onOpenDrawer, this.wishlistCount = 0, this.onWishlistCountChanged, this.onOpenFavorite, this.cartCount = 0, this.notificationsCount = 0, this.messagesCount = 0, this.onOpenCart, this.onOpenNotifications, this.onOpenMessages});
+  const HomeTab({super.key, this.onOpenDrawer, this.wishlistCount = 0, this.onWishlistCountChanged, this.onOpenFavorite, this.cartCount = 0, this.notificationsCount = 0, this.remindersCount = 0, this.messagesCount = 0, this.onOpenCart, this.onOpenNotifications, this.onOpenReminders, this.onOpenMessages});
 
   final VoidCallback? onOpenDrawer;
   final int wishlistCount;
@@ -17,9 +17,11 @@ class HomeTab extends StatefulWidget {
   final VoidCallback? onOpenFavorite;
   final int cartCount;
   final int notificationsCount;
+  final int remindersCount;
   final int messagesCount;
   final VoidCallback? onOpenCart;
   final VoidCallback? onOpenNotifications;
+  final VoidCallback? onOpenReminders;
   final VoidCallback? onOpenMessages;
 
   @override
@@ -133,9 +135,11 @@ class _HomeTabState extends State<HomeTab> {
         onFavorite: widget.onOpenFavorite,
         cartCount: widget.cartCount,
         notificationsCount: widget.notificationsCount,
+        remindersCount: widget.remindersCount,
         messagesCount: widget.messagesCount,
         onCart: widget.onOpenCart,
         onBell: widget.onOpenNotifications,
+        onReminders: widget.onOpenReminders,
         onMessages: widget.onOpenMessages,
       ),
       body: RefreshIndicator(

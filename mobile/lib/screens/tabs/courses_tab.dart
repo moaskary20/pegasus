@@ -6,7 +6,7 @@ import '../../app_theme.dart';
 
 /// تبويب الدورات: تصنيفات من إدارة الدورات التدريبية بتصميم احترافي
 class CoursesTab extends StatefulWidget {
-  const CoursesTab({super.key, this.onOpenDrawer, this.wishlistCount = 0, this.onWishlistCountChanged, this.onOpenFavorite, this.cartCount = 0, this.notificationsCount = 0, this.messagesCount = 0, this.onOpenCart, this.onOpenNotifications, this.onOpenMessages});
+  const CoursesTab({super.key, this.onOpenDrawer, this.wishlistCount = 0, this.onWishlistCountChanged, this.onOpenFavorite, this.cartCount = 0, this.notificationsCount = 0, this.remindersCount = 0, this.messagesCount = 0, this.onOpenCart, this.onOpenNotifications, this.onOpenReminders, this.onOpenMessages});
 
   final VoidCallback? onOpenDrawer;
   final int wishlistCount;
@@ -14,9 +14,11 @@ class CoursesTab extends StatefulWidget {
   final VoidCallback? onOpenFavorite;
   final int cartCount;
   final int notificationsCount;
+  final int remindersCount;
   final int messagesCount;
   final VoidCallback? onOpenCart;
   final VoidCallback? onOpenNotifications;
+  final VoidCallback? onOpenReminders;
   final VoidCallback? onOpenMessages;
 
   @override
@@ -54,9 +56,11 @@ class _CoursesTabState extends State<CoursesTab> {
         onFavorite: widget.onOpenFavorite,
         cartCount: widget.cartCount,
         notificationsCount: widget.notificationsCount,
+        remindersCount: widget.remindersCount,
         messagesCount: widget.messagesCount,
         onCart: widget.onOpenCart,
         onBell: widget.onOpenNotifications,
+        onReminders: widget.onOpenReminders,
         onMessages: widget.onOpenMessages,
       ),
       body: RefreshIndicator(

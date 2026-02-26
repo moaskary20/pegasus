@@ -69,6 +69,24 @@ class StoreApi {
     }
   }
 
+  /// قائمة تقييمات المنتج
+  static Future<ProductReviewsResponse?> getProductReviews(int productId) async {
+    try {
+      final uri = Uri.parse('$apiBaseUrl$apiStoreProductReviews/$productId/reviews');
+      final res = await http.get(uri, headers: _headers);
+      if (res.statusCode != 200) return null;
+      final data = jsonDecode(res.body.toString()) as Map<String, dynamic>? ?? {};
+      final list = (data['reviews'] as List<dynamic>?) ?? [];
+      return ProductReviewsResponse(
+        reviews: list.map((e) => ProductReviewItem.fromJson(e as Map<String, dynamic>)).toList(),
+        averageRating: (data['average_rating'] as num?)?.toDouble() ?? 0,
+        ratingsCount: (data['ratings_count'] as num?)?.toInt() ?? 0,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// جلب تصنيفات المتجر من إدارة المتجر (ProductCategory)
   static Future<StoreCategoriesResponse> getCategories() async {
     try {
@@ -86,6 +104,48 @@ class StoreApi {
     } catch (_) {
       return StoreCategoriesResponse(categories: []);
     }
+  }
+}
+
+class ProductReviewsResponse {
+  ProductReviewsResponse({
+    required this.reviews,
+    required this.averageRating,
+    required this.ratingsCount,
+  });
+  final List<ProductReviewItem> reviews;
+  final double averageRating;
+  final int ratingsCount;
+}
+
+class ProductReviewItem {
+  ProductReviewItem({
+    required this.id,
+    required this.userName,
+    this.avatar,
+    required this.rating,
+    this.comment,
+    this.isVerifiedPurchase = false,
+    required this.createdAt,
+  });
+  final int id;
+  final String userName;
+  final String? avatar;
+  final int rating;
+  final String? comment;
+  final bool isVerifiedPurchase;
+  final String createdAt;
+
+  factory ProductReviewItem.fromJson(Map<String, dynamic> json) {
+    return ProductReviewItem(
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      userName: (json['user_name'] ?? '').toString(),
+      avatar: json['avatar']?.toString(),
+      rating: (json['rating'] as num?)?.toInt() ?? 0,
+      comment: json['comment']?.toString(),
+      isVerifiedPurchase: json['is_verified_purchase'] == true,
+      createdAt: (json['created_at'] ?? '').toString(),
+    );
   }
 }
 

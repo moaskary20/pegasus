@@ -11,6 +11,8 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
     this.cartCount = 0,
     this.onBell,
     this.notificationsCount = 0,
+    this.onReminders,
+    this.remindersCount = 0,
     this.onFavorite,
     this.favoriteCount = 0,
     this.onMessages,
@@ -26,6 +28,9 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onBell;
   /// عدد الإشعارات غير المقروءة (يُظهر بالأحمر فوق الأيقونة)
   final int notificationsCount;
+  final VoidCallback? onReminders;
+  /// عدد التنبيهات (اختبارات، دروس، إلخ)
+  final int remindersCount;
   final VoidCallback? onFavorite;
   /// عدد عناصر المفضلة (يُظهر فوق القلب ويُلوّن القلب بالأحمر عند > 0)
   final int favoriteCount;
@@ -64,6 +69,12 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
               tooltip: 'القائمة',
             ),
             _IconWithBadge(
+              icon: const Icon(Icons.notifications_active_outlined),
+              count: remindersCount,
+              onPressed: onReminders ?? () {},
+              tooltip: 'التنبيهات',
+            ),
+            _IconWithBadge(
               icon: const Icon(Icons.chat_bubble_outline_rounded),
               count: messagesCount,
               onPressed: onMessages ?? () {},
@@ -72,7 +83,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
           ],
         ),
       ),
-      leadingWidth: 100,
+      leadingWidth: 130,
       actions: [
         Stack(
           clipBehavior: Clip.none,

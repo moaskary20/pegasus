@@ -1,9 +1,29 @@
 import 'package:flutter/material.dart';
 import '../app_theme.dart';
 import '../api/orders_api.dart';
+import '../api/store_orders_api.dart';
 import 'feature_scaffold.dart';
 
-/// سجل المشتريات — بيانات من الـ backend (GET /api/orders)
+/// عنصر موحد للعرض (دورات أو منتجات)
+class _PurchaseItem {
+  _PurchaseItem({required this.id, required this.orderNumber, required this.total, required this.status, required this.itemsSummary, required this.isStoreOrder, this.createdAt});
+  final int id;
+  final String orderNumber;
+  final double total;
+  final String status;
+  final List<_ItemSummary> itemsSummary;
+  final bool isStoreOrder;
+  final String? createdAt;
+}
+
+class _ItemSummary {
+  _ItemSummary({required this.title, required this.quantity, required this.price});
+  final String title;
+  final int quantity;
+  final double price;
+}
+
+/// سجل المشتريات — دورات + طلبات المتجر (GET /api/orders, GET /api/store-orders)
 class PurchaseHistoryScreen extends StatefulWidget {
   const PurchaseHistoryScreen({super.key});
 
@@ -13,7 +33,7 @@ class PurchaseHistoryScreen extends StatefulWidget {
 
 class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
   bool _loading = true;
-  List<OrderItem> _list = [];
+  List<_PurchaseItem> _list = [];
   bool _needsAuth = false;
 
   @override
@@ -24,11 +44,36 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
 
   Future<void> _load() async {
     setState(() => _loading = true);
-    final res = await OrdersApi.getOrders();
+    final ordersRes = await OrdersApi.getOrders();
+    final storeRes = await StoreOrdersApi.getStoreOrders();
     if (!mounted) return;
+    final combined = <_PurchaseItem>[];
+    for (final o in ordersRes.orders) {
+      combined.add(_PurchaseItem(
+        id: o.id,
+        orderNumber: o.orderNumber,
+        total: o.total,
+        status: o.status,
+        itemsSummary: o.itemsSummary.map((e) => _ItemSummary(title: e.title, quantity: e.quantity, price: e.price)).toList(),
+        isStoreOrder: false,
+        createdAt: o.createdAt,
+      ));
+    }
+    for (final o in storeRes.orders) {
+      combined.add(_PurchaseItem(
+        id: o.id,
+        orderNumber: o.orderNumber,
+        total: o.total,
+        status: o.paymentStatus == 'paid' ? 'paid' : o.status,
+        itemsSummary: o.itemsSummary.map((e) => _ItemSummary(title: e.productName, quantity: e.quantity, price: e.price)).toList(),
+        isStoreOrder: true,
+        createdAt: o.createdAt,
+      ));
+    }
+    combined.sort((a, b) => (b.createdAt ?? '').compareTo(a.createdAt ?? ''));
     setState(() {
-      _list = res.orders;
-      _needsAuth = res.needsAuth;
+      _list = combined;
+      _needsAuth = ordersRes.needsAuth || storeRes.needsAuth;
       _loading = false;
     });
   }
@@ -41,6 +86,14 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
         return 'قيد الانتظار';
       case 'failed':
         return 'فشل';
+      case 'processing':
+        return 'قيد المعالجة';
+      case 'shipped':
+        return 'تم الشحن';
+      case 'delivered':
+        return 'تم التسليم';
+      case 'cancelled':
+        return 'ملغي';
       default:
         return status;
     }
@@ -67,10 +120,10 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
                         padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                         itemCount: _list.length,
                         itemBuilder: (_, i) {
-                          final order = _list[i];
+                          final item = _list[i];
                           return _OrderCard(
-                            order: order,
-                            statusLabel: _statusLabel(order.status),
+                            item: item,
+                            statusLabel: _statusLabel(item.status),
                           );
                         },
                       ),
@@ -80,13 +133,14 @@ class _PurchaseHistoryScreenState extends State<PurchaseHistoryScreen> {
 }
 
 class _OrderCard extends StatelessWidget {
-  const _OrderCard({required this.order, required this.statusLabel});
+  const _OrderCard({required this.item, required this.statusLabel});
 
-  final OrderItem order;
+  final _PurchaseItem item;
   final String statusLabel;
 
   @override
   Widget build(BuildContext context) {
+    final isPaid = item.status == 'paid';
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 0,
@@ -99,33 +153,47 @@ class _OrderCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  order.orderNumber,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.primaryDark,
+                Expanded(
+                  child: Row(
+                    children: [
+                      Text(
+                        item.orderNumber,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.primaryDark,
+                            ),
                       ),
+                      if (item.isStoreOrder) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(color: AppTheme.primary.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(6)),
+                          child: Text('متجر', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppTheme.primary)),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: order.status == 'paid' ? Colors.green.withValues(alpha: 0.15) : Colors.orange.withValues(alpha: 0.15),
+                    color: isPaid ? Colors.green.withValues(alpha: 0.15) : Colors.orange.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(statusLabel, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: order.status == 'paid' ? Colors.green : Colors.orange)),
+                  child: Text(statusLabel, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: isPaid ? Colors.green : Colors.orange)),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            ...order.itemsSummary.take(3).map((e) => Padding(
+            ...item.itemsSummary.take(3).map((e) => Padding(
                   padding: const EdgeInsets.only(bottom: 4),
                   child: Text('• ${e.title}', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey.shade700), maxLines: 1, overflow: TextOverflow.ellipsis),
                 )),
-            if (order.itemsSummary.length > 3)
-              Text('+ ${order.itemsSummary.length - 3} عناصر أخرى', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey.shade500)),
+            if (item.itemsSummary.length > 3)
+              Text('+ ${item.itemsSummary.length - 3} عناصر أخرى', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey.shade500)),
             const Divider(height: 16),
             Text(
-              'الإجمالي: ${order.total.toStringAsFixed(1)} ر.س',
+              'الإجمالي: ${item.total.toStringAsFixed(1)} ر.س',
               style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: AppTheme.primary),
             ),
           ],
