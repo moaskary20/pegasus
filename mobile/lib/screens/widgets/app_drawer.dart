@@ -13,6 +13,7 @@ import '../account_settings_screen.dart';
 import '../subscriptions_screen.dart';
 import '../purchase_history_screen.dart';
 import '../support_screen.dart';
+import '../my_points_screen.dart';
 import '../instructor_finances_screen.dart';
 
 const Color _primary = Color(0xFF2c004d);
@@ -84,6 +85,7 @@ class _AppDrawerContentState extends State<AppDrawerContent> {
               _DrawerTile(icon: Icons.favorite_border_rounded, label: 'قائمة الرغبات', onTap: () => _push(context, const WishlistScreen())),
               _DrawerTile(icon: Icons.notifications_none_rounded, label: 'الإشعارات والتنبيهات', onTap: () => _push(context, const NotificationsRemindersScreen())),
               _DrawerTile(icon: Icons.chat_bubble_outline_rounded, label: 'الرسائل', onTap: () => _push(context, const MessagesScreen())),
+              _DrawerTile(icon: Icons.star_rounded, label: 'نقاطي', onTap: () => _push(context, const MyPointsScreen())),
               _DrawerTile(icon: Icons.settings_outlined, label: 'إعدادات الحساب', onTap: () => _push(context, const AccountSettingsScreen())),
               if (_isInstructor)
                 _DrawerTile(icon: Icons.account_balance_wallet_outlined, label: 'الإدارة المالية', onTap: () => _push(context, const InstructorFinancesScreen())),

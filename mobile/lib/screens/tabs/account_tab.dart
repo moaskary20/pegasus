@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../login_screen.dart';
 import '../account_settings_screen.dart';
 import '../support_screen.dart';
@@ -90,6 +91,14 @@ class _AccountTabState extends State<AccountTab> {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (context) => screen),
     ).then((_) => _loadUser());
+  }
+
+  Future<void> _openAboutUrl() async {
+    final base = apiBaseUrl.endsWith('/') ? apiBaseUrl.substring(0, apiBaseUrl.length - 1) : apiBaseUrl;
+    final uri = Uri.parse('$base/about');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   @override
@@ -193,6 +202,12 @@ class _AccountTabState extends State<AccountTab> {
               title: 'سجل المشتريات',
               subtitle: 'طلبات الدورات والمنتجات',
               onTap: () => _push(const PurchaseHistoryScreen()),
+            ),
+            _AccountTile(
+              icon: Icons.info_outline_rounded,
+              title: 'من نحن',
+              subtitle: 'تعرف على أكاديمية بيغاسوس',
+              onTap: () => _openAboutUrl(),
             ),
             _AccountTile(
               icon: Icons.help_outline,

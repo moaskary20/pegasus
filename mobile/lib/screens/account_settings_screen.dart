@@ -5,6 +5,7 @@ import 'feature_scaffold.dart';
 import 'profile_edit_screen.dart';
 import 'password_change_screen.dart';
 import 'notification_settings_screen.dart';
+import 'reminder_settings_screen.dart';
 
 /// إعدادات الحساب — بيانات المستخدم من الـ backend (GET /api/auth/user)
 class AccountSettingsScreen extends StatefulWidget {
@@ -118,6 +119,15 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
             ),
             _AnimatedSettingTile(
               index: 3,
+              icon: Icons.notification_add_outlined,
+              title: 'إعدادات التنبيهات',
+              subtitle: 'تفعيل أو إيقاف التنبيهات حسب النوع (اختبار، درس، رسالة، كوبون،...)',
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ReminderSettingsScreen()),
+              ),
+            ),
+            _AnimatedSettingTile(
+              index: 4,
               icon: Icons.language_rounded,
               title: 'اللغة',
               subtitle: 'العربية',

@@ -467,6 +467,25 @@ Route::get('/api/subscriptions/my', [\App\Http\Controllers\Api\SubscriptionsCont
 Route::post('/api/subscriptions/subscribe', [\App\Http\Controllers\Api\SubscriptionsController::class, 'subscribe'])
     ->middleware(['throttle:10,1', 'auth:sanctum'])
     ->name('api.subscriptions.subscribe');
+Route::get('/api/points', [\App\Http\Controllers\Api\PointsController::class, 'index'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.points.index');
+Route::get('/api/points/transactions', [\App\Http\Controllers\Api\PointsController::class, 'transactions'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.points.transactions');
+Route::get('/api/rewards', [\App\Http\Controllers\Api\PointsController::class, 'rewards'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.rewards.index');
+Route::post('/api/rewards/{id}/redeem', [\App\Http\Controllers\Api\PointsController::class, 'redeem'])
+    ->middleware(['throttle:30,1', 'auth:sanctum'])
+    ->name('api.rewards.redeem')
+    ->whereNumber('id');
+Route::get('/api/reminder-settings', [\App\Http\Controllers\Api\ReminderSettingsController::class, 'index'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.reminder-settings.index');
+Route::put('/api/reminder-settings', [\App\Http\Controllers\Api\ReminderSettingsController::class, 'update'])
+    ->middleware(['throttle:30,1', 'auth:sanctum'])
+    ->name('api.reminder-settings.update');
 Route::get('/api/reminders', [ReminderController::class, 'index'])
     ->middleware(['throttle:60,1', 'auth:sanctum'])
     ->name('api.reminders.index.mobile');

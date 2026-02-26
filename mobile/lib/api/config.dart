@@ -112,6 +112,15 @@ const String apiReminders = '/api/reminders';
 const String apiRemindersCounts = '/api/reminders/counts';
 const String apiRemindersDismiss = '/api/reminders/dismiss';
 
+/// النقاط والمكافآت (يتطلب مصادقة)
+const String apiPoints = '/api/points';
+const String apiPointsTransactions = '/api/points/transactions';
+const String apiRewards = '/api/rewards';
+const String apiRewardsRedeem = '/api/rewards';
+
+/// إعدادات التنبيهات (يتطلب مصادقة)
+const String apiReminderSettings = '/api/reminder-settings';
+
 /// الملف الشخصي للمدرب
 const String apiInstructors = '/api/instructors';
 /// الإدارة المالية للمدرس (يتطلب مصادقة + دور مدرس)

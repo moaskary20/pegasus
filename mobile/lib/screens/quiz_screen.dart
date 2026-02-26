@@ -60,15 +60,16 @@ class _QuizScreenState extends State<QuizScreen> {
       _error = null;
       _submitResult = null;
     });
-    final res = await QuizApi.getQuiz(widget.courseSlug, widget.lessonId);
+    final result = await QuizApi.getQuiz(widget.courseSlug, widget.lessonId);
     if (!mounted) return;
-    if (res == null) {
+    if (result.error != null) {
       setState(() {
         _loading = false;
-        _error = 'تعذر تحميل الاختبار';
+        _error = result.error;
       });
       return;
     }
+    final res = result.response!;
     if (res.maxReached) {
       setState(() {
         _loading = false;
@@ -171,10 +172,27 @@ class _QuizScreenState extends State<QuizScreen> {
             const SizedBox(height: 16),
             Text(_error!, textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 24),
-            FilledButton(
-              onPressed: () => Navigator.pop(context),
-              style: FilledButton.styleFrom(backgroundColor: AppTheme.primary),
-              child: const Text('رجوع'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                OutlinedButton(
+                  onPressed: () {
+                    setState(() {
+                      _error = null;
+                      _loading = true;
+                    });
+                    _load();
+                  },
+                  style: OutlinedButton.styleFrom(foregroundColor: AppTheme.primary),
+                  child: const Text('إعادة المحاولة'),
+                ),
+                const SizedBox(width: 12),
+                FilledButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: FilledButton.styleFrom(backgroundColor: AppTheme.primary),
+                  child: const Text('رجوع'),
+                ),
+              ],
             ),
           ],
         ),

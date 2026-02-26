@@ -18,7 +18,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
     this.onMenu,
   });
 
-  /// النص في المنتصف (افتراضي:Pegasus Academy)
+  /// النص في المنتصف (افتراضي: Academy Pegasus)
   final String? title;
   final VoidCallback? onCart;
   /// عدد عناصر السلة (يُظهر بالأحمر فوق الأيقونة)
@@ -45,7 +45,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
       elevation: 0,
       centerTitle: true,
       title: Text(
-        title ?? 'أكاديمية بيغاسوس',
+        title ?? 'Academy Pegasus',
         style: const TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.bold,

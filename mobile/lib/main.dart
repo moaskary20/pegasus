@@ -70,7 +70,7 @@ class _MyAppState extends State<MyApp> {
     final theme = _buildTheme();
     final isArabic = _locale.languageCode == 'ar';
     return MaterialApp(
-      title: 'أكاديمية بيغاسوس',
+      title: 'Academy Pegasus',
       debugShowCheckedModeBanner: false,
       locale: _locale,
       builder: (context, child) {

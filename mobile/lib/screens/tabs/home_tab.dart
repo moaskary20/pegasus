@@ -128,7 +128,7 @@ class _HomeTabState extends State<HomeTab> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8F8),
       appBar: AppHeader(
-        title: 'أكاديمية بيغاسوس',
+        title: 'Academy Pegasus',
         onMenu: widget.onOpenDrawer ?? () => Scaffold.of(context).openDrawer(),
         favoriteCount: widget.wishlistCount,
         onFavorite: widget.onOpenFavorite,
@@ -174,9 +174,9 @@ class _HomeTabState extends State<HomeTab> {
                   ),
                   if (_data != null) ...[
                     _buildHomeSlider(_data!.homeSlider),
-                    _buildSectionTitle('الدورات الأكثر مشاهدة', '🔥'),
+                    _buildSectionTitle('الدورات الأكثر مشاهدة'),
                     _buildTopCourses(_data!.topCourses),
-                    _buildSectionTitle('أحدث الدورات', '⚡'),
+                    _buildSectionTitle('أحدث الدورات'),
                     _buildRecentCourses(_data!.recentCourses),
                     _buildCategoriesSection(_data!.categories),
                     if (_isHomeFullyEmpty) _buildUnifiedEmptyState(),
@@ -282,25 +282,16 @@ class _HomeTabState extends State<HomeTab> {
     );
   }
 
-  Widget _buildSectionTitle(String title, String emoji) {
+  Widget _buildSectionTitle(String title) {
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
-        child: Row(
-          children: [
-            Text(
-              emoji,
-              style: const TextStyle(fontSize: 22),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF333333),
-                  ),
-            ),
-          ],
+        child: Text(
+          title,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF333333),
+              ),
         ),
       ),
     );
@@ -510,11 +501,6 @@ class _HomeTabState extends State<HomeTab> {
           padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
           child: Row(
             children: [
-              Text(
-                '📂',
-                style: const TextStyle(fontSize: 20),
-              ),
-              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   cat.name,

@@ -12,48 +12,73 @@ class QuizApi {
     return h;
   }
 
-  /// جلب الاختبار (مع إنشاء محاولة إن لزم)
-  static Future<QuizResponse?> getQuiz(String courseSlug, int lessonId) async {
+  /// جلب الاختبار (مع إنشاء محاولة إن لزم). يرجع النتيجة أو رسالة الخطأ من الباكند.
+  static Future<QuizLoadResult> getQuiz(String courseSlug, int lessonId) async {
     try {
       final uri = Uri.parse('$apiBaseUrl/api/courses/$courseSlug/lessons/$lessonId/quiz');
       final res = await http.get(uri, headers: _headers);
       final data = jsonDecode(res.body.toString()) as Map<String, dynamic>? ?? {};
       if (res.statusCode == 200) {
         if (data['max_reached'] == true) {
-          return QuizResponse(
-            maxReached: true,
-            quiz: null,
-            attempt: null,
-            lastAttempt: data['last_attempt'] != null
-                ? QuizAttemptResult.fromJson(data['last_attempt'] as Map<String, dynamic>)
-                : null,
+          return QuizLoadResult(
+            response: QuizResponse(
+              maxReached: true,
+              quiz: null,
+              attempt: null,
+              lastAttempt: data['last_attempt'] != null
+                  ? QuizAttemptResult.fromJson(data['last_attempt'] as Map<String, dynamic>)
+                  : null,
+            ),
           );
         }
         if (data['already_submitted'] == true) {
           final quizJson = data['quiz'];
-          return QuizResponse(
-            maxReached: false,
-            alreadySubmitted: true,
-            quiz: quizJson != null ? QuizDetail.fromJson(quizJson as Map<String, dynamic>) : null,
-            attempt: null,
-            lastAttempt: data['attempt'] != null
-                ? QuizAttemptResult.fromJson(data['attempt'] as Map<String, dynamic>)
-                : null,
+          return QuizLoadResult(
+            response: QuizResponse(
+              maxReached: false,
+              alreadySubmitted: true,
+              quiz: quizJson != null ? QuizDetail.fromJson(quizJson as Map<String, dynamic>) : null,
+              attempt: null,
+              lastAttempt: data['attempt'] != null
+                  ? QuizAttemptResult.fromJson(data['attempt'] as Map<String, dynamic>)
+                  : null,
+            ),
           );
         }
-        return QuizResponse(
-          maxReached: false,
-          alreadySubmitted: false,
-          quiz: QuizDetail.fromJson(data['quiz'] as Map<String, dynamic>),
-          attempt: data['attempt'] != null
-              ? QuizAttemptData.fromJson(data['attempt'] as Map<String, dynamic>)
-              : null,
-          lastAttempt: null,
+        return QuizLoadResult(
+          response: QuizResponse(
+            maxReached: false,
+            alreadySubmitted: false,
+            quiz: QuizDetail.fromJson(data['quiz'] as Map<String, dynamic>),
+            attempt: data['attempt'] != null
+                ? QuizAttemptData.fromJson(data['attempt'] as Map<String, dynamic>)
+                : null,
+            lastAttempt: null,
+          ),
         );
       }
-      return null;
-    } catch (_) {
-      return null;
+      final msg = (data['message'] ?? data['error'] ?? '').toString().toLowerCase();
+      String error = 'تعذر تحميل الاختبار';
+      if (res.statusCode == 401) {
+        error = 'يجب تسجيل الدخول لأداء الاختبار';
+      } else if (res.statusCode == 403) {
+        error = msg.contains('enrolled') ? 'يجب التسجيل في الدورة لأداء الاختبار' : 'غير مسموح';
+      } else if (res.statusCode == 404) {
+        if (msg.contains('no quiz') || msg.contains('quiz')) {
+          error = 'لا يوجد اختبار لهذا الدرس';
+        } else if (msg.contains('lesson')) {
+          error = 'الدرس غير موجود';
+        } else if (msg.contains('course')) {
+          error = 'الدورة غير موجودة';
+        } else {
+          error = 'لا يوجد اختبار لهذا الدرس';
+        }
+      } else if (msg.isNotEmpty) {
+        error = (data['message'] ?? data['error'] ?? error).toString();
+      }
+      return QuizLoadResult(error: error);
+    } catch (e) {
+      return QuizLoadResult(error: 'خطأ في الاتصال. تحقق من الإنترنت وحاول مرة أخرى.');
     }
   }
 
@@ -100,6 +125,12 @@ class QuizApi {
       return null;
     }
   }
+}
+
+class QuizLoadResult {
+  QuizLoadResult({this.response, this.error});
+  final QuizResponse? response;
+  final String? error;
 }
 
 class QuizResponse {

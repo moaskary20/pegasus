@@ -135,6 +135,7 @@ class CoursesController extends Controller
                         'duration_minutes' => (int) ($lesson->duration_minutes ?? 0),
                         'is_free_preview' => (bool) ($lesson->is_free_preview ?? false),
                         'sort_order' => (int) ($lesson->sort_order ?? 0),
+                        'has_quiz' => $lesson->quiz()->exists(),
                         'has_zoom_meeting' => $zm !== null,
                         'zoom_join_url' => $zm?->join_url,
                         'zoom_scheduled_at' => $zm?->scheduled_start_time?->toIso8601String(),

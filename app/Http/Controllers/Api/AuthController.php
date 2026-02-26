@@ -124,6 +124,10 @@ class AuthController extends Controller
             'city' => $user->city,
             'job' => $user->job,
             'roles' => $user->getRoleNames(),
+            'total_points' => (int) ($user->total_points ?? 0),
+            'available_points' => (int) ($user->available_points ?? 0),
+            'rank' => $user->rank ?? 'bronze',
+            'rank_label' => $user->rank_label,
         ]);
     }
 

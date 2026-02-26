@@ -288,8 +288,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> with SingleTi
   Widget _buildInfoCard(StoreProductDetail p) {
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-      transform: Matrix4.translationValues(0, -24, 0),
+      margin: const EdgeInsets.fromLTRB(16, 20, 16, 0),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),

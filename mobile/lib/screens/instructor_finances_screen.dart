@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../api/instructor_finances_api.dart';
 import '../api/auth_api.dart';
 import '../app_theme.dart';
-import 'feature_scaffold.dart';
 
 const Color _primary = Color(0xFF2c004d);
 
@@ -57,8 +56,18 @@ class _InstructorFinancesScreenState extends State<InstructorFinancesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return FeatureScaffold(
-      title: 'الإدارة المالية',
+    return Scaffold(
+      backgroundColor: const Color(0xFFF5F3F8),
+      appBar: AppBar(
+        backgroundColor: _primary,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () => Navigator.maybePop(context),
+        ),
+        title: const Text('الإدارة المالية', style: TextStyle(fontWeight: FontWeight.w600)),
+      ),
       body: RefreshIndicator(
         onRefresh: _load,
         color: _primary,
@@ -74,45 +83,61 @@ class _InstructorFinancesScreenState extends State<InstructorFinancesScreen> {
   }
 
   Widget _buildNeedsAuth() {
-    return ListView(
-      padding: const EdgeInsets.all(24),
+    return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
-      children: [
-        const SizedBox(height: 48),
-        Icon(Icons.lock_outline_rounded, size: 72, color: _primary.withValues(alpha: 0.5)),
-        const SizedBox(height: 24),
-        Text(
-          'سجّل الدخول كمدرب لعرض الإدارة المالية',
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade700),
-          textDirection: TextDirection.rtl,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height - 200),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 48),
+              Icon(Icons.lock_outline_rounded, size: 72, color: _primary.withValues(alpha: 0.5)),
+              const SizedBox(height: 24),
+              Text(
+                'سجّل الدخول كمدرب لعرض الإدارة المالية',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade700),
+                textDirection: TextDirection.rtl,
+              ),
+            ],
+          ),
         ),
-      ],
+      ),
     );
   }
 
   Widget _buildError() {
-    return ListView(
-      padding: const EdgeInsets.all(24),
+    return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
-      children: [
-        const SizedBox(height: 48),
-        Icon(Icons.error_outline_rounded, size: 72, color: Colors.grey.shade400),
-        const SizedBox(height: 16),
-        Text(
-          _error ?? 'حدث خطأ',
-          textAlign: TextAlign.center,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade700),
-          textDirection: TextDirection.rtl,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height - 200),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const SizedBox(height: 48),
+              Icon(Icons.error_outline_rounded, size: 72, color: Colors.grey.shade400),
+              const SizedBox(height: 16),
+              Text(
+                _error ?? 'حدث خطأ',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade700),
+                textDirection: TextDirection.rtl,
+              ),
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: _load,
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('إعادة المحاولة'),
+                style: FilledButton.styleFrom(backgroundColor: _primary),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 24),
-        FilledButton.icon(
-          onPressed: _load,
-          icon: const Icon(Icons.refresh_rounded),
-          label: const Text('إعادة المحاولة'),
-          style: FilledButton.styleFrom(backgroundColor: _primary),
-        ),
-      ],
+      ),
     );
   }
 
@@ -120,10 +145,12 @@ class _InstructorFinancesScreenState extends State<InstructorFinancesScreen> {
     final s = _data!.stats;
     final courses = _data!.courses;
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+    return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-      children: [
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
@@ -189,7 +216,8 @@ class _InstructorFinancesScreenState extends State<InstructorFinancesScreen> {
           )
         else
           ...courses.map((c) => _CourseEarningCard(course: c)),
-      ],
+        ],
+      ),
     );
   }
 }
