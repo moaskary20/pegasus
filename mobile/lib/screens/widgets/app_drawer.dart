@@ -13,6 +13,7 @@ import '../account_settings_screen.dart';
 import '../subscriptions_screen.dart';
 import '../purchase_history_screen.dart';
 import '../support_screen.dart';
+import '../instructor_finances_screen.dart';
 
 const Color _primary = Color(0xFF2c004d);
 
@@ -37,6 +38,7 @@ class _AppDrawerContentState extends State<AppDrawerContent> {
   }
 
   Future<void> _loadUser() async {
+    if (AuthApi.token == null) await AuthApi.loadStoredToken();
     final user = await AuthApi.getUser();
     if (mounted) {
       setState(() {
@@ -44,6 +46,14 @@ class _AppDrawerContentState extends State<AppDrawerContent> {
         _loadingUser = false;
       });
     }
+  }
+
+  bool get _isInstructor {
+    final roles = _user?['roles'];
+    if (roles is List) {
+      return roles.any((r) => r.toString().toLowerCase() == 'instructor');
+    }
+    return false;
   }
 
   @override
@@ -71,6 +81,8 @@ class _AppDrawerContentState extends State<AppDrawerContent> {
               _DrawerTile(icon: Icons.notifications_none_rounded, label: 'الإشعارات والتنبيهات', onTap: () => _push(context, const NotificationsRemindersScreen())),
               _DrawerTile(icon: Icons.chat_bubble_outline_rounded, label: 'الرسائل', onTap: () => _push(context, const MessagesScreen())),
               _DrawerTile(icon: Icons.settings_outlined, label: 'إعدادات الحساب', onTap: () => _push(context, const AccountSettingsScreen())),
+              if (_isInstructor)
+                _DrawerTile(icon: Icons.account_balance_wallet_outlined, label: 'الإدارة المالية', onTap: () => _push(context, const InstructorFinancesScreen())),
               _DrawerTile(icon: Icons.card_membership_outlined, label: 'الاشتراكات', onTap: () => _push(context, const SubscriptionsScreen())),
               _DrawerTile(icon: Icons.receipt_long_outlined, label: 'سجل المشتريات', onTap: () => _push(context, const PurchaseHistoryScreen())),
               _DrawerTile(icon: Icons.help_outline_rounded, label: 'المساعدة والدعم', onTap: () => _push(context, const SupportScreen())),

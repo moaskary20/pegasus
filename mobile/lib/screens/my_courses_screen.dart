@@ -4,7 +4,6 @@ import '../app_theme.dart';
 import '../api/config.dart';
 import '../api/my_courses_api.dart';
 import '../api/certificate_api.dart';
-import 'feature_scaffold.dart';
 import 'course_detail_screen.dart';
 
 /// تعلّمي / دوراتي — بيانات من الـ backend (GET /api/my-courses)
@@ -71,59 +70,78 @@ class _MyCoursesScreenState extends State<MyCoursesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return FeatureScaffold(
-      title: 'تعلّمي / دوراتي',
+    return Scaffold(
+      backgroundColor: AppTheme.surface,
+      appBar: AppBar(
+        backgroundColor: AppTheme.primary,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () => Navigator.maybePop(context),
+        ),
+        title: const Text('تعلّمي / دوراتي'),
+      ),
       body: RefreshIndicator(
         onRefresh: _load,
         color: AppTheme.primary,
         child: _loading
             ? const Center(child: CircularProgressIndicator(color: AppTheme.primary))
             : _needsAuth
-                ? _NeedsAuth(message: 'سجّل الدخول لعرض دوراتك')
+                ? SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height - 150),
+                      child: _NeedsAuth(message: 'سجّل الدخول لعرض دوراتك'),
+                    ),
+                  )
                 : _list.isEmpty
-                    ? _EmptyState(
-                        message: 'الدورات المسجلة فيها ستظهر هنا',
-                        subtitle: 'بعد الاشتراك في أي دورة ستجدها هنا لمتابعة التعلم',
-                        onRefresh: _load,
+                    ? SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(minHeight: MediaQuery.of(context).size.height - 150),
+                          child: _EmptyState(
+                            message: 'الدورات المسجلة فيها ستظهر هنا',
+                            subtitle: 'بعد الاشتراك في أي دورة ستجدها هنا لمتابعة التعلم',
+                            onRefresh: _load,
+                          ),
+                        ),
                       )
-                    : CustomScrollView(
-                        slivers: [
-                          SliverToBoxAdapter(
-                            child: Padding(
-                              padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-                              child: _StatsCard(
-                                totalCourses: _totalCourses,
-                                completedCount: _completedCount,
-                                inProgressCount: _inProgressCount,
-                                avgProgress: _avgProgress,
-                                totalHours: _totalHours,
-                              ),
+                    : ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.only(bottom: 24),
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+                            child: _StatsCard(
+                              totalCourses: _totalCourses,
+                              completedCount: _completedCount,
+                              inProgressCount: _inProgressCount,
+                              avgProgress: _avgProgress,
+                              totalHours: _totalHours,
                             ),
                           ),
-                          SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (_, i) {
-                                final e = _list[i];
-                                return _EnrollmentTile(
-                                  item: e,
-                                  imageUrl: _imageUrl(e.coverImage),
-                                  onTap: () => Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => CourseDetailScreen(
-                                        courseSlug: e.slug,
-                                        courseTitle: e.title,
-                                      ),
+                          ...List.generate(
+                            _list.length,
+                            (i) {
+                              final e = _list[i];
+                              return _EnrollmentTile(
+                                item: e,
+                                imageUrl: _imageUrl(e.coverImage),
+                                onTap: () => Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => CourseDetailScreen(
+                                      courseSlug: e.slug,
+                                      courseTitle: e.title,
                                     ),
                                   ),
-                                  onCertificate: e.completedAt != null
-                                      ? () => _downloadCertificate(e.slug)
-                                      : null,
-                                );
-                              },
-                              childCount: _list.length,
-                            ),
+                                ),
+                                onCertificate: e.completedAt != null
+                                    ? () => _downloadCertificate(e.slug)
+                                    : null,
+                              );
+                            },
                           ),
-                          const SliverToBoxAdapter(child: SizedBox(height: 24)),
                         ],
                       ),
       ),

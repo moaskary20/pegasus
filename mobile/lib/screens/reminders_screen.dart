@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../api/auth_api.dart';
 import '../api/reminders_api.dart';
 import '../app_theme.dart';
 import 'course_detail_screen.dart';
@@ -124,28 +125,79 @@ class _RemindersScreenState extends State<RemindersScreen> {
   }
 
   Widget _buildNeedsAuth() {
+    // إذا وُجد توكن في الذاكرة ولكن الـ API أرجع 401 → انتهت الجلسة أو مشكلة اتصال
+    final hasToken = AuthApi.token != null;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.lock_outline_rounded, size: 64, color: Colors.grey.shade400),
+            Icon(
+              hasToken ? Icons.cloud_off_rounded : Icons.lock_outline_rounded,
+              size: 64,
+              color: Colors.grey.shade400,
+            ),
             const SizedBox(height: 16),
             Text(
-              'يجب تسجيل الدخول لعرض التنبيهات',
+              hasToken
+                  ? 'تعذر تحميل التنبيهات'
+                  : 'يجب تسجيل الدخول لعرض التنبيهات',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey.shade600),
               textAlign: TextAlign.center,
               textDirection: TextDirection.rtl,
             ),
-            const SizedBox(height: 24),
-            FilledButton(
-              onPressed: () => Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
+            if (hasToken) ...[
+              const SizedBox(height: 8),
+              Text(
+                'تحقق من الاتصال وجرّب التحديث، أو سجّل الدخول مجدداً',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+                textAlign: TextAlign.center,
+                textDirection: TextDirection.rtl,
               ),
-              style: FilledButton.styleFrom(backgroundColor: AppTheme.primary),
-              child: const Text('تسجيل الدخول'),
+            ],
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (hasToken) ...[
+                  TextButton.icon(
+                    onPressed: () async {
+                      await AuthApi.logout();
+                      if (mounted) {
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(builder: (_) => const LoginScreen()),
+                          (_) => false,
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.logout_rounded, size: 20),
+                    label: const Text('تسجيل الخروج'),
+                  ),
+                  const SizedBox(width: 12),
+                  FilledButton.icon(
+                    onPressed: () => _load(),
+                    icon: const Icon(Icons.refresh_rounded, size: 20),
+                    label: const Text('تحديث'),
+                    style: FilledButton.styleFrom(backgroundColor: AppTheme.primary),
+                  ),
+                ] else ...[
+                  TextButton.icon(
+                    onPressed: () => _load(),
+                    icon: const Icon(Icons.refresh_rounded, size: 20),
+                    label: const Text('تحديث'),
+                  ),
+                  const SizedBox(width: 12),
+                  FilledButton(
+                    onPressed: () => Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    ),
+                    style: FilledButton.styleFrom(backgroundColor: AppTheme.primary),
+                    child: const Text('تسجيل الدخول'),
+                  ),
+                ],
+              ],
             ),
           ],
         ),

@@ -3,7 +3,6 @@ import 'package:url_launcher/url_launcher.dart';
 import '../api/auth_api.dart';
 import '../app_theme.dart';
 import '../api/support_api.dart';
-import 'feature_scaffold.dart';
 
 /// المساعدة والدعم — بيانات وإرسال من الـ backend (GET /api/support، POST complaint/contact)
 class SupportScreen extends StatefulWidget {
@@ -48,106 +47,95 @@ class _SupportScreenState extends State<SupportScreen> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
-    return FeatureScaffold(
-      title: 'المساعدة والدعم',
+    if (_loadingSettings) {
+      return Scaffold(
+        backgroundColor: AppTheme.surface,
+        appBar: AppBar(
+          backgroundColor: AppTheme.primary,
+          foregroundColor: Colors.white,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            onPressed: () => Navigator.maybePop(context),
+          ),
+          title: const Text('المساعدة والدعم'),
+        ),
+        body: const Center(child: CircularProgressIndicator(color: AppTheme.primary)),
+      );
+    }
+    return Scaffold(
+      backgroundColor: AppTheme.surface,
+      appBar: AppBar(
+        backgroundColor: AppTheme.primary,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () => Navigator.maybePop(context),
+        ),
+        title: const Text('المساعدة والدعم'),
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: Colors.white,
+          indicatorWeight: 3,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
+          tabs: const [
+            Tab(text: 'شكوى'),
+            Tab(text: 'تواصل'),
+          ],
+        ),
+      ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (_settings != null && (_settings!.supportEmail.isNotEmpty || _settings!.supportPhone.isNotEmpty)) ...[
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-              child: TweenAnimationBuilder<double>(
-                tween: AppTheme.fadeInTween(),
-                duration: AppTheme.animNormal,
-                builder: (context, value, _) => Opacity(
-                  opacity: value,
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppTheme.primary.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('تواصل معنا', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: AppTheme.primaryDark)),
-                        const SizedBox(height: 12),
-                        if (_settings!.supportEmail.isNotEmpty)
-                          _ContactRow(
-                            icon: Icons.email_outlined,
-                            label: _settings!.supportEmail,
-                            onTap: () => launchUrl(Uri.parse('mailto:${_settings!.supportEmail}')),
-                          ),
-                        if (_settings!.supportPhone.isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          _ContactRow(
-                            icon: Icons.phone_outlined,
-                            label: _settings!.supportPhone,
-                            onTap: () => launchUrl(Uri.parse('tel:${_settings!.supportPhone}')),
-                          ),
-                        ],
-                        if (_settings!.supportPhone2.isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          _ContactRow(
-                            icon: Icons.phone_outlined,
-                            label: _settings!.supportPhone2,
-                            onTap: () => launchUrl(Uri.parse('tel:${_settings!.supportPhone2}')),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppTheme.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('تواصل معنا', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: AppTheme.primaryDark)),
+                    const SizedBox(height: 12),
+                    if (_settings!.supportEmail.isNotEmpty)
+                      _ContactRow(
+                        icon: Icons.email_outlined,
+                        label: _settings!.supportEmail,
+                        onTap: () => launchUrl(Uri.parse('mailto:${_settings!.supportEmail}')),
+                      ),
+                    if (_settings!.supportPhone.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      _ContactRow(
+                        icon: Icons.phone_outlined,
+                        label: _settings!.supportPhone,
+                        onTap: () => launchUrl(Uri.parse('tel:${_settings!.supportPhone}')),
+                      ),
+                    ],
+                    if (_settings!.supportPhone2.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      _ContactRow(
+                        icon: Icons.phone_outlined,
+                        label: _settings!.supportPhone2,
+                        onTap: () => launchUrl(Uri.parse('tel:${_settings!.supportPhone2}')),
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ),
           ],
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: TweenAnimationBuilder<double>(
-              tween: AppTheme.fadeInTween(),
-              duration: AppTheme.animNormal,
-              builder: (context, value, _) => Opacity(
-                opacity: value,
-                child: Text(
-                  'تقديم شكوى أو استفسار',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade600),
-                ),
-              ),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            child: Text(
+              'تقديم شكوى أو استفسار',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade600),
             ),
           ),
-          const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: TweenAnimationBuilder<double>(
-              tween: AppTheme.fadeInTween(),
-              duration: AppTheme.animNormal,
-              builder: (context, value, _) => Opacity(
-                opacity: value,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: AppTheme.primary.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: TabBar(
-                    controller: _tabController,
-                    indicator: BoxDecoration(
-                      color: AppTheme.primary,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    indicatorSize: TabBarIndicatorSize.tab,
-                    labelColor: Colors.white,
-                    unselectedLabelColor: AppTheme.primaryDark,
-                    labelStyle: const TextStyle(fontWeight: FontWeight.bold),
-                    tabs: const [
-                      Tab(text: 'شكوى'),
-                      Tab(text: 'تواصل'),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
           Expanded(
             child: TabBarView(
               controller: _tabController,

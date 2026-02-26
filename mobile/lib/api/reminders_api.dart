@@ -14,7 +14,10 @@ class RemindersApi {
 
   static Future<RemindersResponse> getReminders({String? type}) async {
     try {
-      await AuthApi.loadStoredToken();
+      // تحميل التوكن من التخزين إن لم يكن في الذاكرة (لتجنب الكتابة فوق توكن صالح من الذاكرة)
+      if (AuthApi.token == null) {
+        await AuthApi.loadStoredToken();
+      }
       if (AuthApi.token == null) {
         return RemindersResponse(reminders: [], needsAuth: true);
       }
@@ -42,7 +45,9 @@ class RemindersApi {
 
   static Future<ReminderCountsResponse> getCounts() async {
     try {
-      await AuthApi.loadStoredToken();
+      if (AuthApi.token == null) {
+        await AuthApi.loadStoredToken();
+      }
       if (AuthApi.token == null) {
         return ReminderCountsResponse(counts: {}, needsAuth: true);
       }
@@ -67,7 +72,9 @@ class RemindersApi {
 
   static Future<bool> dismiss({required String type, int? remindableId}) async {
     try {
-      await AuthApi.loadStoredToken();
+      if (AuthApi.token == null) {
+        await AuthApi.loadStoredToken();
+      }
       if (AuthApi.token == null) return false;
       final uri = Uri.parse('$apiBaseUrl$apiRemindersDismiss');
       final body = <String, dynamic>{'type': type};

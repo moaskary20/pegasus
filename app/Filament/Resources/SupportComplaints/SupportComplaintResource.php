@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\SupportComplaints;
 
+use App\Filament\Resources\SupportComplaints\Pages\CreateSupportComplaint;
 use App\Filament\Resources\SupportComplaints\Pages\EditSupportComplaint;
 use App\Filament\Resources\SupportComplaints\Pages\ListSupportComplaints;
 use App\Filament\Resources\SupportComplaints\Pages\ViewSupportComplaint;
@@ -34,7 +35,7 @@ class SupportComplaintResource extends Resource
 
     public static function canCreate(): bool
     {
-        return false;
+        return true;
     }
 
     public static function form(Schema $schema): Schema
@@ -63,6 +64,7 @@ class SupportComplaintResource extends Resource
     {
         return [
             'index' => ListSupportComplaints::route('/'),
+            'create' => CreateSupportComplaint::route('/create'),
             'view' => ViewSupportComplaint::route('/{record}'),
             'edit' => EditSupportComplaint::route('/{record}/edit'),
         ];

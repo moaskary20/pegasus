@@ -123,7 +123,6 @@ class _InstructorFinancesScreenState extends State<InstructorFinancesScreen> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
       physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-      textDirection: TextDirection.rtl,
       children: [
         Container(
           padding: const EdgeInsets.all(20),

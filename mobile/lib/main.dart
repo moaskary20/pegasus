@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:video_player/video_player.dart';
 import 'api/auth_api.dart';
 import 'screens/main_shell.dart';
@@ -20,16 +21,21 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  /// ثيم بسيط بدون تحميل خطوط من الشبكة لتفادي شاشة بيضاء على الويب
+  /// ثيم باستخدام خط Tajawal من Google Fonts لجميع النصوص في التطبيق
   static ThemeData _buildTheme() {
-    return ThemeData(
+    final base = ThemeData(
       colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF2c004d)),
       useMaterial3: true,
+    );
+    return base.copyWith(
+      textTheme: GoogleFonts.tajawalTextTheme(base.textTheme),
+      primaryTextTheme: GoogleFonts.tajawalTextTheme(base.primaryTextTheme),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = _buildTheme();
     return MaterialApp(
       title: 'أكاديمية بيغاسوس',
       debugShowCheckedModeBanner: false,
@@ -37,10 +43,13 @@ class MyApp extends StatelessWidget {
       builder: (context, child) {
         return Directionality(
           textDirection: TextDirection.rtl,
-          child: child ?? const SizedBox.shrink(),
+          child: DefaultTextStyle(
+            style: GoogleFonts.tajawal(),
+            child: child ?? const SizedBox.shrink(),
+          ),
         );
       },
-      theme: _buildTheme(),
+      theme: theme,
       home: const SplashScreen(),
     );
   }
