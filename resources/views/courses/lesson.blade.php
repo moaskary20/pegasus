@@ -209,6 +209,55 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 @endif
 
+                {{-- أسئلة وأجوبة (Q&A) --}}
+                @if($canAccess)
+                    <div class="px-6 py-5 border-t">
+                        <h3 class="text-lg font-extrabold text-slate-900 mb-3">أسئلة وأجوبة</h3>
+                        @if($isEnrolled)
+                            <form action="{{ route('site.course.lesson.questions.store', [$course, $lesson]) }}" method="post" class="mb-6">
+                                @csrf
+                                <textarea name="question" rows="3" class="w-full rounded-xl border border-slate-200 px-4 py-3 focus:border-[#3d195c] focus:ring-2 focus:ring-[#3d195c]/20" placeholder="اطرح سؤالك عن هذا الدرس..." required></textarea>
+                                <button type="submit" class="mt-2 px-5 py-2.5 rounded-xl bg-[#3d195c] text-white font-bold hover:bg-[#3d195c]/95 transition">
+                                    طرح السؤال
+                                </button>
+                            </form>
+                        @endif
+                        <div class="space-y-4">
+                            @forelse($lesson->questions ?? [] as $question)
+                                <div class="p-4 rounded-2xl border bg-white">
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-10 h-10 rounded-full bg-[#3d195c]/10 flex items-center justify-center shrink-0 font-bold text-[#3d195c]">
+                                            {{ strtoupper(mb_substr($question->user->name ?? '?', 0, 1)) }}
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <div class="flex items-center gap-2 text-sm mb-1">
+                                                <span class="font-bold text-slate-900">{{ $question->user->name ?? 'مجهول' }}</span>
+                                                <span class="text-slate-500">{{ $question->created_at?->diffForHumans() }}</span>
+                                                @if($question->is_answered)
+                                                    <span class="px-2 py-0.5 rounded-lg bg-emerald-100 text-emerald-700 text-xs font-bold">تم الرد</span>
+                                                @endif
+                                            </div>
+                                            <p class="text-slate-700">{{ $question->question }}</p>
+                                            @if($question->answers->count() > 0)
+                                                <div class="mt-3 space-y-2 pl-4 border-r-2 border-[#3d195c]/20">
+                                                    @foreach($question->answers as $answer)
+                                                        <div>
+                                                            <div class="text-xs text-slate-500 mb-0.5">{{ $answer->user->name ?? 'المدرب' }} · {{ $answer->created_at?->diffForHumans() }}</div>
+                                                            <p class="text-sm text-slate-700">{{ $answer->answer }}</p>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            @empty
+                                <p class="text-slate-500 text-sm">لا توجد أسئلة بعد. كن أول من يطرح سؤالاً!</p>
+                            @endforelse
+                        </div>
+                    </div>
+                @endif
+
                 {{-- مدة الدرس + حالة الإكمال --}}
                 <div class="px-6 py-4 border-t flex flex-wrap items-center justify-between gap-3">
                     @if($lesson->duration_minutes)

@@ -8,14 +8,13 @@ import 'tabs/account_tab.dart';
 import 'widgets/app_drawer.dart';
 import 'wishlist_screen.dart';
 import 'cart_screen.dart';
-import 'notifications_screen.dart';
+import 'notifications_reminders_screen.dart';
 import 'messages_screen.dart';
 import '../api/wishlist_api.dart';
 import '../api/cart_api.dart';
 import '../api/notifications_api.dart';
 import '../api/messages_api.dart';
 import '../api/reminders_api.dart';
-import 'reminders_screen.dart';
 
 const Color _primary = Color(0xFF2c004d);
 
@@ -172,17 +171,13 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
                 onWishlistCountChanged: _onWishlistCountChanged,
                 onOpenFavorite: _openWishlist,
                 cartCount: _cartCount,
-                notificationsCount: _notificationsCount,
-                remindersCount: _remindersCount,
+                notificationsAndRemindersCount: _notificationsCount + _remindersCount,
                 messagesCount: _messagesCount,
                 onOpenCart: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const CartScreen()),
                 ).then((_) => _loadCounts()),
-                onOpenNotifications: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-                ).then((_) => _loadCounts()),
-                onOpenReminders: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const RemindersScreen()),
+                onOpenNotificationsAndReminders: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const NotificationsRemindersScreen()),
                 ).then((_) => _loadCounts()),
                 onOpenMessages: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const MessagesScreen()),
@@ -194,17 +189,13 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
                 onWishlistCountChanged: _onWishlistCountChanged,
                 onOpenFavorite: _openWishlist,
                 cartCount: _cartCount,
-                notificationsCount: _notificationsCount,
-                remindersCount: _remindersCount,
+                notificationsAndRemindersCount: _notificationsCount + _remindersCount,
                 messagesCount: _messagesCount,
                 onOpenCart: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const CartScreen()),
                 ).then((_) => _loadCounts()),
-                onOpenNotifications: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-                ).then((_) => _loadCounts()),
-                onOpenReminders: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const RemindersScreen()),
+                onOpenNotificationsAndReminders: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const NotificationsRemindersScreen()),
                 ).then((_) => _loadCounts()),
                 onOpenMessages: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const MessagesScreen()),
@@ -216,17 +207,13 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
                 onWishlistCountChanged: _onWishlistCountChanged,
                 onOpenFavorite: _openWishlist,
                 cartCount: _cartCount,
-                notificationsCount: _notificationsCount,
-                remindersCount: _remindersCount,
+                notificationsAndRemindersCount: _notificationsCount + _remindersCount,
                 messagesCount: _messagesCount,
                 onOpenCart: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const CartScreen()),
                 ).then((_) => _loadCounts()),
-                onOpenNotifications: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-                ).then((_) => _loadCounts()),
-                onOpenReminders: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const RemindersScreen()),
+                onOpenNotificationsAndReminders: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const NotificationsRemindersScreen()),
                 ).then((_) => _loadCounts()),
                 onOpenMessages: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const MessagesScreen()),
@@ -238,17 +225,13 @@ class _MainShellState extends State<MainShell> with SingleTickerProviderStateMix
                 onWishlistCountChanged: _onWishlistCountChanged,
                 onOpenFavorite: _openWishlist,
                 cartCount: _cartCount,
-                notificationsCount: _notificationsCount,
-                remindersCount: _remindersCount,
+                notificationsAndRemindersCount: _notificationsCount + _remindersCount,
                 messagesCount: _messagesCount,
                 onOpenCart: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const CartScreen()),
                 ).then((_) => _loadCounts()),
-                onOpenNotifications: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-                ).then((_) => _loadCounts()),
-                onOpenReminders: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const RemindersScreen()),
+                onOpenNotificationsAndReminders: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const NotificationsRemindersScreen()),
                 ).then((_) => _loadCounts()),
                 onOpenMessages: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const MessagesScreen()),

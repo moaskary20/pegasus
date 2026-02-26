@@ -179,7 +179,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> with SingleTi
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F3F8),
-      body: NestedScrollView(
+      body: RefreshIndicator(
+        onRefresh: _load,
+        color: AppTheme.primary,
+        child: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) => [
           _buildSliverAppBar(images),
           SliverToBoxAdapter(child: _buildInfoCard(p)),
@@ -198,6 +201,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> with SingleTi
             _SpecsTab(product: p),
             _ReviewsTab(product: p, onRated: _load),
           ],
+        ),
         ),
       ),
       bottomNavigationBar: _buildBottomBar(p),

@@ -2,17 +2,15 @@ import 'package:flutter/material.dart';
 
 const Color _primary = Color(0xFF2c004d);
 
-/// هيدر موحد: سلة، جرس، مفضلة | اسم التطبيق/العنوان | رسائل، قائمة جانبية
+/// هيدر موحد: سلة، جرس (إشعارات+تنبيهات)، مفضلة | اسم التطبيق/العنوان | رسائل، قائمة جانبية
 class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   const AppHeader({
     super.key,
     this.title,
     this.onCart,
     this.cartCount = 0,
-    this.onBell,
-    this.notificationsCount = 0,
-    this.onReminders,
-    this.remindersCount = 0,
+    this.onNotificationsAndReminders,
+    this.notificationsAndRemindersCount = 0,
     this.onFavorite,
     this.favoriteCount = 0,
     this.onMessages,
@@ -25,12 +23,9 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback? onCart;
   /// عدد عناصر السلة (يُظهر بالأحمر فوق الأيقونة)
   final int cartCount;
-  final VoidCallback? onBell;
-  /// عدد الإشعارات غير المقروءة (يُظهر بالأحمر فوق الأيقونة)
-  final int notificationsCount;
-  final VoidCallback? onReminders;
-  /// عدد التنبيهات (اختبارات، دروس، إلخ)
-  final int remindersCount;
+  final VoidCallback? onNotificationsAndReminders;
+  /// عدد الإشعارات + التنبيهات (مدمجان في أيقونة واحدة)
+  final int notificationsAndRemindersCount;
   final VoidCallback? onFavorite;
   /// عدد عناصر المفضلة (يُظهر فوق القلب ويُلوّن القلب بالأحمر عند > 0)
   final int favoriteCount;
@@ -69,10 +64,10 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
               tooltip: 'القائمة',
             ),
             _IconWithBadge(
-              icon: const Icon(Icons.notifications_active_outlined),
-              count: remindersCount,
-              onPressed: onReminders ?? () {},
-              tooltip: 'التنبيهات',
+              icon: const Icon(Icons.notifications_none_rounded),
+              count: notificationsAndRemindersCount,
+              onPressed: onNotificationsAndReminders ?? () {},
+              tooltip: 'الإشعارات والتنبيهات',
             ),
             _IconWithBadge(
               icon: const Icon(Icons.chat_bubble_outline_rounded),
@@ -103,12 +98,6 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
                 child: _Badge(count: favoriteCount),
               ),
           ],
-        ),
-        _IconWithBadge(
-          icon: const Icon(Icons.notifications_none_rounded),
-          count: notificationsCount,
-          onPressed: onBell ?? () {},
-          tooltip: 'الإشعارات',
         ),
         _IconWithBadge(
           icon: const Icon(Icons.shopping_cart_outlined),

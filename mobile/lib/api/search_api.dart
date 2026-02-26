@@ -31,8 +31,16 @@ class SearchApi {
     return SearchSuggestionsResult(suggestions: [], recent: []);
   }
 
-  /// نتائج البحث (دورات، دروس، مدربين...)
-  static Future<SearchResultsResponse> search(String query, {int? categoryId, String? level, bool? isFree, double? minRating, int? instructorId, String? sort}) async {
+  /// نتائج البحث (دورات، دروس، مدربين، أسئلة)
+  static Future<SearchResultsResponse> search(
+    String query, {
+    int? categoryId,
+    String? level,
+    bool? isFree,
+    double? minRating,
+    int? instructorId,
+    String? sort,
+  }) async {
     try {
       final params = <String, String>{'q': query};
       if (categoryId != null && categoryId > 0) params['category_id'] = categoryId.toString();
@@ -46,12 +54,27 @@ class SearchApi {
       final res = await http.get(uri, headers: _headers);
       final data = jsonDecode(res.body.toString()) as Map<String, dynamic>? ?? {};
       if (res.statusCode == 200) {
-        final coursesRaw = (data['results']?['courses'] ?? data['courses']) as List<dynamic>? ?? [];
+        final results = data['results'] as Map<String, dynamic>? ?? {};
+        final coursesRaw = (results['courses'] ?? data['courses']) as List<dynamic>? ?? [];
+        final lessonsRaw = results['lessons'] as List<dynamic>? ?? [];
+        final instructorsRaw = results['instructors'] as List<dynamic>? ?? [];
+        final questionsRaw = results['questions'] as List<dynamic>? ?? [];
+
         final courses = coursesRaw.map((e) => CourseItem.fromJson(e as Map<String, dynamic>)).toList();
-        return SearchResultsResponse(query: (data['query'] ?? query).toString(), courses: courses);
+        final lessons = lessonsRaw.map((e) => SearchLessonItem.fromJson(e as Map<String, dynamic>)).toList();
+        final instructors = instructorsRaw.map((e) => SearchInstructorItem.fromJson(e as Map<String, dynamic>)).toList();
+        final questions = questionsRaw.map((e) => SearchQuestionItem.fromJson(e as Map<String, dynamic>)).toList();
+
+        return SearchResultsResponse(
+          query: (data['query'] ?? query).toString(),
+          courses: courses,
+          lessons: lessons,
+          instructors: instructors,
+          questions: questions,
+        );
       }
     } catch (_) {}
-    return SearchResultsResponse(query: query, courses: []);
+    return SearchResultsResponse(query: query, courses: [], lessons: [], instructors: [], questions: []);
   }
 
   /// مسح سجل البحث (يتطلب مصادقة)
@@ -73,7 +96,127 @@ class SearchSuggestionsResult {
 }
 
 class SearchResultsResponse {
-  SearchResultsResponse({required this.query, required this.courses});
+  SearchResultsResponse({
+    required this.query,
+    required this.courses,
+    required this.lessons,
+    required this.instructors,
+    required this.questions,
+  });
   final String query;
   final List<CourseItem> courses;
+  final List<SearchLessonItem> lessons;
+  final List<SearchInstructorItem> instructors;
+  final List<SearchQuestionItem> questions;
+
+  bool get hasResults =>
+      courses.isNotEmpty || lessons.isNotEmpty || instructors.isNotEmpty || questions.isNotEmpty;
+}
+
+class SearchLessonItem {
+  SearchLessonItem({
+    required this.id,
+    required this.title,
+    this.description,
+    required this.courseId,
+    this.courseSlug,
+    required this.courseTitle,
+    this.instructor,
+    this.sectionTitle,
+    this.durationMinutes,
+    this.isFree = false,
+  });
+  final int id;
+  final String title;
+  final String? description;
+  final int courseId;
+  final String? courseSlug;
+  final String courseTitle;
+  final String? instructor;
+  final String? sectionTitle;
+  final int? durationMinutes;
+  final bool isFree;
+
+  factory SearchLessonItem.fromJson(Map<String, dynamic> json) {
+    return SearchLessonItem(
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      title: (json['title'] ?? '').toString(),
+      description: json['description']?.toString(),
+      courseId: (json['course_id'] as num?)?.toInt() ?? 0,
+      courseSlug: json['course_slug']?.toString(),
+      courseTitle: (json['course_title'] ?? '').toString(),
+      instructor: json['instructor']?.toString(),
+      sectionTitle: json['section_title']?.toString(),
+      durationMinutes: (json['duration_minutes'] as num?)?.toInt(),
+      isFree: (json['is_free'] as bool?) ?? false,
+    );
+  }
+}
+
+class SearchInstructorItem {
+  SearchInstructorItem({
+    required this.id,
+    required this.name,
+    this.avatar,
+    this.job,
+    this.city,
+    this.coursesCount = 0,
+  });
+  final int id;
+  final String name;
+  final String? avatar;
+  final String? job;
+  final String? city;
+  final int coursesCount;
+
+  factory SearchInstructorItem.fromJson(Map<String, dynamic> json) {
+    return SearchInstructorItem(
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      name: (json['name'] ?? '').toString(),
+      avatar: json['avatar']?.toString(),
+      job: json['job']?.toString(),
+      city: json['city']?.toString(),
+      coursesCount: (json['courses_count'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
+class SearchQuestionItem {
+  SearchQuestionItem({
+    required this.id,
+    required this.question,
+    required this.courseId,
+    this.courseSlug,
+    required this.courseTitle,
+    this.lessonId,
+    this.lessonTitle,
+    required this.userName,
+    this.answersCount = 0,
+    required this.createdAt,
+  });
+  final int id;
+  final String question;
+  final int courseId;
+  final String? courseSlug;
+  final String courseTitle;
+  final int? lessonId;
+  final String? lessonTitle;
+  final String userName;
+  final int answersCount;
+  final String createdAt;
+
+  factory SearchQuestionItem.fromJson(Map<String, dynamic> json) {
+    return SearchQuestionItem(
+      id: (json['id'] as num?)?.toInt() ?? 0,
+      question: (json['question'] ?? '').toString(),
+      courseId: (json['course_id'] as num?)?.toInt() ?? 0,
+      courseSlug: json['course_slug']?.toString(),
+      courseTitle: (json['course_title'] ?? '').toString(),
+      lessonId: (json['lesson_id'] as num?)?.toInt(),
+      lessonTitle: json['lesson_title']?.toString(),
+      userName: (json['user_name'] ?? '').toString(),
+      answersCount: (json['answers_count'] as num?)?.toInt() ?? 0,
+      createdAt: (json['created_at'] ?? '').toString(),
+    );
+  }
 }

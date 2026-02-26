@@ -7,7 +7,9 @@ import '../api/config.dart';
 import '../api/lessons_api.dart';
 import '../api/auth_api.dart';
 import '../app_theme.dart';
+import '../utils/error_messages.dart';
 import 'quiz_screen.dart';
+import 'course_questions_screen.dart';
 
 /// شاشة مشغل الدرس — فيديو كامل مع حفظ التقدم
 class LessonPlayerScreen extends StatefulWidget {
@@ -100,8 +102,8 @@ class _LessonPlayerScreenState extends State<LessonPlayerScreen> {
         ..initialize().then((_) {
           if (mounted) setState(() {});
           _videoController!.play();
-        }).catchError((_) {
-          if (mounted) setState(() => _error = 'تعذر تشغيل الفيديو');
+        }).catchError((e) {
+          if (mounted) setState(() => _error = ErrorMessages.from(e, fallback: 'تعذر تشغيل الفيديو'));
         });
     }
   }
@@ -202,6 +204,12 @@ class _LessonPlayerScreenState extends State<LessonPlayerScreen> {
     }
 
     final lesson = _lesson!;
+    final hasZoomOnly = (lesson.videoUrl == null || lesson.videoUrl!.isEmpty) &&
+        (lesson.zoomMeeting != null && lesson.zoomMeeting!.joinUrl != null && lesson.zoomMeeting!.joinUrl!.isNotEmpty);
+    final hasDetails = (lesson.content != null && lesson.content!.isNotEmpty) ||
+        (lesson.files.isNotEmpty) ||
+        (!hasZoomOnly && lesson.zoomMeeting != null && lesson.zoomMeeting!.joinUrl != null);
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
@@ -227,35 +235,69 @@ class _LessonPlayerScreenState extends State<LessonPlayerScreen> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              Expanded(
-                child: Center(
-                  child: _buildVideoArea(lesson),
+              SizedBox(
+                height: 220,
+                width: double.infinity,
+                child: Center(child: _buildVideoArea(lesson)),
+              ),
+              if (hasDetails)
+                Expanded(
+                  child: Container(
+                    color: const Color(0xFF1a1a1a),
+                    child: ListView(
+                      padding: const EdgeInsets.all(16),
+                      children: [
+                        if (lesson.content != null && lesson.content!.isNotEmpty)
+                          _buildContentSection(lesson.content!),
+                        if (!hasZoomOnly && lesson.zoomMeeting != null && lesson.zoomMeeting!.joinUrl != null)
+                          _buildZoomSection(lesson.zoomMeeting!),
+                        if (lesson.files.isNotEmpty) _buildFilesSection(lesson.files),
+                      ],
+                    ),
+                  ),
+                )
+              else
+                const Spacer(),
+              Container(
+                padding: const EdgeInsets.all(16),
+                color: Colors.black87,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => CourseQuestionsScreen(
+                            courseSlug: widget.courseSlug,
+                            courseTitle: widget.courseTitle,
+                            lessonId: widget.lessonId,
+                            lessonTitle: lesson.title,
+                          ),
+                        ),
+                      ),
+                      icon: const Icon(Icons.contact_support_rounded, size: 20),
+                      label: const Text('أسئلة وأجوبة'),
+                      style: OutlinedButton.styleFrom(foregroundColor: Colors.white70, side: const BorderSide(color: Colors.white38)),
+                    ),
+                    if (lesson.hasQuiz) ...[
+                      const SizedBox(width: 12),
+                      FilledButton.icon(
+                        onPressed: _checkQuizAndNavigate,
+                        icon: const Icon(Icons.quiz_rounded),
+                        label: const Text('اختبار الدرس'),
+                        style: FilledButton.styleFrom(backgroundColor: AppTheme.primary),
+                      ),
+                    ],
+                    if (lesson.hasQuiz) const SizedBox(width: 12),
+                    if (lesson.nextLesson != null)
+                      TextButton.icon(
+                        onPressed: _onExit,
+                        icon: const Icon(Icons.check_circle_outline_rounded, color: Colors.white70),
+                        label: Text('إنهاء والمتابعة', style: TextStyle(color: Colors.white70)),
+                      ),
+                  ],
                 ),
               ),
-              if (lesson.nextLesson != null || lesson.hasQuiz)
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  color: Colors.black87,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      if (lesson.hasQuiz)
-                        FilledButton.icon(
-                          onPressed: _checkQuizAndNavigate,
-                          icon: const Icon(Icons.quiz_rounded),
-                          label: const Text('اختبار الدرس'),
-                          style: FilledButton.styleFrom(backgroundColor: AppTheme.primary),
-                        ),
-                      if (lesson.hasQuiz && lesson.nextLesson != null) const SizedBox(width: 12),
-                      if (lesson.nextLesson != null)
-                        TextButton.icon(
-                          onPressed: _onExit,
-                          icon: const Icon(Icons.check_circle_outline_rounded, color: Colors.white70),
-                          label: Text('إنهاء والمتابعة', style: TextStyle(color: Colors.white70)),
-                        ),
-                    ],
-                  ),
-                ),
             ],
           ),
         ),
@@ -263,8 +305,173 @@ class _LessonPlayerScreenState extends State<LessonPlayerScreen> {
     );
   }
 
+  String _formatZoomTime(String? iso) {
+    if (iso == null || iso.isEmpty) return '';
+    try {
+      final dt = DateTime.parse(iso);
+      return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    } catch (_) {
+      return iso;
+    }
+  }
+
+  String _stripHtml(String html) {
+    return html.replaceAll(RegExp(r'<[^>]*>'), ' ').replaceAll(RegExp(r'\s+'), ' ').trim();
+  }
+
+  Widget _buildContentSection(String content) {
+    final text = _stripHtml(content);
+    if (text.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.article_outlined, size: 20, color: Colors.white70),
+              const SizedBox(width: 8),
+              Text('محتوى الدرس', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SelectableText(
+            text,
+            style: TextStyle(fontSize: 14, color: Colors.white70, height: 1.6),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildZoomSection(LessonZoomMeeting zm) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.video_call_rounded, size: 20, color: Colors.white70),
+              const SizedBox(width: 8),
+              Text('اجتماع Zoom', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          if (zm.scheduledStartTime != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Text(
+                'الموعد: ${_formatZoomTime(zm.scheduledStartTime)}',
+                style: TextStyle(fontSize: 13, color: Colors.white70),
+              ),
+            ),
+          if (zm.duration > 0)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Text('المدة: ${zm.duration} دقيقة', style: TextStyle(fontSize: 13, color: Colors.white70)),
+            ),
+          if (zm.joinUrl != null && zm.joinUrl!.isNotEmpty)
+            FilledButton.icon(
+              onPressed: () {
+                final url = zm.joinUrl!.startsWith('http') ? zm.joinUrl! : _fullUrl(zm.joinUrl!);
+                launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+              },
+              icon: const Icon(Icons.video_call_rounded, size: 20),
+              label: const Text('انضم للاجتماع'),
+              style: FilledButton.styleFrom(backgroundColor: AppTheme.primary),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilesSection(List<LessonFileItem> files) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.attach_file_rounded, size: 20, color: Colors.white70),
+              const SizedBox(width: 8),
+              Text('الملفات المرفقة', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...files.map((f) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: InkWell(
+                  onTap: () {
+                    if (f.url != null && f.url!.isNotEmpty) {
+                      final url = f.url!.startsWith('http') ? f.url! : _fullUrl(f.url!);
+                      launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white24),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.insert_drive_file_rounded, color: AppTheme.primary),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(f.name, style: TextStyle(color: Colors.white, fontSize: 14), overflow: TextOverflow.ellipsis),
+                        ),
+                        if (f.size > 0)
+                          Text('${(f.size / 1024).toStringAsFixed(1)} KB', style: TextStyle(fontSize: 12, color: Colors.white54)),
+                      ],
+                    ),
+                  ),
+                ),
+              )),
+        ],
+      ),
+    );
+  }
+
   Widget _buildVideoArea(LessonDetailItem lesson) {
     if (lesson.videoUrl == null || lesson.videoUrl!.isEmpty) {
+      final hasZoom = lesson.zoomMeeting != null && lesson.zoomMeeting!.joinUrl != null && lesson.zoomMeeting!.joinUrl!.isNotEmpty;
+      if (hasZoom) {
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.video_call_rounded, size: 64, color: Colors.white70),
+            const SizedBox(height: 16),
+            Text(
+              'اجتماع Zoom مباشر',
+              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'اضغط أدناه للانضمام للاجتماع',
+              style: TextStyle(color: Colors.white70, fontSize: 14),
+            ),
+            const SizedBox(height: 24),
+            FilledButton.icon(
+              onPressed: () {
+                final url = lesson.zoomMeeting!.joinUrl!;
+                final u = url.startsWith('http') ? url : _fullUrl(url);
+                launchUrl(Uri.parse(u), mode: LaunchMode.externalApplication);
+              },
+              icon: const Icon(Icons.video_call_rounded, size: 24),
+              label: const Text('انضم لاجتماع Zoom'),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF2D8CFF),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        );
+      }
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [

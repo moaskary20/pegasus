@@ -320,6 +320,10 @@ class CourseLessonItem {
     required this.durationMinutes,
     required this.isFreePreview,
     required this.sortOrder,
+    this.hasZoomMeeting = false,
+    this.zoomJoinUrl,
+    this.zoomScheduledAt,
+    this.zoomDuration,
   });
 
   final int id;
@@ -327,14 +331,10 @@ class CourseLessonItem {
   final int durationMinutes;
   final bool isFreePreview;
   final int sortOrder;
-
-  String get durationLabel {
-    if (durationMinutes < 60) return '$durationMinutes د';
-    final h = durationMinutes ~/ 60;
-    final m = durationMinutes % 60;
-    if (m == 0) return '${h} س';
-    return '$h س $m د';
-  }
+  final bool hasZoomMeeting;
+  final String? zoomJoinUrl;
+  final String? zoomScheduledAt;
+  final int? zoomDuration;
 
   factory CourseLessonItem.fromJson(Map<String, dynamic> json) {
     return CourseLessonItem(
@@ -343,7 +343,19 @@ class CourseLessonItem {
       durationMinutes: (json['duration_minutes'] as num?)?.toInt() ?? 0,
       isFreePreview: (json['is_free_preview'] as bool?) ?? false,
       sortOrder: (json['sort_order'] as num?)?.toInt() ?? 0,
+      hasZoomMeeting: (json['has_zoom_meeting'] as bool?) ?? false,
+      zoomJoinUrl: json['zoom_join_url']?.toString(),
+      zoomScheduledAt: json['zoom_scheduled_at']?.toString(),
+      zoomDuration: json['zoom_duration'] != null ? (json['zoom_duration'] as num).toInt() : null,
     );
+  }
+
+  String get durationLabel {
+    if (durationMinutes < 60) return '$durationMinutes د';
+    final h = durationMinutes ~/ 60;
+    final m = durationMinutes % 60;
+    if (m == 0) return '${h} س';
+    return '$h س $m د';
   }
 }
 

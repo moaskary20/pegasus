@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import 'config.dart';
 import 'auth_api.dart';
@@ -31,7 +31,7 @@ class MyAssignmentsApi {
   static Future<AssignmentSubmitResult> submitAssignment(
     int assignmentId, {
     required String content,
-    required List<File> files,
+    required List<PlatformFile> files,
   }) async {
     try {
       await AuthApi.loadStoredToken();
@@ -40,11 +40,17 @@ class MyAssignmentsApi {
       request.headers.addAll(_headers);
       request.fields['content'] = content;
       for (final f in files) {
-        if (await f.exists()) {
+        if (f.path != null && f.path!.isNotEmpty) {
           request.files.add(await http.MultipartFile.fromPath(
             'files[]',
-            f.path,
-            filename: f.path.split(Platform.pathSeparator).last,
+            f.path!,
+            filename: f.name,
+          ));
+        } else if (f.bytes != null && f.bytes!.isNotEmpty) {
+          request.files.add(http.MultipartFile.fromBytes(
+            'files[]',
+            f.bytes!,
+            filename: f.name,
           ));
         }
       }

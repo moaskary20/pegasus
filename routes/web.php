@@ -276,6 +276,13 @@ Route::get('/api/home', [\App\Http\Controllers\Api\HomeController::class, '__inv
     ->middleware(['throttle:60,1'])
     ->name('api.home');
 
+Route::get('/api/blog', [\App\Http\Controllers\Api\BlogController::class, 'index'])
+    ->middleware(['throttle:60,1'])
+    ->name('api.blog.index');
+Route::get('/api/blog/{slug}', [\App\Http\Controllers\Api\BlogController::class, 'show'])
+    ->middleware(['throttle:60,1'])
+    ->name('api.blog.show');
+
 Route::get('/api/store/categories', [\App\Http\Controllers\Api\StoreController::class, 'categories'])
     ->middleware(['throttle:60,1'])
     ->name('api.store.categories');
@@ -326,6 +333,15 @@ Route::post('/api/courses/{courseSlug}/lessons/{lessonId}/quiz', [\App\Http\Cont
 Route::post('/api/courses/{courseSlug}/lessons/{lessonId}/quiz/retake', [\App\Http\Controllers\Api\QuizController::class, 'retake'])
     ->middleware(['throttle:60,1', 'auth:sanctum'])
     ->name('api.courses.quiz.retake')
+    ->where(['lessonId' => '[0-9]+']);
+
+Route::get('/api/courses/{courseSlug}/lessons/{lessonId}/questions', [\App\Http\Controllers\Api\CourseQuestionsController::class, 'index'])
+    ->middleware(['throttle:60,1', 'auth:sanctum'])
+    ->name('api.courses.lessons.questions.index')
+    ->where(['lessonId' => '[0-9]+']);
+Route::post('/api/courses/{courseSlug}/lessons/{lessonId}/questions', [\App\Http\Controllers\Api\CourseQuestionsController::class, 'store'])
+    ->middleware(['throttle:30,1', 'auth:sanctum'])
+    ->name('api.courses.lessons.questions.store')
     ->where(['lessonId' => '[0-9]+']);
 
 Route::get('/api/courses/{courseSlug}/certificate', [\App\Http\Controllers\Api\CertificateController::class, 'download'])
@@ -739,6 +755,7 @@ Route::get('/courses/{course:slug}/lessons/{lesson}', function (Course $course, 
         'quiz',
         'zoomMeeting',
         'assignments' => fn ($q) => $q->where('is_published', true),
+        'questions' => fn ($q) => $q->with(['user', 'answers' => fn ($a) => $a->with('user')->orderBy('created_at')])->orderByDesc('created_at'),
     ]);
 
     $isEnrolled = false;
@@ -803,6 +820,41 @@ Route::get('/courses/{course:slug}/lessons/{lesson}', function (Course $course, 
         'progress' => $progress,
     ]);
 })->name('site.course.lesson.show');
+
+Route::post('/courses/{course:slug}/lessons/{lesson}/questions', function (Request $request, Course $course, \App\Models\Lesson $lesson) {
+    if (!auth()->check()) {
+        return redirect()->route('login');
+    }
+    abort_unless($lesson->section && (int) $lesson->section->course_id === (int) $course->id, 404);
+    $enrollment = \App\Models\Enrollment::query()
+        ->where('user_id', auth()->id())
+        ->where('course_id', $course->id)
+        ->exists();
+    if (!$enrollment) {
+        return back()->with('notice', ['type' => 'error', 'message' => 'يجب الاشتراك في الدورة لطرح الأسئلة.']);
+    }
+    $accessService = app(\App\Services\LessonAccessService::class);
+    if (!$accessService->canAccessLesson(auth()->user(), $lesson)) {
+        return back()->with('notice', ['type' => 'error', 'message' => 'لا يمكنك الوصول لهذا الدرس بعد.']);
+    }
+    $question = trim((string) $request->input('question', ''));
+    if ($question === '') {
+        return back()->with('notice', ['type' => 'error', 'message' => 'يرجى كتابة السؤال.']);
+    }
+    $q = \App\Models\CourseQuestion::create([
+        'course_id' => $course->id,
+        'user_id' => auth()->id(),
+        'lesson_id' => $lesson->id,
+        'question' => $question,
+        'is_answered' => false,
+    ]);
+    $instructor = $course->instructor;
+    if ($instructor && $instructor->id !== auth()->id()) {
+        $instructor->notify(new \App\Notifications\CourseQuestionAnsweredNotification($q, 'new_question'));
+    }
+    return redirect()->route('site.course.lesson.show', [$course, $lesson])
+        ->with('notice', ['type' => 'success', 'message' => 'تم إرسال سؤالك. سيرد عليه المدرب قريباً.']);
+})->name('site.course.lesson.questions.store')->middleware('auth');
 
 Route::post('/courses/{course:slug}/lessons/{lesson}/save-progress', function (Request $request, Course $course, \App\Models\Lesson $lesson) {
     if (!auth()->check()) {
@@ -1238,7 +1290,24 @@ Route::post('/cart/store/{item}', function (Request $request, \App\Models\StoreC
     return redirect()->route('site.cart')->with('notice', ['type' => 'success', 'message' => 'تمت إزالة المنتج من السلة.']);
 })->name('site.cart.store.remove');
 
-Route::view('/blog', 'pages.blog')->name('site.blog');
+Route::get('/blog', function () {
+    $posts = \App\Models\BlogPost::query()
+        ->published()
+        ->with('author:id,name,avatar')
+        ->orderByDesc('published_at')
+        ->orderByDesc('created_at')
+        ->paginate(12);
+    return view('pages.blog', ['posts' => $posts]);
+})->name('site.blog');
+
+Route::get('/blog/{slug}', function (string $slug) {
+    $post = \App\Models\BlogPost::query()
+        ->published()
+        ->where('slug', $slug)
+        ->with('author:id,name,avatar')
+        ->firstOrFail();
+    return view('pages.blog-post', ['post' => $post]);
+})->name('site.blog.show');
 
 // Search API routes with rate limiting (no 'web' middleware for API/mobile clients with Bearer token)
 Route::prefix('api/search')->middleware(['throttle:60,1'])->group(function () {

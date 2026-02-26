@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../login_screen.dart';
 import '../account_settings_screen.dart';
 import '../support_screen.dart';
-import '../reminders_screen.dart';
+import '../notifications_reminders_screen.dart';
 import '../subscriptions_screen.dart';
 import '../purchase_history_screen.dart';
 import '../../api/auth_api.dart';
@@ -20,12 +20,10 @@ class AccountTab extends StatefulWidget {
     this.onWishlistCountChanged,
     this.onOpenFavorite,
     this.cartCount = 0,
-    this.notificationsCount = 0,
-    this.remindersCount = 0,
+    this.notificationsAndRemindersCount = 0,
     this.messagesCount = 0,
     this.onOpenCart,
-    this.onOpenNotifications,
-    this.onOpenReminders,
+    this.onOpenNotificationsAndReminders,
     this.onOpenMessages,
   });
 
@@ -34,12 +32,10 @@ class AccountTab extends StatefulWidget {
   final void Function(int delta)? onWishlistCountChanged;
   final VoidCallback? onOpenFavorite;
   final int cartCount;
-  final int notificationsCount;
-  final int remindersCount;
+  final int notificationsAndRemindersCount;
   final int messagesCount;
   final VoidCallback? onOpenCart;
-  final VoidCallback? onOpenNotifications;
-  final VoidCallback? onOpenReminders;
+  final VoidCallback? onOpenNotificationsAndReminders;
   final VoidCallback? onOpenMessages;
 
   @override
@@ -94,12 +90,10 @@ class _AccountTabState extends State<AccountTab> {
         favoriteCount: widget.wishlistCount,
         onFavorite: widget.onOpenFavorite,
         cartCount: widget.cartCount,
-        notificationsCount: widget.notificationsCount,
-        remindersCount: widget.remindersCount,
+        notificationsAndRemindersCount: widget.notificationsAndRemindersCount,
         messagesCount: widget.messagesCount,
         onCart: widget.onOpenCart,
-        onBell: widget.onOpenNotifications,
-        onReminders: widget.onOpenReminders,
+        onNotificationsAndReminders: widget.onOpenNotificationsAndReminders,
         onMessages: widget.onOpenMessages,
       ),
       body: RefreshIndicator(
@@ -178,10 +172,10 @@ class _AccountTabState extends State<AccountTab> {
               onTap: () => _push(const SupportScreen()),
             ),
             _AccountTile(
-              icon: Icons.notifications_active_outlined,
-              title: 'التنبيهات',
-              subtitle: 'اختبارات، دروس، رسائل',
-              onTap: () => _push(const RemindersScreen()),
+              icon: Icons.notifications_none_rounded,
+              title: 'الإشعارات والتنبيهات',
+              subtitle: 'إشعارات، تنبيهات اختبارات ودروس',
+              onTap: () => _push(const NotificationsRemindersScreen()),
             ),
             const Divider(height: 32),
             ListTile(

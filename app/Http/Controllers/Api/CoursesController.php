@@ -92,7 +92,7 @@ class CoursesController extends Controller
                 'instructor:id,name,avatar',
                 'category:id,name',
                 'subCategory:id,name',
-                'sections' => fn ($q) => $q->orderBy('sort_order')->with(['lessons' => fn ($q2) => $q2->orderBy('sort_order')]),
+                'sections' => fn ($q) => $q->orderBy('sort_order')->with(['lessons' => fn ($q2) => $q2->orderBy('sort_order')->with('zoomMeeting')]),
             ])
             ->withCount(['lessons'])
             ->first();
@@ -127,13 +127,20 @@ class CoursesController extends Controller
                 'id' => $section->id,
                 'title' => $section->title ?? '',
                 'sort_order' => (int) ($section->sort_order ?? 0),
-                'lessons' => $section->lessons->map(fn ($lesson) => [
-                    'id' => $lesson->id,
-                    'title' => $lesson->title ?? '',
-                    'duration_minutes' => (int) ($lesson->duration_minutes ?? 0),
-                    'is_free_preview' => (bool) ($lesson->is_free_preview ?? false),
-                    'sort_order' => (int) ($lesson->sort_order ?? 0),
-                ])->values()->all(),
+                'lessons' => $section->lessons->map(function ($lesson) {
+                    $zm = (bool) ($lesson->has_zoom_meeting ?? false) && $lesson->zoomMeeting ? $lesson->zoomMeeting : null;
+                    return [
+                        'id' => $lesson->id,
+                        'title' => $lesson->title ?? '',
+                        'duration_minutes' => (int) ($lesson->duration_minutes ?? 0),
+                        'is_free_preview' => (bool) ($lesson->is_free_preview ?? false),
+                        'sort_order' => (int) ($lesson->sort_order ?? 0),
+                        'has_zoom_meeting' => $zm !== null,
+                        'zoom_join_url' => $zm?->join_url,
+                        'zoom_scheduled_at' => $zm?->scheduled_start_time?->toIso8601String(),
+                        'zoom_duration' => $zm ? (int) ($zm->duration ?? 0) : null,
+                    ];
+                })->values()->all(),
             ];
         })->values()->all();
 

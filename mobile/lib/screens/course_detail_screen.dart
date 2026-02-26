@@ -178,7 +178,10 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> with SingleTick
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F3F8),
-      body: NestedScrollView(
+      body: RefreshIndicator(
+        onRefresh: _load,
+        color: AppTheme.primary,
+        child: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) => [
           _buildSliverAppBar(),
           SliverToBoxAdapter(child: _buildInfoCard()),
@@ -551,6 +554,21 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> with SingleTick
                 ],
               ],
             ),
+            if (c.priceMonthly != null || c.priceDaily != null) ...[
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 12,
+                runSpacing: 6,
+                children: [
+                  if (c.priceOnce != null)
+                    _PriceChip(label: 'اشتراك واحد (120 يوم)', price: c.priceOnce!, isPrimary: true),
+                  if (c.priceMonthly != null)
+                    _PriceChip(label: 'شهري', price: c.priceMonthly!, isPrimary: false),
+                  if (c.priceDaily != null)
+                    _PriceChip(label: 'يومي (درس واحد)', price: c.priceDaily!, isPrimary: false),
+                ],
+              ),
+            ],
             const SizedBox(height: 16),
             Row(
               children: [
@@ -575,6 +593,33 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> with SingleTick
     if (u.startsWith('/')) return '$base$u';
     if (u.startsWith('storage/')) return '$base/$u';
     return '$base/storage/$u';
+  }
+}
+
+class _PriceChip extends StatelessWidget {
+  const _PriceChip({required this.label, required this.price, this.isPrimary = false});
+
+  final String label;
+  final double price;
+  final bool isPrimary;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: isPrimary ? AppTheme.primary.withValues(alpha: 0.1) : Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        '$label: ${price.toStringAsFixed(0)} ر.س',
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: isPrimary ? FontWeight.bold : FontWeight.w500,
+          color: isPrimary ? AppTheme.primary : Colors.grey.shade700,
+        ),
+      ),
+    );
   }
 }
 
@@ -1082,6 +1127,30 @@ class _LessonsTab extends StatelessWidget {
                                 ],
                               ),
                             ),
+                            if (lesson.hasZoomMeeting)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                margin: const EdgeInsets.only(left: 6),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF2D8CFF).withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.video_call_rounded, size: 14, color: const Color(0xFF2D8CFF)),
+                                    const SizedBox(width: 4),
+                                    const Text(
+                                      'Zoom',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF2D8CFF),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             if (lesson.isFreePreview)
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

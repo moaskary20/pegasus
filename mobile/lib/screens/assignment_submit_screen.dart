@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import '../app_theme.dart';
@@ -20,7 +19,7 @@ class _AssignmentSubmitScreenState extends State<AssignmentSubmitScreen> {
   bool _loading = true;
   String? _error;
   final _contentController = TextEditingController();
-  final List<File> _selectedFiles = [];
+  final List<PlatformFile> _selectedFiles = [];
   bool _sending = false;
 
   @override
@@ -61,19 +60,14 @@ class _AssignmentSubmitScreenState extends State<AssignmentSubmitScreen> {
     final maxMb = _detail?.maxFileSizeMb ?? 10;
     final maxBytes = (maxMb * 1024 * 1024).toInt();
     for (final f in result.files) {
-      if (f.path != null) {
-        final file = File(f.path!);
-        if (await file.exists()) {
-          final size = await file.length();
-          if (size <= maxBytes) {
-            setState(() => _selectedFiles.add(file));
-          } else {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('الملف ${f.name} يتجاوز الحد المسموح ($maxMb م.ب)')),
-              );
-            }
-          }
+      final size = f.size;
+      if (size <= maxBytes) {
+        setState(() => _selectedFiles.add(f));
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('الملف ${f.name} يتجاوز الحد المسموح ($maxMb م.ب)')),
+          );
         }
       }
     }
@@ -209,7 +203,7 @@ class _AssignmentSubmitScreenState extends State<AssignmentSubmitScreen> {
                               const SizedBox(height: 12),
                               ...List.generate(_selectedFiles.length, (i) {
                                 final f = _selectedFiles[i];
-                                final name = f.path.split('/').last;
+                                final name = f.name;
                                 return Padding(
                                   padding: const EdgeInsets.only(bottom: 8),
                                   child: Row(

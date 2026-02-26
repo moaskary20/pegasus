@@ -7,13 +7,13 @@ import '../my_courses_screen.dart';
 import '../my_assignments_screen.dart';
 import '../cart_screen.dart';
 import '../wishlist_screen.dart';
-import '../notifications_screen.dart';
+import '../notifications_reminders_screen.dart';
 import '../messages_screen.dart';
 import '../account_settings_screen.dart';
 import '../subscriptions_screen.dart';
 import '../purchase_history_screen.dart';
 import '../support_screen.dart';
-import '../reminders_screen.dart';
+import '../blog_list_screen.dart';
 
 const Color _primary = Color(0xFF2c004d);
 
@@ -69,12 +69,12 @@ class _AppDrawerContentState extends State<AppDrawerContent> {
               _DrawerTile(icon: Icons.assignment_outlined, label: 'واجباتي', onTap: () => _push(context, const MyAssignmentsScreen())),
               _DrawerTile(icon: Icons.shopping_cart_outlined, label: 'سلة المشتريات', onTap: () => _push(context, const CartScreen())),
               _DrawerTile(icon: Icons.favorite_border_rounded, label: 'قائمة الرغبات', onTap: () => _push(context, const WishlistScreen())),
-              _DrawerTile(icon: Icons.notifications_none_rounded, label: 'الإشعارات', onTap: () => _push(context, const NotificationsScreen())),
+              _DrawerTile(icon: Icons.notifications_none_rounded, label: 'الإشعارات والتنبيهات', onTap: () => _push(context, const NotificationsRemindersScreen())),
               _DrawerTile(icon: Icons.chat_bubble_outline_rounded, label: 'الرسائل', onTap: () => _push(context, const MessagesScreen())),
-              _DrawerTile(icon: Icons.notifications_active_outlined, label: 'التنبيهات', onTap: () => _push(context, const RemindersScreen())),
               _DrawerTile(icon: Icons.settings_outlined, label: 'إعدادات الحساب', onTap: () => _push(context, const AccountSettingsScreen())),
               _DrawerTile(icon: Icons.card_membership_outlined, label: 'الاشتراكات', onTap: () => _push(context, const SubscriptionsScreen())),
               _DrawerTile(icon: Icons.receipt_long_outlined, label: 'سجل المشتريات', onTap: () => _push(context, const PurchaseHistoryScreen())),
+              _DrawerTile(icon: Icons.article_outlined, label: 'المدونة', onTap: () => _push(context, const BlogListScreen())),
               _DrawerTile(icon: Icons.help_outline_rounded, label: 'المساعدة والدعم', onTap: () => _push(context, const SupportScreen())),
             ],
           ),

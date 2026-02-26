@@ -52,6 +52,10 @@ class LessonDetailItem {
     this.nextLesson,
     required this.canAccess,
     required this.hasQuiz,
+    this.content,
+    this.contentType,
+    this.files = const [],
+    this.zoomMeeting,
   });
 
   final int id;
@@ -63,6 +67,10 @@ class LessonDetailItem {
   final PrevNextLesson? nextLesson;
   final bool canAccess;
   final bool hasQuiz;
+  final String? content;
+  final String? contentType;
+  final List<LessonFileItem> files;
+  final LessonZoomMeeting? zoomMeeting;
 
   factory LessonDetailItem.fromJson(Map<String, dynamic> json) {
     PrevNextLesson? prev;
@@ -75,6 +83,12 @@ class LessonDetailItem {
       final n = json['next_lesson'] as Map<String, dynamic>;
       next = PrevNextLesson(id: (n['id'] as num?)?.toInt() ?? 0, title: (n['title'] ?? '').toString());
     }
+    final filesRaw = (json['files'] as List<dynamic>?) ?? [];
+    final files = filesRaw.map((e) => LessonFileItem.fromJson(e as Map<String, dynamic>)).toList();
+    LessonZoomMeeting? zoom;
+    if (json['zoom_meeting'] != null) {
+      zoom = LessonZoomMeeting.fromJson(json['zoom_meeting'] as Map<String, dynamic>);
+    }
     return LessonDetailItem(
       id: (json['id'] as num?)?.toInt() ?? 0,
       title: (json['title'] ?? '').toString(),
@@ -85,8 +99,45 @@ class LessonDetailItem {
       nextLesson: next,
       canAccess: (json['can_access'] as bool?) ?? true,
       hasQuiz: (json['has_quiz'] as bool?) ?? false,
+      content: json['content']?.toString(),
+      contentType: json['content_type']?.toString(),
+      files: files,
+      zoomMeeting: zoom,
     );
   }
+}
+
+class LessonFileItem {
+  LessonFileItem({required this.id, required this.name, this.url, required this.size});
+  final int id;
+  final String name;
+  final String? url;
+  final int size;
+  factory LessonFileItem.fromJson(Map<String, dynamic> json) => LessonFileItem(
+        id: (json['id'] as num?)?.toInt() ?? 0,
+        name: (json['name'] ?? '').toString(),
+        url: json['url']?.toString(),
+        size: (json['size'] as num?)?.toInt() ?? 0,
+      );
+}
+
+class LessonZoomMeeting {
+  LessonZoomMeeting({
+    this.joinUrl,
+    this.scheduledStartTime,
+    int? duration,
+    this.topic,
+  }) : duration = duration ?? 0;
+  final String? joinUrl;
+  final String? scheduledStartTime;
+  final int duration;
+  final String? topic;
+  factory LessonZoomMeeting.fromJson(Map<String, dynamic> json) => LessonZoomMeeting(
+        joinUrl: json['join_url']?.toString(),
+        scheduledStartTime: json['scheduled_start_time']?.toString(),
+        duration: (json['duration'] as num?)?.toInt(),
+        topic: json['topic']?.toString(),
+      );
 }
 
 class PrevNextLesson {

@@ -6,19 +6,17 @@ import '../../app_theme.dart';
 
 /// تبويب الدورات: تصنيفات من إدارة الدورات التدريبية بتصميم احترافي
 class CoursesTab extends StatefulWidget {
-  const CoursesTab({super.key, this.onOpenDrawer, this.wishlistCount = 0, this.onWishlistCountChanged, this.onOpenFavorite, this.cartCount = 0, this.notificationsCount = 0, this.remindersCount = 0, this.messagesCount = 0, this.onOpenCart, this.onOpenNotifications, this.onOpenReminders, this.onOpenMessages});
+  const CoursesTab({super.key, this.onOpenDrawer, this.wishlistCount = 0, this.onWishlistCountChanged, this.onOpenFavorite, this.cartCount = 0, this.notificationsAndRemindersCount = 0, this.messagesCount = 0, this.onOpenCart, this.onOpenNotificationsAndReminders, this.onOpenMessages});
 
   final VoidCallback? onOpenDrawer;
   final int wishlistCount;
   final void Function(int delta)? onWishlistCountChanged;
   final VoidCallback? onOpenFavorite;
   final int cartCount;
-  final int notificationsCount;
-  final int remindersCount;
+  final int notificationsAndRemindersCount;
   final int messagesCount;
   final VoidCallback? onOpenCart;
-  final VoidCallback? onOpenNotifications;
-  final VoidCallback? onOpenReminders;
+  final VoidCallback? onOpenNotificationsAndReminders;
   final VoidCallback? onOpenMessages;
 
   @override
@@ -55,12 +53,10 @@ class _CoursesTabState extends State<CoursesTab> {
         favoriteCount: widget.wishlistCount,
         onFavorite: widget.onOpenFavorite,
         cartCount: widget.cartCount,
-        notificationsCount: widget.notificationsCount,
-        remindersCount: widget.remindersCount,
+        notificationsAndRemindersCount: widget.notificationsAndRemindersCount,
         messagesCount: widget.messagesCount,
         onCart: widget.onOpenCart,
-        onBell: widget.onOpenNotifications,
-        onReminders: widget.onOpenReminders,
+        onNotificationsAndReminders: widget.onOpenNotificationsAndReminders,
         onMessages: widget.onOpenMessages,
       ),
       body: RefreshIndicator(

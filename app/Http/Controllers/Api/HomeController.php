@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\BlogPost;
 use App\Models\Category;
 use App\Models\Course;
 use App\Models\CourseWishlist;
@@ -27,12 +28,14 @@ class HomeController extends Controller
         $categoriesWithCourses = $this->loadCategoriesWithCourses();
         $homeSlider = $this->getHomeSlider();
         $wishlistIds = $this->loadWishlistIds();
+        $blogPosts = $this->loadBlogPosts();
 
         return response()->json([
             'home_slider' => $homeSlider,
             'top_courses' => $topCourses,
             'recent_courses' => $recentCourses,
             'categories' => $categoriesWithCourses,
+            'blog_posts' => $blogPosts,
             'wishlist_ids' => array_values($wishlistIds),
         ]);
     }
@@ -134,6 +137,46 @@ class HomeController extends Controller
         $accessToken = PersonalAccessToken::findToken($token);
         if ($accessToken) {
             auth('sanctum')->setUser($accessToken->tokenable);
+        }
+    }
+
+    private function loadBlogPosts(): array
+    {
+        try {
+            $posts = BlogPost::query()
+                ->published()
+                ->with('author:id,name,avatar')
+                ->orderByDesc('published_at')
+                ->orderByDesc('created_at')
+                ->limit(6)
+                ->get();
+
+            return $posts->map(function ($post) {
+                $coverUrl = null;
+                if ($post->cover_image) {
+                    $coverUrl = $this->absoluteCoverUrl('storage/' . ltrim($post->cover_image, '/'));
+                }
+                $authorAvatar = null;
+                if ($post->author && $post->author->avatar) {
+                    $authorAvatar = $this->absoluteCoverUrl('storage/' . ltrim($post->author->avatar, '/'));
+                }
+                return [
+                    'id' => $post->id,
+                    'title' => $post->title ?? '',
+                    'slug' => $post->slug ?? '',
+                    'excerpt' => $post->excerpt ?? '',
+                    'cover_image' => $coverUrl,
+                    'published_at' => $post->published_at?->toIso8601String(),
+                    'author' => $post->author ? [
+                        'id' => $post->author->id,
+                        'name' => $post->author->name ?? '',
+                        'avatar' => $authorAvatar,
+                    ] : null,
+                ];
+            })->values()->all();
+        } catch (\Throwable $e) {
+            Log::warning('HomeController: loadBlogPosts failed', ['message' => $e->getMessage()]);
+            return [];
         }
     }
 

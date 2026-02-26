@@ -7,7 +7,10 @@ import 'login_screen.dart';
 
 /// الإشعارات — مربوط بـ api/notifications مع حركات وقائمة تفاعلية
 class NotificationsScreen extends StatefulWidget {
-  const NotificationsScreen({super.key});
+  const NotificationsScreen({super.key, this.embedded = false});
+
+  /// عند true: يُعرض داخل تبويبات (بدون scaffold خاص)
+  final bool embedded;
 
   @override
   State<NotificationsScreen> createState() => _NotificationsScreenState();
@@ -67,23 +70,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     if (ok && mounted) _load(refresh: true);
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return FeatureScaffold(
-      title: 'الإشعارات',
-      actions: [
-        if (!_needsAuth && _unreadCount > 0)
-          TextButton(
-            onPressed: _markAllRead,
-            child: const Text('تحديد الكل كمقروء'),
-          ),
-        if (!_needsAuth && _list.any((e) => e.isRead))
-          TextButton(
-            onPressed: _deleteRead,
-            child: const Text('حذف المقروء'),
-          ),
-      ],
-      body: RefreshIndicator(
+  Widget _buildBody() {
+    return RefreshIndicator(
         onRefresh: () => _load(refresh: true),
         color: AppTheme.primary,
         child: _loading && _list.isEmpty
@@ -147,7 +135,29 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       ],
                     ),
                   ),
-      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.embedded) {
+      return _buildBody();
+    }
+    return FeatureScaffold(
+      title: 'الإشعارات',
+      actions: [
+        if (!_needsAuth && _unreadCount > 0)
+          TextButton(
+            onPressed: _markAllRead,
+            child: const Text('تحديد الكل كمقروء'),
+          ),
+        if (!_needsAuth && _list.any((e) => e.isRead))
+          TextButton(
+            onPressed: _deleteRead,
+            child: const Text('حذف المقروء'),
+          ),
+      ],
+      body: _buildBody(),
     );
   }
 }

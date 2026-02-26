@@ -33,7 +33,7 @@ class LessonController extends Controller
 
         $lesson = Lesson::query()
             ->whereHas('section', fn ($q) => $q->where('course_id', $course->id))
-            ->with(['video', 'section'])
+            ->with(['video', 'section', 'files', 'zoomMeeting'])
             ->find($lessonId);
 
         if (!$lesson) {
@@ -89,6 +89,33 @@ class LessonController extends Controller
             $videoUrl = $baseUrl . '/' . ltrim($videoUrl, '/');
         }
 
+        $contentType = $lesson->content_type ?? '';
+        $hasContent = in_array($contentType, ['text', 'mixed']) && !empty(trim((string) ($lesson->content ?? '')));
+
+        $files = $lesson->files->map(function ($f) use ($baseUrl) {
+            $url = $f->path ? asset('storage/' . ltrim($f->path, '/')) : null;
+            if ($url && !str_starts_with((string) $url, 'http')) {
+                $url = $baseUrl . '/' . ltrim((string) $url, '/');
+            }
+            return [
+                'id' => $f->id,
+                'name' => $f->name ?? '',
+                'url' => $url,
+                'size' => (int) ($f->size ?? 0),
+            ];
+        })->values()->all();
+
+        $zoomMeeting = null;
+        if ((bool) ($lesson->has_zoom_meeting ?? false) && $lesson->zoomMeeting) {
+            $zm = $lesson->zoomMeeting;
+            $zoomMeeting = [
+                'join_url' => $zm->join_url ?? null,
+                'scheduled_start_time' => $zm->scheduled_start_time?->toIso8601String(),
+                'duration' => (int) ($zm->duration ?? 0),
+                'topic' => $zm->topic ?? null,
+            ];
+        }
+
         $data = [
             'id' => $lesson->id,
             'title' => $lesson->title ?? '',
@@ -99,6 +126,10 @@ class LessonController extends Controller
             'next_lesson' => $nextLesson,
             'can_access' => $canAccess,
             'has_quiz' => $lesson->quiz()->exists(),
+            'content' => $hasContent ? $lesson->content : null,
+            'content_type' => $contentType ?: null,
+            'files' => $files,
+            'zoom_meeting' => $zoomMeeting,
         ];
 
         return response()->json($data);

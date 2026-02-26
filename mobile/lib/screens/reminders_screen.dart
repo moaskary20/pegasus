@@ -10,7 +10,10 @@ import 'quiz_screen.dart';
 
 /// شاشة التنبيهات — اختبارات، رسائل، دروس، كوبونات، إلخ
 class RemindersScreen extends StatefulWidget {
-  const RemindersScreen({super.key});
+  const RemindersScreen({super.key, this.embedded = false});
+
+  /// عند true: يُعرض داخل تبويبات (بدون scaffold خاص)
+  final bool embedded;
 
   @override
   State<RemindersScreen> createState() => _RemindersScreenState();
@@ -87,11 +90,8 @@ class _RemindersScreenState extends State<RemindersScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return FeatureScaffold(
-      title: 'التنبيهات',
-      body: RefreshIndicator(
+  Widget _buildBody() {
+    return RefreshIndicator(
         onRefresh: _load,
         color: AppTheme.primary,
         child: _loading
@@ -109,7 +109,17 @@ class _RemindersScreenState extends State<RemindersScreen> {
                           onTap: () => _onReminderTap(_reminders[i]),
                         ),
                       ),
-      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.embedded) {
+      return _buildBody();
+    }
+    return FeatureScaffold(
+      title: 'التنبيهات',
+      body: _buildBody(),
     );
   }
 

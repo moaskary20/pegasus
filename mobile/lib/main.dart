@@ -46,7 +46,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
-/// شاشة الـ Splash تعرض فيديو spalsh.mp4 (4 ثوانٍ) يملأ الشاشة ثم تنتقل لتسجيل الدخول أو الرئيسية
+/// شاشة الـ Splash تعرض فيديو splash.mp4 يملأ الشاشة ثم تنتقل لتسجيل الدخول أو الرئيسية
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -67,7 +67,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Future<void> _prepareAndPlayVideo() async {
     // لا يُعرض شيء سوى الفيديو — شاشة سوداء حتى جاهزية الفيديو
-    _controller = VideoPlayerController.asset('assets/images/spalsh.mp4');
+    _controller = VideoPlayerController.asset('assets/images/splash.mp4');
     try {
       await _controller!.initialize();
       if (!mounted) return;

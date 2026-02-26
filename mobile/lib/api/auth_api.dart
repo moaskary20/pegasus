@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../utils/error_messages.dart';
 
 const _tokenKey = 'auth_token';
 const _rememberKey = 'auth_remember';
@@ -64,7 +65,7 @@ class AuthApi {
       } catch (_) {
         if (res.statusCode != 200) {
           return AuthResult.failure(
-            message: 'خطأ من الخادم (${res.statusCode})',
+            message: ErrorMessages.from(null, statusCode: res.statusCode),
             error: res.body.length > 300 ? '${res.body.substring(0, 300)}...' : res.body,
           );
         }
@@ -77,12 +78,12 @@ class AuthApi {
           return AuthResult.success(token: token, user: user);
         }
       }
-      final message = data['message'] as String? ?? 'حدث خطأ غير متوقع (${res.statusCode})';
+      final message = data['message'] as String? ?? ErrorMessages.from(null, statusCode: res.statusCode);
       final errors = data['errors'] as Map<String, dynamic>?;
       return AuthResult.failure(message: message, errors: errors, error: 'HTTP ${res.statusCode}: ${res.body.length > 200 ? "${res.body.substring(0, 200)}..." : res.body}');
     } catch (e) {
       return AuthResult.failure(
-        message: 'تحقق من الاتصال بالإنترنت وحاول مرة أخرى.',
+        message: ErrorMessages.from(e),
         error: e.toString(),
       );
     }
@@ -119,14 +120,11 @@ class AuthApi {
           return AuthResult.success(token: token, user: user);
         }
       }
-      final message = data['message'] as String? ?? 'حدث خطأ غير متوقع';
+      final message = data['message'] as String? ?? ErrorMessages.from(null, statusCode: res.statusCode);
       final errors = data['errors'] as Map<String, dynamic>?;
       return AuthResult.failure(message: message, errors: errors);
     } catch (e) {
-      return AuthResult.failure(
-        message: 'تحقق من الاتصال بالإنترنت وحاول مرة أخرى.',
-        error: e.toString(),
-      );
+      return AuthResult.failure(message: ErrorMessages.from(e), error: e.toString());
     }
   }
 
