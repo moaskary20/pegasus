@@ -13,6 +13,7 @@ use App\Observers\LessonObserver;
 use App\Observers\OrderObserver;
 use Filament\Auth\Http\Responses\Contracts\LogoutResponse as LogoutResponseContract;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -29,6 +30,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Password::defaults(function () {
+            return Password::min(8)
+                ->mixedCase()
+                ->numbers();
+        });
+
         CourseRating::observe(CourseRatingObserver::class);
         Enrollment::observe(EnrollmentObserver::class);
         Lesson::observe(LessonObserver::class);

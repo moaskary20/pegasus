@@ -107,9 +107,10 @@
                             </div>
                             <div>
                                 <label for="reg_password" class="block text-sm font-bold text-slate-700 mb-1">كلمة المرور</label>
-                                <input type="password" name="password" id="reg_password" required
+                                <input type="password" name="password" id="reg_password" required minlength="8"
                                     class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-[#2c004d] focus:ring-2 focus:ring-[#2c004d]/20 outline-none transition"
                                     placeholder="••••••••">
+                                <p class="text-xs text-slate-500 mt-1">8 أحرف على الأقل، حرف كبير، وأرقام</p>
                                 @error('password')<span class="text-rose-600 text-xs mt-1">{{ $message }}</span>@enderror
                             </div>
                             <div>

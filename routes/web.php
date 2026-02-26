@@ -161,7 +161,7 @@ Route::put('/account/password', function (Request $request) {
                 $fail('كلمة المرور الحالية غير صحيحة.');
             }
         }],
-        'password' => ['required', 'string', 'min:8', 'confirmed'],
+        'password' => ['required', 'string', 'confirmed', \Illuminate\Validation\Rules\Password::defaults()],
     ]);
     
     $user->update(['password' => $validated['password']]);

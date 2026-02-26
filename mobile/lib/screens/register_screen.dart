@@ -36,6 +36,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
+  String? _validatePassword(String? v) {
+    if (v == null || v.trim().isEmpty) return 'أدخل كلمة المرور';
+    if (v.length < 8) return 'كلمة المرور 8 أحرف على الأقل';
+    if (!v.contains(RegExp(r'[A-Z]'))) return 'يجب أن تحتوي على حرف كبير (كابيتال)';
+    if (!v.contains(RegExp(r'[0-9]'))) return 'يجب أن تحتوي على رقم واحد على الأقل';
+    return null;
+  }
+
   Future<void> _onRegister() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _isLoading = true);
@@ -168,6 +176,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
+                Text(
+                  '8 أحرف على الأقل، حرف كبير، وأرقام',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
+                ),
+                const SizedBox(height: 8),
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
@@ -183,11 +196,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       },
                     ),
                   ),
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'أدخل كلمة المرور';
-                    if (v.length < 6) return 'كلمة المرور 6 أحرف على الأقل';
-                    return null;
-                  },
+                  validator: (v) => _validatePassword(v),
                 ),
                 const SizedBox(height: 16),
                 TextFormField(

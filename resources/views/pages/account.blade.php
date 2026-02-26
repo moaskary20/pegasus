@@ -204,7 +204,7 @@
                     <label class="block text-sm font-semibold text-slate-700 mb-2">كلمة المرور الجديدة</label>
                     <input type="password" name="password" required minlength="8"
                         class="w-full md:w-96 px-4 py-3 rounded-xl border border-slate-200 focus:border-[#2c004d] focus:ring-2 focus:ring-[#2c004d]/20 outline-none transition"
-                        placeholder="أدخل كلمة المرور الجديدة (الحد الأدنى 8 أحرف)">
+                        placeholder="8 أحرف على الأقل، حرف كبير، وأرقام">
                     @error('password')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                 </div>
 

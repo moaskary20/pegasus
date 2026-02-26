@@ -21,7 +21,7 @@ class ReportExportService
             ->where('status', 'paid');
         
         if (!$user->hasRole('admin')) {
-            $query->whereHas('items.course', fn($q) => $q->where('instructor_id', $user->id));
+            $query->whereHas('items.course', fn($q) => $q->where('user_id', $user->id));
         }
         
         if (isset($filters['start_date'])) {
@@ -88,7 +88,7 @@ class ReportExportService
         $query = Enrollment::with(['user', 'course'])
             ->whereHas('course', function ($q) use ($user) {
                 if (!$user->hasRole('admin')) {
-                    $q->where('instructor_id', $user->id);
+                    $q->where('user_id', $user->id);
                 }
             });
         
@@ -163,7 +163,7 @@ class ReportExportService
         $query = Order::where('status', 'paid');
         
         if (!$user->hasRole('admin')) {
-            $query->whereHas('items.course', fn($q) => $q->where('instructor_id', $user->id));
+            $query->whereHas('items.course', fn($q) => $q->where('user_id', $user->id));
         }
         
         if (isset($filters['start_date'])) {

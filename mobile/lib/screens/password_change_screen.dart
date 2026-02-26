@@ -60,6 +60,24 @@ class _PasswordChangeScreenState extends State<PasswordChangeScreen> {
       );
       return;
     }
+    if (!RegExp(r'[A-Z]').hasMatch(newPass)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('يجب أن تحتوي كلمة المرور على حرف كبير (كابيتال)'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    if (!RegExp(r'[0-9]').hasMatch(newPass)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('يجب أن تحتوي كلمة المرور على رقم واحد على الأقل'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
     if (newPass != confirm) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -155,7 +173,7 @@ class _PasswordChangeScreenState extends State<PasswordChangeScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'يجب أن تكون كلمة المرور 8 أحرف على الأقل',
+              '8 أحرف على الأقل، حرف كبير (كابيتال)، وأرقام',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
               textAlign: TextAlign.center,
             ),

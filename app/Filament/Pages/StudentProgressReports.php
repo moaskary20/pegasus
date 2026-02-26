@@ -48,7 +48,7 @@ class StudentProgressReports extends Page
             return Course::orderBy('title')->get();
         }
         
-        return Course::where('instructor_id', $user->id)->orderBy('title')->get();
+        return Course::where('user_id', $user->id)->orderBy('title')->get();
     }
     
     public function getEnrollmentsProperty()
@@ -58,7 +58,7 @@ class StudentProgressReports extends Page
         $query = Enrollment::with(['user', 'course'])
             ->whereHas('course', function ($q) use ($user) {
                 if (!$user->hasRole('admin')) {
-                    $q->where('instructor_id', $user->id);
+                    $q->where('user_id', $user->id);
                 }
             });
         
@@ -90,7 +90,7 @@ class StudentProgressReports extends Page
         
         $baseQuery = Enrollment::whereHas('course', function ($q) use ($user) {
             if (!$user->hasRole('admin')) {
-                $q->where('instructor_id', $user->id);
+                $q->where('user_id', $user->id);
             }
         });
         
@@ -117,7 +117,7 @@ class StudentProgressReports extends Page
         
         $query = Enrollment::whereHas('course', function ($q) use ($user) {
             if (!$user->hasRole('admin')) {
-                $q->where('instructor_id', $user->id);
+                $q->where('user_id', $user->id);
             }
         });
         
@@ -140,7 +140,7 @@ class StudentProgressReports extends Page
         return Enrollment::with(['user', 'course'])
             ->whereHas('course', function ($q) use ($user) {
                 if (!$user->hasRole('admin')) {
-                    $q->where('instructor_id', $user->id);
+                    $q->where('user_id', $user->id);
                 }
             })
             ->whereNotNull('completed_at')
@@ -158,7 +158,7 @@ class StudentProgressReports extends Page
                 'enrollments as completed_count' => fn($q) => $q->whereNotNull('completed_at'),
             ])
             ->withAvg('enrollments', 'progress_percentage')
-            ->when(!$user->hasRole('admin'), fn($q) => $q->where('instructor_id', $user->id))
+            ->when(!$user->hasRole('admin'), fn($q) => $q->where('user_id', $user->id))
             ->orderByDesc('enrollments_count')
             ->limit(10)
             ->get();

@@ -44,10 +44,10 @@ class AdminDashboard extends Page
             ];
         } else {
             // Instructor
-            $courseIds = Course::where('instructor_id', $user->id)->pluck('id');
+            $courseIds = Course::where('user_id', $user->id)->pluck('id');
             return [
-                'courses' => Course::where('instructor_id', $user->id)->count(),
-                'published_courses' => Course::where('instructor_id', $user->id)->where('is_published', true)->count(),
+                'courses' => Course::where('user_id', $user->id)->count(),
+                'published_courses' => Course::where('user_id', $user->id)->where('is_published', true)->count(),
                 'enrollments' => Enrollment::whereIn('course_id', $courseIds)->count(),
                 'completed_courses' => Enrollment::whereIn('course_id', $courseIds)->whereNotNull('completed_at')->count(),
                 'revenue' => Order::whereHas('items', fn($q) => $q->whereIn('course_id', $courseIds))->where('status', 'paid')->sum('total'),
@@ -61,7 +61,7 @@ class AdminDashboard extends Page
         $query = Enrollment::with(['user', 'course']);
         
         if (!$user->hasRole('admin')) {
-            $courseIds = Course::where('instructor_id', $user->id)->pluck('id');
+            $courseIds = Course::where('user_id', $user->id)->pluck('id');
             $query->whereIn('course_id', $courseIds);
         }
         
@@ -74,7 +74,7 @@ class AdminDashboard extends Page
         $query = Course::withCount('enrollments');
         
         if (!$user->hasRole('admin')) {
-            $query->where('instructor_id', $user->id);
+            $query->where('user_id', $user->id);
         }
         
         return $query->orderByDesc('enrollments_count')->limit(5)->get();
@@ -88,7 +88,7 @@ class AdminDashboard extends Page
             ->where('created_at', '>=', now()->subMonths(6));
         
         if (!$user->hasRole('admin')) {
-            $courseIds = Course::where('instructor_id', $user->id)->pluck('id');
+            $courseIds = Course::where('user_id', $user->id)->pluck('id');
             $query->whereIn('course_id', $courseIds);
         }
         

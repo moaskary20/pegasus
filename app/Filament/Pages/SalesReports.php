@@ -58,7 +58,7 @@ class SalesReports extends Page
             return Course::orderBy('title')->get();
         }
         
-        return Course::where('instructor_id', $user->id)->orderBy('title')->get();
+        return Course::where('user_id', $user->id)->orderBy('title')->get();
     }
     
     public function getTotalRevenueProperty(): float
@@ -115,7 +115,7 @@ class SalesReports extends Page
             ->select('course_id', DB::raw('COUNT(*) as enrollments_count'))
             ->whereHas('course', function ($q) use ($user) {
                 if (!$user->hasRole('admin')) {
-                    $q->where('instructor_id', $user->id);
+                    $q->where('user_id', $user->id);
                 }
             });
         
@@ -144,7 +144,7 @@ class SalesReports extends Page
         $thisMonth = Order::query()
             ->where('status', 'paid')
             ->when(!auth()->user()->hasRole('admin'), fn($q) => 
-                $q->whereHas('items.course', fn($c) => $c->where('instructor_id', auth()->id()))
+                $q->whereHas('items.course', fn($c) => $c->where('user_id', auth()->id()))
             )
             ->whereBetween('created_at', [now()->startOfMonth(), now()])
             ->sum('total');
@@ -152,7 +152,7 @@ class SalesReports extends Page
         $lastMonth = Order::query()
             ->where('status', 'paid')
             ->when(!auth()->user()->hasRole('admin'), fn($q) => 
-                $q->whereHas('items.course', fn($c) => $c->where('instructor_id', auth()->id()))
+                $q->whereHas('items.course', fn($c) => $c->where('user_id', auth()->id()))
             )
             ->whereBetween('created_at', [now()->subMonth()->startOfMonth(), now()->subMonth()->endOfMonth()])
             ->sum('total');
@@ -171,7 +171,7 @@ class SalesReports extends Page
             ->where('status', 'paid');
         
         if (!$user->hasRole('admin')) {
-            $query->whereHas('items.course', fn($q) => $q->where('instructor_id', $user->id));
+            $query->whereHas('items.course', fn($q) => $q->where('user_id', $user->id));
         }
         
         if ($this->courseFilter !== 'all') {
@@ -193,7 +193,7 @@ class SalesReports extends Page
         $query = Enrollment::query();
         
         if (!$user->hasRole('admin')) {
-            $query->whereHas('course', fn($q) => $q->where('instructor_id', $user->id));
+            $query->whereHas('course', fn($q) => $q->where('user_id', $user->id));
         }
         
         if ($this->courseFilter !== 'all') {

@@ -27,7 +27,9 @@ class UserForm
                     ->label('كلمة المرور')
                     ->password()
                     ->required(fn ($livewire) => $livewire instanceof \App\Filament\Resources\Users\Pages\CreateUser)
-                    ->dehydrated(fn ($state) => filled($state)),
+                    ->rules(['sometimes', \Illuminate\Validation\Rules\Password::defaults()])
+                    ->dehydrated(fn ($state) => filled($state))
+                    ->helperText('8 أحرف على الأقل، حرف كبير، وأرقام'),
                 TextInput::make('phone')
                     ->label('رقم الهاتف')
                     ->tel()

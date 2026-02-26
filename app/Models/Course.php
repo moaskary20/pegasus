@@ -54,6 +54,14 @@ class Course extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    /**
+     * Alias for instructor - نفس العلاقة (الجدول يستخدم user_id وليس instructor_id)
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);

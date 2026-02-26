@@ -212,16 +212,18 @@
             <div class="flex items-center gap-3 text-xs sm:text-sm">
                 <a href="{{ route('site.support') }}" class="hover:underline underline-offset-4">المساعدة والدعم</a>
                 <span class="opacity-30">|</span>
-                <div x-data="{ open:false }" @mouseenter="open=true" @mouseleave="open=false" class="relative">
+                <div x-data="{ open:false, closeTimer: null }" @mouseenter="closeTimer && clearTimeout(closeTimer); open=true" @mouseleave="closeTimer = setTimeout(() => open=false, 120)" class="relative">
                     <button type="button" class="inline-flex items-center gap-1 hover:underline underline-offset-4">
                         <span>اللغة</span>
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                         </svg>
                     </button>
-                    <div x-show="open" x-cloak class="absolute right-0 mt-2 w-44 rounded-xl border border-white/10 bg-white text-slate-900 shadow-xl overflow-hidden" style="direction: rtl;">
-                        <a href="{{ route('lang.switch', ['locale' => 'ar']) }}" class="block px-4 py-2 text-sm hover:bg-slate-50">العربية</a>
-                        <a href="{{ route('lang.switch', ['locale' => 'en']) }}" class="block px-4 py-2 text-sm hover:bg-slate-50">English</a>
+                    <div x-show="open" x-cloak class="absolute right-0 pt-1 top-full" style="direction: rtl;">
+                        <div class="mt-1 w-44 rounded-xl border border-white/10 bg-white text-slate-900 shadow-xl overflow-hidden">
+                            <a href="{{ route('lang.switch', ['locale' => 'ar']) }}" class="block px-4 py-2 text-sm hover:bg-slate-50">العربية</a>
+                            <a href="{{ route('lang.switch', ['locale' => 'en']) }}" class="block px-4 py-2 text-sm hover:bg-slate-50">English</a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -236,7 +238,7 @@
                 {{-- Icons (right of search) --}}
                 <div class="flex items-center gap-1 sm:gap-2 shrink-0">
                     {{-- User menu (moved to wishlist position) --}}
-                    <div x-data="{ open:false }" @mouseenter="open=true" @mouseleave="open=false" class="relative">
+                    <div x-data="{ open:false, closeTimer: null }" @mouseenter="closeTimer && clearTimeout(closeTimer); open=true" @mouseleave="closeTimer = setTimeout(() => open=false, 150)" class="relative">
                         <a href="{{ $user ? url('/account') : route('site.auth') }}" class="flex items-center gap-2 p-1.5 rounded-xl hover:bg-slate-100 transition-colors" style="direction: rtl;">
                             <div class="w-9 h-9 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center">
                                 @if($user && $user->avatar)
@@ -249,7 +251,8 @@
                             </div>
                         </a>
 
-                        <div x-show="open" x-cloak class="absolute right-0 mt-2 w-[320px] rounded-2xl border bg-white shadow-xl overflow-hidden" style="direction: rtl;">
+                        <div x-show="open" x-cloak class="absolute right-0 pt-1 top-full" style="direction: rtl;">
+                            <div class="mt-1 w-[320px] rounded-2xl border bg-white shadow-xl overflow-hidden">
                             <div class="px-4 py-4 bg-gradient-to-l from-[#2c004d] to-[#2c004d]/90 text-white">
                                 @if($user)
                                     <div class="flex items-center gap-3">
@@ -342,11 +345,12 @@
                                     </a>
                                 @endif
                             </div>
+                            </div>
                         </div>
                     </div>
 
                     {{-- Cart --}}
-                    <div x-data="{ open:false }" @mouseenter="open=true" @mouseleave="open=false" class="relative">
+                    <div x-data="{ open:false, closeTimer: null }" @mouseenter="closeTimer && clearTimeout(closeTimer); open=true" @mouseleave="closeTimer = setTimeout(() => open=false, 150)" class="relative">
                         <a href="{{ route('site.cart') }}" class="relative p-2 rounded-xl hover:bg-slate-100 transition-colors" aria-label="سلة المشتريات">
                             <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
@@ -358,7 +362,8 @@
                             @endif
                         </a>
 
-                        <div x-show="open" x-cloak class="absolute right-0 mt-2 w-[380px] rounded-2xl border bg-white shadow-xl overflow-hidden" style="direction: rtl;">
+                        <div x-show="open" x-cloak class="absolute right-0 pt-1 top-full" style="direction: rtl;">
+                            <div class="mt-1 w-[380px] rounded-2xl border bg-white shadow-xl overflow-hidden">
                             <div class="px-4 py-3 bg-slate-50 border-b flex items-center justify-between">
                                 <div class="font-semibold text-sm">سلة المشتريات</div>
                                 <a href="{{ route('site.cart') }}" class="text-xs text-[#2c004d] hover:underline">فتح السلة</a>
@@ -398,6 +403,7 @@
                                     @endif
                                 @endif
                             </div>
+                            </div>
                         </div>
                     </div>
 
@@ -405,6 +411,7 @@
                     <div
                         x-data="{
                             open:false,
+                            closeTimer: null,
                             count: 0,
                             notifications: [],
                             init() { this.fetchCount(); },
@@ -444,8 +451,8 @@
                                 } catch (e) {}
                             },
                         }"
-                        @mouseenter="open=true; fetchNotifications()"
-                        @mouseleave="open=false"
+                        @mouseenter="closeTimer && clearTimeout(closeTimer); open=true; fetchNotifications()"
+                        @mouseleave="closeTimer = setTimeout(() => open=false, 150)"
                         class="relative"
                     >
                         <a href="{{ $user ? route('site.notifications') : route('site.auth') }}" class="relative inline-flex p-2 rounded-xl hover:bg-slate-100 transition-colors" aria-label="الإشعارات">
@@ -461,7 +468,8 @@
                             ></span>
                         </a>
 
-                        <div x-show="open" x-cloak class="absolute right-0 mt-2 w-[360px] rounded-2xl border bg-white shadow-xl overflow-hidden" style="direction: rtl;">
+                        <div x-show="open" x-cloak class="absolute right-0 pt-1 top-full" style="direction: rtl;">
+                            <div class="mt-1 w-[360px] rounded-2xl border bg-white shadow-xl overflow-hidden">
                             <div class="px-4 py-3 bg-slate-50 border-b flex items-center justify-between">
                                 <div class="font-semibold text-sm">الإشعارات</div>
                                 @if($user)
@@ -486,6 +494,7 @@
                             <div class="px-4 py-3 bg-slate-50 border-t">
                                 <a href="{{ route('site.notifications') }}" class="block text-center text-sm font-semibold text-[#2c004d] hover:underline">عرض كل الإشعارات</a>
                             </div>
+                            </div>
                         </div>
                     </div>
 
@@ -493,6 +502,7 @@
                     <div
                         x-data="{
                             open: false,
+                            closeTimer: null,
                             count: {{ $unreadMessagesCount }},
                             conversations: [],
                             init() {
@@ -517,8 +527,8 @@
                                 } catch (e) {}
                             }
                         }"
-                        @mouseenter="open=true; {{ $user ? 'fetchMessages()' : '' }}"
-                        @mouseleave="open=false"
+                        @mouseenter="closeTimer && clearTimeout(closeTimer); open=true; {{ $user ? 'fetchMessages()' : '' }}"
+                        @mouseleave="closeTimer = setTimeout(() => open=false, 150)"
                         class="relative"
                     >
                         <a href="{{ $user ? route('site.messages') : route('site.auth') }}" class="relative inline-flex p-2 rounded-xl hover:bg-slate-100 transition-colors" aria-label="الرسائل">
@@ -535,7 +545,8 @@
                         </a>
 
                         @if($user)
-                        <div x-show="open" x-cloak class="absolute right-0 mt-2 w-[360px] rounded-2xl border bg-white shadow-xl overflow-hidden z-50" style="direction: rtl;">
+                        <div x-show="open" x-cloak class="absolute right-0 pt-1 top-full z-50" style="direction: rtl;">
+                            <div class="mt-1 w-[360px] rounded-2xl border bg-white shadow-xl overflow-hidden">
                             <div class="px-4 py-3 bg-slate-50 border-b flex items-center justify-between">
                                 <div class="font-semibold text-sm">الرسائل</div>
                                 <a href="{{ route('site.messages') }}" class="text-xs text-[#2c004d] hover:underline font-bold">عرض كل الرسائل</a>
@@ -560,12 +571,13 @@
                             <div class="px-4 py-3 bg-slate-50 border-t">
                                 <a href="{{ route('site.messages') }}" class="block text-center text-sm font-semibold text-[#2c004d] hover:underline">عرض كل الرسائل</a>
                             </div>
+                            </div>
                         </div>
                         @endif
                     </div>
 
                     {{-- Wishlist (moved to user menu position) --}}
-                    <div x-data="{ open:false }" @mouseenter="open=true" @mouseleave="open=false" class="relative">
+                    <div x-data="{ open:false, closeTimer: null }" @mouseenter="closeTimer && clearTimeout(closeTimer); open=true" @mouseleave="closeTimer = setTimeout(() => open=false, 150)" class="relative">
                         <a href="{{ route('site.wishlist') }}" class="relative p-2 rounded-xl hover:bg-slate-100 transition-colors" aria-label="قائمة الرغبات">
                             <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
@@ -577,7 +589,8 @@
                             @endif
                         </a>
 
-                        <div x-show="open" x-cloak class="absolute right-0 mt-2 w-[360px] rounded-2xl border bg-white shadow-xl overflow-hidden" style="direction: rtl;">
+                        <div x-show="open" x-cloak class="absolute right-0 pt-1 top-full" style="direction: rtl;">
+                            <div class="mt-1 w-[360px] rounded-2xl border bg-white shadow-xl overflow-hidden">
                             <div class="px-4 py-3 bg-slate-50 border-b flex items-center justify-between">
                                 <div class="font-semibold text-sm">قائمة الرغبات</div>
                                 <a href="{{ route('site.wishlist') }}" class="text-xs text-[#2c004d] hover:underline font-bold">عرض كل القائمة</a>
@@ -610,6 +623,7 @@
                             </div>
                             <div class="px-4 py-3 bg-slate-50 border-t">
                                 <a href="{{ route('site.wishlist') }}" class="block text-center text-sm font-semibold text-[#2c004d] hover:underline">عرض كل قائمة الرغبات</a>
+                            </div>
                             </div>
                         </div>
                     </div>
@@ -832,12 +846,13 @@
                 <div
                     x-data="{
                         open: false,
+                        closeTimer: null,
                         activeId: {{ (int) ($navCategories->first()?->id ?? 0) }},
                         setActive(id){ this.activeId = id; },
                         isActive(id){ return Number(id) === Number(this.activeId); }
                     }"
-                    @mouseenter="open = true"
-                    @mouseleave="open = false"
+                    @mouseenter="closeTimer && clearTimeout(closeTimer); open = true"
+                    @mouseleave="closeTimer = setTimeout(() => open = false, 150)"
                     class="relative"
                 >
                     <button type="button" class="inline-flex items-center gap-1 hover:text-[#2c004d] transition-colors">
@@ -852,9 +867,10 @@
                         x-show="open"
                         x-cloak
                         x-transition.opacity.duration.150ms
-                        class="absolute right-1/2 translate-x-1/2 mt-3 w-[860px] rounded-2xl border bg-white shadow-2xl overflow-hidden z-50"
+                        class="absolute right-1/2 translate-x-1/2 pt-2 top-full w-[860px] z-50"
                         style="direction: rtl;"
                     >
+                        <div class="mt-2 w-full rounded-2xl border bg-white shadow-2xl overflow-hidden">
                         <div class="grid grid-cols-12">
                             {{-- Categories column --}}
                             <div class="col-span-4 bg-slate-50 border-l p-3">
@@ -978,17 +994,19 @@
                                 </div>
                             </div>
                         </div>
+                        </div>
                     </div>
                 </div>
                 <div
                     x-data="{
                         storeOpen: false,
+                        storeCloseTimer: null,
                         storeActiveId: {{ (int) ($navStoreCategories->first()?->id ?? 0) }},
                         storeSetActive(id){ this.storeActiveId = id; },
                         storeIsActive(id){ return Number(id) === Number(this.storeActiveId); }
                     }"
-                    @mouseenter="storeOpen = true"
-                    @mouseleave="storeOpen = false"
+                    @mouseenter="storeCloseTimer && clearTimeout(storeCloseTimer); storeOpen = true"
+                    @mouseleave="storeCloseTimer = setTimeout(() => storeOpen = false, 150)"
                     class="relative"
                 >
                     <button type="button" class="inline-flex items-center gap-1 hover:text-[#2c004d] transition-colors">
@@ -1003,9 +1021,10 @@
                         x-show="storeOpen"
                         x-cloak
                         x-transition.opacity.duration.150ms
-                        class="absolute right-1/2 translate-x-1/2 mt-3 w-[860px] rounded-2xl border bg-white shadow-2xl overflow-hidden z-50"
+                        class="absolute right-1/2 translate-x-1/2 pt-2 top-full w-[860px] z-50"
                         style="direction: rtl;"
                     >
+                        <div class="mt-2 w-full rounded-2xl border bg-white shadow-2xl overflow-hidden">
                         <div class="grid grid-cols-12">
                             {{-- Store Categories column --}}
                             <div class="col-span-4 bg-slate-50 border-l p-3">
@@ -1136,6 +1155,7 @@
                                     @endforelse
                                 </div>
                             </div>
+                        </div>
                         </div>
                     </div>
                 </div>

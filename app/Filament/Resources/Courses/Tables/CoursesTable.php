@@ -109,6 +109,11 @@ class CoursesTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                \Filament\Tables\Filters\SelectFilter::make('user_id')
+                    ->label('المدرس')
+                    ->relationship('instructor', 'name')
+                    ->searchable()
+                    ->preload(),
                 \Filament\Tables\Filters\SelectFilter::make('level')
                     ->label('المستوى')
                     ->options([
