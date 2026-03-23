@@ -269,6 +269,8 @@ Route::view('/contact', 'pages.contact')->name('site.contact');
 Route::view('/about', 'pages.about')->name('site.about');
 
 Route::get('/auth', [\App\Http\Controllers\Site\AuthController::class, 'show'])->name('site.auth');
+// اسم بديل لـ route('login') للتوافق مع Laravel والمراجع الخارجية
+Route::get('/login', fn () => redirect()->route('site.auth'))->name('login');
 Route::post('/auth/login', [\App\Http\Controllers\Site\AuthController::class, 'login'])->name('site.auth.login');
 Route::post('/auth/register', [\App\Http\Controllers\Site\AuthController::class, 'register'])->name('site.auth.register');
 
@@ -861,7 +863,7 @@ Route::get('/courses/{course:slug}/lessons/{lesson}', function (Course $course, 
 
 Route::post('/courses/{course:slug}/lessons/{lesson}/questions', function (Request $request, Course $course, \App\Models\Lesson $lesson) {
     if (!auth()->check()) {
-        return redirect()->route('login');
+        return redirect()->route('site.auth');
     }
     abort_unless($lesson->section && (int) $lesson->section->course_id === (int) $course->id, 404);
     $enrollment = \App\Models\Enrollment::query()

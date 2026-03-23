@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Models\PlatformSetting;
 use App\Services\PlatformMailConfig;
 use BackedEnum;
+use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Storage;
@@ -175,8 +176,21 @@ class PlatformSettings extends Page
             'moyasar_enabled', 'moyasar_mode', 'moyasar_publishable_key', 'moyasar_secret_key',
             'paytabs_enabled', 'paytabs_mode', 'paytabs_profile_id', 'paytabs_server_key', 'paytabs_client_key',
         ];
-        $this->saveSettingsGroup($keys, 'payment');
-        session()->flash('success', 'تم حفظ إعدادات بوابات الدفع بنجاح');
+        try {
+            $this->saveSettingsGroup($keys, 'payment');
+            Notification::make()
+                ->title('تم الحفظ')
+                ->body('تم حفظ إعدادات بوابات الدفع بنجاح')
+                ->success()
+                ->send();
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('savePaymentGatewaysSettings failed', ['error' => $e->getMessage()]);
+            Notification::make()
+                ->title('خطأ')
+                ->body('فشل الحفظ: ' . $e->getMessage())
+                ->danger()
+                ->send();
+        }
     }
     
     public function saveSeoSettings(): void

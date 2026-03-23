@@ -563,7 +563,7 @@
                 </div>
 
                 <div class="form-actions">
-                    <button class="save-btn" wire:click="saveLessonsSettings">
+                    <button type="button" class="save-btn" wire:click="saveLessonsSettings">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                         </svg>
@@ -696,7 +696,7 @@
                 </div>
 
                 <div class="form-actions">
-                    <button class="save-btn" wire:click="saveSecuritySettings">
+                    <button type="button" class="save-btn" wire:click="saveSecuritySettings">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                         </svg>
@@ -811,7 +811,7 @@
                 </div>
 
                 <div class="form-actions">
-                    <button class="save-btn" wire:click="saveSocialSettings">
+                    <button type="button" class="save-btn" wire:click="saveSocialSettings">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                         </svg>
@@ -1173,7 +1173,7 @@
                 </div>
 
                 <div class="form-actions">
-                    <button class="save-btn" wire:click="saveAnalyticsSettings">
+                    <button type="button" class="save-btn" wire:click="saveAnalyticsSettings">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                         </svg>
@@ -1342,7 +1342,7 @@
                 </div>
 
                 <div class="form-actions">
-                    <button class="save-btn" wire:click="saveEmailSettings">
+                    <button type="button" class="save-btn" wire:click="saveEmailSettings">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                         </svg>
@@ -1663,11 +1663,14 @@
                 </div>
 
                 <div class="form-actions">
-                    <button class="save-btn" wire:click="savePaymentGatewaysSettings">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                        </svg>
-                        حفظ إعدادات بوابات الدفع
+                    <button type="button" class="save-btn" wire:click="savePaymentGatewaysSettings" wire:loading.attr="disabled">
+                        <span wire:loading.remove wire:target="savePaymentGatewaysSettings">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            حفظ إعدادات بوابات الدفع
+                        </span>
+                        <span wire:loading wire:target="savePaymentGatewaysSettings">جاري الحفظ...</span>
                     </button>
                 </div>
             @endif
@@ -1890,7 +1893,7 @@
                 </div>
 
                 <div class="form-actions">
-                    <button class="save-btn" wire:click="saveSeoSettings">
+                    <button type="button" class="save-btn" wire:click="saveSeoSettings">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                         </svg>
@@ -2078,7 +2081,7 @@
                 @endif
 
                 <div class="form-actions">
-                    <button class="save-btn" wire:click="saveZoomSettings">
+                    <button type="button" class="save-btn" wire:click="saveZoomSettings">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                         </svg>
@@ -2276,7 +2279,7 @@
                 </div>
 
                 <div class="form-actions">
-                    <button class="save-btn" wire:click="saveGeneralSettings">
+                    <button type="button" class="save-btn" wire:click="saveGeneralSettings">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                         </svg>

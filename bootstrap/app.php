@@ -15,6 +15,18 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             SetLocale::class,
         ]);
+        // توجيه غير المسجّلين: لوحة التحكم -> /admin/login، الموقع العام -> صفحة تسجيل الدخول
+        $middleware->redirectGuestsTo(function ($request) {
+            if ($request->is('admin') || $request->is('admin/*')) {
+                return url('/admin/login');
+            }
+            // طلبات Livewire القادمة من لوحة التحكم (Referer يحتوي admin)
+            if (str_contains((string) $request->header('Referer', ''), '/admin')) {
+                return url('/admin/login');
+            }
+
+            return route('site.auth');
+        });
         // استثناء مسارات API من التحقق من CSRF (تطبيق الموبايل يستخدم Bearer token وليس الجلسة)
         $middleware->validateCsrfTokens(except: [
             'api/*',
