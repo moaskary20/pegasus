@@ -91,9 +91,9 @@
                                         ? $course->previewLesson->youtube_embed_url 
                                         : $course->preview_youtube_embed_url;
                                 @endphp
-                                <iframe class="w-full h-full" src="{{ $embedUrl }}?autoplay=1" title="معاينة الدورة" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen x-ref="previewVideo"></iframe>
+                                <iframe class="w-full h-full" src="{{ $embedUrl }}?autoplay=1" title="معاينة الدورة" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope" allowfullscreen x-ref="previewVideo"></iframe>
                                 @else
-                                <video class="w-full h-full object-contain" controls autoplay x-ref="previewVideo">
+                                <video class="w-full h-full object-contain" controls autoplay controlsList="nodownload noplaybackrate nopictureinpicture" x-ref="previewVideo">
                                     <source src="{{ $course->preview_video_url }}" type="video/mp4">
                                     متصفحك لا يدعم تشغيل الفيديو.
                                 </video>

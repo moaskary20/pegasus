@@ -14,6 +14,7 @@
                             id="video-player"
                             class="w-full h-full"
                             controls
+                            controlsList="nodownload noplaybackrate nopictureinpicture"
                             preload="metadata"
                             data-hls-path="{{ $video->hls_path }}"
                             data-duration="{{ $video->duration_seconds }}"
@@ -27,6 +28,7 @@
                             id="video-player"
                             class="w-full h-full"
                             controls
+                            controlsList="nodownload noplaybackrate nopictureinpicture"
                             preload="metadata"
                             data-path="{{ asset('storage/' . $video->path) }}"
                             data-duration="{{ $video->duration_seconds }}"
