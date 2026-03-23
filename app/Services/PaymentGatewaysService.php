@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Order;
 use App\Models\PlatformSetting;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
 
 class PaymentGatewaysService
 {
@@ -27,7 +28,7 @@ class PaymentGatewaysService
         $methods = [];
         $settings = self::getPaymentSettingsFresh();
 
-        if (self::isTruthy($settings['kashier_enabled'] ?? false)) {
+        if (self::isTruthy($settings['kashier_enabled'] ?? env('KASHIER_ENABLED', false))) {
             $methods['kashier'] = self::$gatewayLabels['kashier'];
         }
         if (self::isTruthy($settings['paypal_enabled'] ?? false)) {
@@ -97,7 +98,8 @@ class PaymentGatewaysService
         $gateway = $order->payment_gateway;
         $settings = self::getPaymentSettingsFresh();
 
-        if ($gateway === 'kashier' && self::isTruthy($settings['kashier_enabled'] ?? false)) {
+        $kashierEnabled = self::isTruthy($settings['kashier_enabled'] ?? env('KASHIER_ENABLED', false));
+        if ($gateway === 'kashier' && $kashierEnabled) {
             return self::buildKashierPaymentUrl($order, $settings);
         }
 
@@ -109,12 +111,19 @@ class PaymentGatewaysService
     {
         $settings = $settings ?? self::getPaymentSettingsFresh();
 
-        $mid = trim((string) ($settings['kashier_merchant_id'] ?? ''));
-        $apiKey = trim((string) ($settings['kashier_api_key'] ?? ''));
-        $encryptionKey = trim((string) ($settings['kashier_encryption_key'] ?? ''));
-        $mode = (string) ($settings['kashier_mode'] ?? 'test');
+        // القراءة من قاعدة البيانات أولاً، مع الاستخدام الاحتياطي لمتغيرات .env (مهم للسيرفرات الخارجية)
+        $mid = trim((string) ($settings['kashier_merchant_id'] ?? env('KASHIER_MID', '')));
+        $apiKey = trim((string) ($settings['kashier_api_key'] ?? env('KASHIER_SECRET_KEY', '')));
+        $encryptionKey = trim((string) ($settings['kashier_encryption_key'] ?? env('KASHIER_ENCRYPTION_KEY', env('KASHIER_API_KEY', ''))));
+        $mode = (string) ($settings['kashier_mode'] ?? env('KASHIER_MODE', 'test'));
 
         if ($mid === '' || $encryptionKey === '') {
+            Log::warning('Kashier: بيانات غير مكتملة', [
+                'has_mid' => $mid !== '',
+                'has_encryption_key' => $encryptionKey !== '',
+                'hint' => 'تحقق من platform_settings أو .env: KASHIER_MID, KASHIER_ENCRYPTION_KEY أو KASHIER_API_KEY',
+            ]);
+
             return null;
         }
 
