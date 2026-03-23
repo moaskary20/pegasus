@@ -85,7 +85,7 @@
 
     if ($navCategoryIdsForCourses->count() > 0) {
         $navCourses = \App\Models\Course::query()
-            ->select(['id', 'title', 'rating', 'price', 'offer_price', 'category_id', 'sub_category_id'])
+            ->select(['id', 'slug', 'title', 'rating', 'price', 'offer_price', 'category_id', 'sub_category_id'])
             ->where('is_published', true)
             ->where(function ($q) use ($navCategoryIdsForCourses, $navChildIds) {
                 // Courses linked directly to a (parent or child) category
