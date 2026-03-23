@@ -99,6 +99,7 @@ class PlatformSetting extends Model
             'social' => 'تسجيل الدخول الاجتماعي',
             'analytics' => 'التحليلات والتتبع',
             'email' => 'إعدادات البريد',
+            'payment' => 'بوابات الدفع',
             'seo' => 'تحسين محركات البحث',
             'general' => 'إعدادات عامة',
         ];

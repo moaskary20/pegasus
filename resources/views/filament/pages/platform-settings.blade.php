@@ -1351,6 +1351,306 @@
                 </div>
             @endif
 
+            <!-- Payment Gateways Settings -->
+            @if($activeTab === 'payment')
+                <div class="content-header">
+                    <div>
+                        <h2>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                            </svg>
+                            بوابات الدفع
+                        </h2>
+                        <p>إعدادات بوابات الدفع الإلكتروني لقبول المدفوعات عبر الموقع</p>
+                    </div>
+                </div>
+
+                {{-- Kashier --}}
+                <div class="settings-card">
+                    <div class="card-title">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                        </svg>
+                        بوابة كاشير (Kashier)
+                    </div>
+                    <p style="color: #cbd5e1; font-size: 0.875rem; margin-bottom: 1rem;">بوابة الدفع المصرية - قبول فيزا، ماستركارد، وميزة. <a href="https://kashier.io" target="_blank" rel="noopener" style="color: #a5b4fc;">كاشير</a></p>
+
+                    <div class="toggle-group" style="margin-bottom: 1rem;">
+                        <div class="toggle-info">
+                            <span class="toggle-label">تفعيل بوابة كاشير</span>
+                            <span class="toggle-hint">تمكين الدفع عبر كاشير في صفحة الدفع</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" wire:model.live="settings.kashier_enabled">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    @if($settings['kashier_enabled'] ?? false)
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>وضع التشغيل</label>
+                                <select wire:model="settings.kashier_mode">
+                                    <option value="test">تجريبي (Test)</option>
+                                    <option value="live">إنتاج (Live)</option>
+                                </select>
+                                <span class="hint">استخدم التجريبي للاختبار قبل التشغيل الفعلي</span>
+                            </div>
+                            <div class="form-group">
+                                <label>معرف التاجر (Merchant ID)</label>
+                                <input type="text" wire:model="settings.kashier_merchant_id" placeholder="أدخل Merchant ID">
+                                <span class="hint">معرف التاجر من لوحة كاشير</span>
+                            </div>
+                            <div class="form-group full-width">
+                                <label>مفتاح API (API Key)</label>
+                                <input type="text" wire:model="settings.kashier_api_key" placeholder="أدخل API Key">
+                                <span class="hint">مفتاح الوصول للتكامل</span>
+                            </div>
+                            <div class="form-group full-width">
+                                <label>مفتاح التشفير (Encryption Key)</label>
+                                <input type="password" wire:model="settings.kashier_encryption_key" placeholder="أدخل Encryption Key">
+                                <span class="hint">المفتاح السري لـ HMAC - احتفظ به بأمان</span>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+
+                {{-- PayPal --}}
+                <div class="settings-card">
+                    <div class="card-title">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                        </svg>
+                        بوابة باي بال (PayPal)
+                    </div>
+                    <p style="color: #cbd5e1; font-size: 0.875rem; margin-bottom: 1rem;">بوابة الدفع الدولية - قبول PayPal وبطاقات الائتمان. <a href="https://developer.paypal.com" target="_blank" rel="noopener" style="color: #a5b4fc;">PayPal Developer</a></p>
+
+                    <div class="toggle-group" style="margin-bottom: 1rem;">
+                        <div class="toggle-info">
+                            <span class="toggle-label">تفعيل بوابة باي بال</span>
+                            <span class="toggle-hint">تمكين الدفع عبر PayPal في صفحة الدفع</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" wire:model.live="settings.paypal_enabled">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    @if($settings['paypal_enabled'] ?? false)
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>وضع التشغيل</label>
+                                <select wire:model="settings.paypal_mode">
+                                    <option value="sandbox">تجريبي (Sandbox)</option>
+                                    <option value="live">إنتاج (Live)</option>
+                                </select>
+                                <span class="hint">استخدم Sandbox للاختبار قبل التشغيل الفعلي</span>
+                            </div>
+                            <div class="form-group full-width">
+                                <label>معرف العميل (Client ID)</label>
+                                <input type="text" wire:model="settings.paypal_client_id" placeholder="أدخل Client ID">
+                                <span class="hint">معرف التطبيق من PayPal Developer Dashboard</span>
+                            </div>
+                            <div class="form-group full-width">
+                                <label>المفتاح السري (Client Secret)</label>
+                                <input type="password" wire:model="settings.paypal_client_secret" placeholder="أدخل Client Secret">
+                                <span class="hint">المفتاح السري للتطبيق - احتفظ به بأمان</span>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+
+                {{-- Paymob --}}
+                <div class="settings-card">
+                    <div class="card-title">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                        </svg>
+                        بوابة بايموب (Paymob)
+                    </div>
+                    <p style="color: #cbd5e1; font-size: 0.875rem; margin-bottom: 1rem;">بوابة الدفع المصرية والإقليمية - فيزا، ماستركارد، فودافون كاش، والتحويل البنكي. <a href="https://docs.paymob.com" target="_blank" rel="noopener" style="color: #a5b4fc;">Paymob Docs</a></p>
+
+                    <div class="toggle-group" style="margin-bottom: 1rem;">
+                        <div class="toggle-info">
+                            <span class="toggle-label">تفعيل بوابة بايموب</span>
+                            <span class="toggle-hint">تمكين الدفع عبر Paymob</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" wire:model.live="settings.paymob_enabled">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    @if($settings['paymob_enabled'] ?? false)
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>وضع التشغيل</label>
+                                <select wire:model="settings.paymob_mode">
+                                    <option value="test">تجريبي (Test)</option>
+                                    <option value="live">إنتاج (Live)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>مفتاح API (API Key)</label>
+                                <input type="text" wire:model="settings.paymob_api_key" placeholder="أدخل API Key">
+                            </div>
+                            <div class="form-group">
+                                <label>معرف التكامل (Integration ID)</label>
+                                <input type="text" wire:model="settings.paymob_integration_id" placeholder="أدخل Integration ID">
+                            </div>
+                            <div class="form-group">
+                                <label>معرف الـ iFrame (iFrame ID)</label>
+                                <input type="text" wire:model="settings.paymob_iframe_id" placeholder="أدخل iFrame ID">
+                            </div>
+                            <div class="form-group full-width">
+                                <label>مفتاح HMAC</label>
+                                <input type="password" wire:model="settings.paymob_hmac_key" placeholder="أدخل HMAC Key">
+                                <span class="hint">المفتاح السري للتحقق من ردود بايموب</span>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+
+                {{-- Stripe --}}
+                <div class="settings-card">
+                    <div class="card-title">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                        </svg>
+                        بوابة سترايب (Stripe)
+                    </div>
+                    <p style="color: #cbd5e1; font-size: 0.875rem; margin-bottom: 1rem;">بوابة الدفع الدولية - قبول بطاقات الائتمان في جميع أنحاء العالم. <a href="https://dashboard.stripe.com" target="_blank" rel="noopener" style="color: #a5b4fc;">Stripe Dashboard</a></p>
+
+                    <div class="toggle-group" style="margin-bottom: 1rem;">
+                        <div class="toggle-info">
+                            <span class="toggle-label">تفعيل بوابة سترايب</span>
+                            <span class="toggle-hint">تمكين الدفع عبر Stripe</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" wire:model.live="settings.stripe_enabled">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    @if($settings['stripe_enabled'] ?? false)
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>وضع التشغيل</label>
+                                <select wire:model="settings.stripe_mode">
+                                    <option value="test">تجريبي (Test)</option>
+                                    <option value="live">إنتاج (Live)</option>
+                                </select>
+                            </div>
+                            <div class="form-group full-width">
+                                <label>المفتاح العام (Publishable Key)</label>
+                                <input type="text" wire:model="settings.stripe_publishable_key" placeholder="pk_test_... أو pk_live_...">
+                            </div>
+                            <div class="form-group full-width">
+                                <label>المفتاح السري (Secret Key)</label>
+                                <input type="password" wire:model="settings.stripe_secret_key" placeholder="sk_test_... أو sk_live_...">
+                            </div>
+                        </div>
+                    @endif
+                </div>
+
+                {{-- Moyasar --}}
+                <div class="settings-card">
+                    <div class="card-title">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                        </svg>
+                        بوابة مويَسَر (Moyasar)
+                    </div>
+                    <p style="color: #cbd5e1; font-size: 0.875rem; margin-bottom: 1rem;">بوابة الدفع السعودية والخليجية - فيزا، ماستركارد، مدى، Apple Pay. <a href="https://moyasar.com/docs" target="_blank" rel="noopener" style="color: #a5b4fc;">Moyasar Docs</a></p>
+
+                    <div class="toggle-group" style="margin-bottom: 1rem;">
+                        <div class="toggle-info">
+                            <span class="toggle-label">تفعيل بوابة مويَسَر</span>
+                            <span class="toggle-hint">تمكين الدفع عبر Moyasar</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" wire:model.live="settings.moyasar_enabled">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    @if($settings['moyasar_enabled'] ?? false)
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>وضع التشغيل</label>
+                                <select wire:model="settings.moyasar_mode">
+                                    <option value="test">تجريبي (Test)</option>
+                                    <option value="live">إنتاج (Live)</option>
+                                </select>
+                            </div>
+                            <div class="form-group full-width">
+                                <label>المفتاح العام (Publishable Key)</label>
+                                <input type="text" wire:model="settings.moyasar_publishable_key" placeholder="أدخل Publishable Key">
+                            </div>
+                            <div class="form-group full-width">
+                                <label>المفتاح السري (Secret Key)</label>
+                                <input type="password" wire:model="settings.moyasar_secret_key" placeholder="أدخل Secret Key">
+                            </div>
+                        </div>
+                    @endif
+                </div>
+
+                {{-- PayTabs --}}
+                <div class="settings-card">
+                    <div class="card-title">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                        </svg>
+                        بوابة باي تابس (PayTabs)
+                    </div>
+                    <p style="color: #cbd5e1; font-size: 0.875rem; margin-bottom: 1rem;">بوابة الدفع الخليجية - فيزا، ماستركارد، مدى، مدى للشراء. <a href="https://site.paytabs.com/en/developers" target="_blank" rel="noopener" style="color: #a5b4fc;">PayTabs Docs</a></p>
+
+                    <div class="toggle-group" style="margin-bottom: 1rem;">
+                        <div class="toggle-info">
+                            <span class="toggle-label">تفعيل بوابة باي تابس</span>
+                            <span class="toggle-hint">تمكين الدفع عبر PayTabs</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" wire:model.live="settings.paytabs_enabled">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    @if($settings['paytabs_enabled'] ?? false)
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>وضع التشغيل</label>
+                                <select wire:model="settings.paytabs_mode">
+                                    <option value="test">تجريبي (Test)</option>
+                                    <option value="live">إنتاج (Live)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>معرف الملف (Profile ID)</label>
+                                <input type="text" wire:model="settings.paytabs_profile_id" placeholder="أدخل Profile ID">
+                            </div>
+                            <div class="form-group full-width">
+                                <label>مفتاح الخادم (Server Key)</label>
+                                <input type="password" wire:model="settings.paytabs_server_key" placeholder="أدخل Server Key">
+                            </div>
+                            <div class="form-group full-width">
+                                <label>مفتاح العميل (Client Key)</label>
+                                <input type="text" wire:model="settings.paytabs_client_key" placeholder="أدخل Client Key">
+                            </div>
+                        </div>
+                    @endif
+                </div>
+
+                <div class="form-actions">
+                    <button class="save-btn" wire:click="savePaymentGatewaysSettings">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        حفظ إعدادات بوابات الدفع
+                    </button>
+                </div>
+            @endif
+
             <!-- SEO Settings -->
             @if($activeTab === 'seo')
                 <div class="content-header">
