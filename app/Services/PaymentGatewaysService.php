@@ -28,7 +28,7 @@ class PaymentGatewaysService
         $methods = [];
         $settings = self::getPaymentSettingsFresh();
 
-        if (self::isTruthy($settings['kashier_enabled'] ?? env('KASHIER_ENABLED', false))) {
+        if (self::isTruthy($settings['kashier_enabled'] ?? false)) {
             $methods['kashier'] = self::$gatewayLabels['kashier'];
         }
         if (self::isTruthy($settings['paypal_enabled'] ?? false)) {
@@ -54,13 +54,12 @@ class PaymentGatewaysService
     }
 
     /**
-     * قراءة إعدادات الدفع مباشرة من DB بدون cache
+     * قراءة إعدادات الدفع مباشرة من DB بدون cache.
+     * يستخدم الاتصال الرئيسي (write) لتجنّب تأخر النسخ في بيئات read replica على السيرفر الخارجي.
      */
     protected static function getPaymentSettingsFresh(): array
     {
-        $rows = PlatformSetting::query()
-            ->where('group', 'payment')
-            ->get(['key', 'value', 'type']);
+        $rows = PlatformSetting::where('group', 'payment')->get(['key', 'value', 'type']);
 
         $result = [];
         foreach ($rows as $row) {
@@ -98,7 +97,7 @@ class PaymentGatewaysService
         $gateway = $order->payment_gateway;
         $settings = self::getPaymentSettingsFresh();
 
-        $kashierEnabled = self::isTruthy($settings['kashier_enabled'] ?? env('KASHIER_ENABLED', false));
+        $kashierEnabled = self::isTruthy($settings['kashier_enabled'] ?? false);
         if ($gateway === 'kashier' && $kashierEnabled) {
             return self::buildKashierPaymentUrl($order, $settings);
         }
@@ -111,17 +110,16 @@ class PaymentGatewaysService
     {
         $settings = $settings ?? self::getPaymentSettingsFresh();
 
-        // القراءة من قاعدة البيانات أولاً، مع الاستخدام الاحتياطي لمتغيرات .env (مهم للسيرفرات الخارجية)
-        $mid = trim((string) ($settings['kashier_merchant_id'] ?? env('KASHIER_MID', '')));
-        $apiKey = trim((string) ($settings['kashier_api_key'] ?? env('KASHIER_SECRET_KEY', '')));
-        $encryptionKey = trim((string) ($settings['kashier_encryption_key'] ?? env('KASHIER_ENCRYPTION_KEY', env('KASHIER_API_KEY', ''))));
-        $mode = (string) ($settings['kashier_mode'] ?? env('KASHIER_MODE', 'test'));
+        $mid = trim((string) ($settings['kashier_merchant_id'] ?? ''));
+        $apiKey = trim((string) ($settings['kashier_api_key'] ?? ''));
+        $encryptionKey = trim((string) ($settings['kashier_encryption_key'] ?? ''));
+        $mode = (string) ($settings['kashier_mode'] ?? 'test');
 
         if ($mid === '' || $encryptionKey === '') {
-            Log::warning('Kashier: بيانات غير مكتملة', [
+            Log::warning('Kashier: بيانات غير مكتملة في platform_settings', [
                 'has_mid' => $mid !== '',
                 'has_encryption_key' => $encryptionKey !== '',
-                'hint' => 'تحقق من platform_settings أو .env: KASHIER_MID, KASHIER_ENCRYPTION_KEY أو KASHIER_API_KEY',
+                'hint' => 'تأكد من حفظ الإعدادات في لوحة التحكم → الإعدادات العامة → بوابات الدفع',
             ]);
 
             return null;
