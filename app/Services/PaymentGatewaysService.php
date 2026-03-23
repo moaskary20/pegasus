@@ -20,34 +20,65 @@ class PaymentGatewaysService
 
     /**
      * الحصول على طرق الدفع المفعّلة فقط [id => label]
+     * يقرأ مباشرة من قاعدة البيانات لتجنّب الـ cache
      */
     public static function getEnabledPaymentMethods(): array
     {
         $methods = [];
+        $settings = self::getPaymentSettingsFresh();
 
-        if (PlatformSetting::get('kashier_enabled', false)) {
+        if (self::isTruthy($settings['kashier_enabled'] ?? false)) {
             $methods['kashier'] = self::$gatewayLabels['kashier'];
         }
-        if (PlatformSetting::get('paypal_enabled', false)) {
+        if (self::isTruthy($settings['paypal_enabled'] ?? false)) {
             $methods['paypal'] = self::$gatewayLabels['paypal'];
         }
-        if (PlatformSetting::get('paymob_enabled', false)) {
+        if (self::isTruthy($settings['paymob_enabled'] ?? false)) {
             $methods['paymob'] = self::$gatewayLabels['paymob'];
         }
-        if (PlatformSetting::get('stripe_enabled', false)) {
+        if (self::isTruthy($settings['stripe_enabled'] ?? false)) {
             $methods['stripe'] = self::$gatewayLabels['stripe'];
         }
-        if (PlatformSetting::get('moyasar_enabled', false)) {
+        if (self::isTruthy($settings['moyasar_enabled'] ?? false)) {
             $methods['moyasar'] = self::$gatewayLabels['moyasar'];
         }
-        if (PlatformSetting::get('paytabs_enabled', false)) {
+        if (self::isTruthy($settings['paytabs_enabled'] ?? false)) {
             $methods['paytabs'] = self::$gatewayLabels['paytabs'];
         }
-        if (PlatformSetting::get('manual_payment_enabled', true)) {
+        if (self::isTruthy($settings['manual_payment_enabled'] ?? true)) {
             $methods['manual'] = self::$gatewayLabels['manual'];
         }
 
         return $methods;
+    }
+
+    /**
+     * قراءة إعدادات الدفع مباشرة من DB بدون cache
+     */
+    protected static function getPaymentSettingsFresh(): array
+    {
+        $rows = PlatformSetting::query()
+            ->where('group', 'payment')
+            ->get(['key', 'value', 'type']);
+
+        $result = [];
+        foreach ($rows as $row) {
+            $result[$row->key] = PlatformSetting::castValueStatic($row->value ?? '', (string) ($row->type ?? 'string'));
+        }
+
+        return $result;
+    }
+
+    protected static function isTruthy(mixed $value): bool
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+        if (is_string($value)) {
+            return in_array(strtolower($value), ['1', 'true', 'yes', 'on'], true);
+        }
+
+        return (bool) $value;
     }
 
     /**
@@ -64,23 +95,26 @@ class PaymentGatewaysService
     public static function getPaymentRedirectUrl(Order $order): ?string
     {
         $gateway = $order->payment_gateway;
+        $settings = self::getPaymentSettingsFresh();
 
-        if ($gateway === 'kashier' && PlatformSetting::get('kashier_enabled', false)) {
-            return self::buildKashierPaymentUrl($order);
+        if ($gateway === 'kashier' && self::isTruthy($settings['kashier_enabled'] ?? false)) {
+            return self::buildKashierPaymentUrl($order, $settings);
         }
 
         // TODO: PayPal, Paymob, Stripe, Moyasar, PayTabs
         return null;
     }
 
-    protected static function buildKashierPaymentUrl(Order $order): ?string
+    protected static function buildKashierPaymentUrl(Order $order, ?array $settings = null): ?string
     {
-        $mid = PlatformSetting::get('kashier_merchant_id', '');
-        $apiKey = PlatformSetting::get('kashier_api_key', '');
-        $encryptionKey = PlatformSetting::get('kashier_encryption_key', '');
-        $mode = PlatformSetting::get('kashier_mode', 'test');
+        $settings = $settings ?? self::getPaymentSettingsFresh();
 
-        if (empty($mid) || empty($encryptionKey)) {
+        $mid = trim((string) ($settings['kashier_merchant_id'] ?? ''));
+        $apiKey = trim((string) ($settings['kashier_api_key'] ?? ''));
+        $encryptionKey = trim((string) ($settings['kashier_encryption_key'] ?? ''));
+        $mode = (string) ($settings['kashier_mode'] ?? 'test');
+
+        if ($mid === '' || $encryptionKey === '') {
             return null;
         }
 
@@ -96,14 +130,15 @@ class PaymentGatewaysService
                 return null;
             }
             $orderId = $order->order_number ?: (string) $order->id;
-            $paymentUrl = \Asciisd\Kashier\Facades\Kashier::buildPaymentUrl(
+
+            return \Asciisd\Kashier\Facades\Kashier::buildPaymentUrl(
                 $amount,
                 $orderId,
                 []
             );
-            return $paymentUrl;
         } catch (\Throwable $e) {
             report($e);
+
             return null;
         }
     }

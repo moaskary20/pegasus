@@ -77,7 +77,7 @@
                     enctype="multipart/form-data"
                     class="rounded-3xl border bg-white p-6"
                     x-data="{
-                        gateway: '{{ array_key_first($paymentMethods ?? ['kashier' => '']) }}',
+                        gateway: '{{ array_key_first($paymentMethods ?? ['manual' => 'تحويل/دفع يدوي']) }}',
                         manualOpen: false,
                         receiptName: '',
                         requireReceipt() {
@@ -92,7 +92,7 @@
                         closeManual() {
                             const input = this.$refs.receipt;
                             if (!input || !input.files || !input.files.length) {
-                                this.gateway = '{{ array_key_first($paymentMethods ?? ['kashier' => '']) }}';
+                                this.gateway = '{{ array_key_first($paymentMethods ?? ['manual' => '']) }}';
                             }
                             this.manualOpen = false;
                         },
@@ -102,7 +102,7 @@
                     @csrf
                     <div class="text-sm font-extrabold text-slate-900">طريقة الدفع</div>
                     <div class="mt-4 space-y-2 text-sm">
-                        @foreach($paymentMethods ?? ['kashier' => 'الدفع بالفيزا والبطاقات البنكية'] as $val => $label)
+                        @forelse(($paymentMethods ?? []) as $val => $label)
                             <label class="flex items-center justify-between gap-3 cursor-pointer rounded-2xl border px-4 py-3 hover:bg-slate-50 transition">
                                 <span class="font-bold text-slate-800">
                                     {{ $label }}
@@ -121,10 +121,14 @@
                                     class="accent-[#3d195c]"
                                     x-model="gateway"
                                     @change="if (gateway === 'manual') manualOpen = true"
-                                    @checked($loop->first && count($paymentMethods ?? []) > 0)
+                                    @checked($loop->first)
                                 >
                             </label>
-                        @endforeach
+                        @empty
+                            <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                                لا توجد طرق دفع متاحة حالياً. يرجى التواصل مع الإدارة.
+                            </div>
+                        @endforelse
                     </div>
 
                     <div class="mt-6 rounded-3xl border bg-slate-50 p-4 text-sm text-slate-700">

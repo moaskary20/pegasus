@@ -27,7 +27,7 @@ class PlatformSetting extends Model
                 return $default;
             }
 
-            return self::castValue($setting->value, $setting->type);
+            return self::castValueStatic($setting->value, $setting->type);
         });
     }
 
@@ -54,7 +54,7 @@ class PlatformSetting extends Model
             $result = [];
 
             foreach ($settings as $setting) {
-                $result[$setting->key] = self::castValue($setting->value, $setting->type);
+                $result[$setting->key] = self::castValueStatic($setting->value, $setting->type);
             }
 
             return $result;
@@ -75,9 +75,9 @@ class PlatformSetting extends Model
     }
 
     /**
-     * Cast value based on type
+     * Cast value based on type (public for external use)
      */
-    protected static function castValue($value, string $type)
+    public static function castValueStatic($value, string $type)
     {
         return match ($type) {
             'integer' => (int) $value,

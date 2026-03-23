@@ -193,7 +193,17 @@ class CheckoutController extends Controller
                 return redirect()->away($paymentUrl);
             }
 
-            return redirect()->route('site.checkout.success', ['order' => $order->id]);
+            // فشل الحصول على رابط الدفع - حذف الطلب والرجوع مع رسالة خطأ
+            if ($coupon) {
+                $coupon->decrement('used_count');
+            }
+            $order->items()->delete();
+            $order->delete();
+
+            return redirect()->route('site.checkout')->with('notice', [
+                'type' => 'error',
+                'message' => 'لم يتم إعداد بيانات بوابة الدفع في لوحة التحكم. يرجى تفعيل البوابة وإدخال بيانات التاجر، أو اختيار طريقة دفع يدوي.',
+            ]);
         } catch (\Throwable $e) {
             DB::rollBack();
             Log::error('Checkout create order failed', [
