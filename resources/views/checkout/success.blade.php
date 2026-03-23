@@ -20,7 +20,7 @@
 
                 @if($order->payment_gateway === 'manual')
                     <div class="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-800">
-                        تم استلام الإيصال وسيتم مراجعة الدفع من الإدارة قبل تفعيل الدورات.
+                        تم استلام الإيصال وسيتم مراجعة الدفع من الإدارة قبل تفعيل الطلب{{ $order->items->count() > 0 ? ' والدورات' : '' }}.
                     </div>
                 @endif
 
@@ -39,6 +39,7 @@
                     </div>
                 </div>
 
+                @if($order->items->count() > 0)
                 <div class="mt-6">
                     <div class="text-sm font-extrabold text-slate-900">الدورات ضمن الطلب</div>
                     <div class="mt-3 divide-y border rounded-3xl overflow-hidden">
@@ -57,13 +58,40 @@
                         @endforeach
                     </div>
                 </div>
+                @endif
+
+                @if($order->storeOrder && $order->storeOrder->items->count() > 0)
+                <div class="mt-6">
+                    <div class="text-sm font-extrabold text-slate-900">منتجات المتجر ضمن الطلب</div>
+                    <div class="mt-3 divide-y border rounded-3xl overflow-hidden">
+                        @foreach($order->storeOrder->items as $it)
+                            <div class="p-4 bg-white flex items-center justify-between gap-3">
+                                <div class="min-w-0">
+                                    <div class="text-sm font-extrabold text-slate-900 line-clamp-1">{{ $it->product_name ?? 'منتج' }}</div>
+                                    <div class="text-xs text-slate-500 mt-1">الكمية: {{ (int) $it->quantity }} — {{ number_format((float) $it->total, 2) }} ج.م</div>
+                                </div>
+                                @if($it->product)
+                                    <a href="{{ route('site.store.product', $it->product) }}" class="text-xs font-extrabold text-[#3d195c] hover:underline shrink-0">
+                                        عرض المنتج
+                                    </a>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
 
                 <div class="mt-7 flex flex-col sm:flex-row gap-3">
+                    @if($order->items->count() > 0)
                     <a href="{{ route('site.my-courses') }}" class="inline-flex items-center justify-center px-5 py-3 rounded-2xl bg-[#3d195c] text-white font-extrabold hover:bg-[#3d195c]/95 transition">
                         الذهاب إلى دوراتي
                     </a>
                     <a href="{{ route('site.courses') }}" class="inline-flex items-center justify-center px-5 py-3 rounded-2xl bg-slate-100 text-slate-900 font-extrabold hover:bg-slate-200 transition">
                         استكشف دورات أخرى
+                    </a>
+                    @endif
+                    <a href="{{ route('site.store') }}" class="inline-flex items-center justify-center px-5 py-3 rounded-2xl border-2 border-[#3d195c] text-[#3d195c] font-extrabold hover:bg-[#3d195c]/5 transition">
+                        تصفّح المتجر
                     </a>
                 </div>
             </div>

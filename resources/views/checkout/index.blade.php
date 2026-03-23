@@ -39,11 +39,12 @@
     </section>
 
     <section class="max-w-7xl mx-auto px-4 py-10" style="direction: rtl;">
-        <div class="grid lg:grid-cols-12 gap-6 items-start">
-            <div class="lg:col-span-8 xl:col-span-9">
+            <div class="grid lg:grid-cols-12 gap-6 items-start">
+            <div class="lg:col-span-8 xl:col-span-9 space-y-6">
+                @if($courseCart->count() > 0)
                 <div class="rounded-3xl border bg-white overflow-hidden">
                     <div class="px-6 py-5 border-b bg-slate-50">
-                        <div class="text-lg font-extrabold text-slate-900">محتويات الطلب</div>
+                        <div class="text-lg font-extrabold text-slate-900">الدورات</div>
                         <div class="text-xs text-slate-600 mt-1">{{ number_format((int) $courseCart->count()) }} دورة</div>
                     </div>
                     <div class="divide-y">
@@ -68,6 +69,27 @@
                         @endforeach
                     </div>
                 </div>
+                @endif
+
+                @if(isset($storeCart) && $storeCart->count() > 0)
+                <div class="rounded-3xl border bg-white overflow-hidden">
+                    <div class="px-6 py-5 border-b bg-slate-50">
+                        <div class="text-lg font-extrabold text-slate-900">منتجات المتجر</div>
+                        <div class="text-xs text-slate-600 mt-1">{{ number_format((int) $storeCart->count()) }} منتج</div>
+                    </div>
+                    <div class="divide-y">
+                        @foreach($storeCart as $i)
+                            <div class="p-5 flex items-start justify-between gap-3">
+                                <div class="min-w-0 flex-1">
+                                    <a href="{{ $i->product ? route('site.store.product', $i->product) : route('site.store') }}" class="block text-sm font-extrabold text-slate-900 line-clamp-1 hover:text-[#3d195c]">{{ $i->product?->name ?? 'منتج' }}</a>
+                                    <div class="text-xs text-slate-600 mt-1">الكمية: {{ (int) $i->quantity }}</div>
+                                </div>
+                                <span class="text-sm font-extrabold text-slate-900 shrink-0">{{ number_format((float) ($i->total ?? 0), 2) }} ج.م</span>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+                @endif
             </div>
 
             <aside class="lg:col-span-4 xl:col-span-3 lg:col-start-10">
@@ -132,14 +154,24 @@
                     </div>
 
                     <div class="mt-6 rounded-3xl border bg-slate-50 p-4 text-sm text-slate-700">
+                        @if(isset($coursesSubtotal) && (float) $coursesSubtotal > 0)
                         <div class="flex items-center justify-between">
-                            <span>الإجمالي الفرعي</span>
-                            <span class="font-extrabold">{{ number_format((float) $subtotal, 2) }} ج.م</span>
+                            <span>إجمالي الدورات</span>
+                            <span class="font-extrabold">{{ number_format((float) $coursesSubtotal, 2) }} ج.م</span>
                         </div>
-                        <div class="flex items-center justify-between mt-2">
+                        @endif
+                        @if(isset($storeSubtotal) && (float) $storeSubtotal > 0)
+                        <div class="flex items-center justify-between mt-1">
+                            <span>إجمالي المتجر</span>
+                            <span class="font-extrabold">{{ number_format((float) $storeSubtotal, 2) }} ج.م</span>
+                        </div>
+                        @endif
+                        @if((float) ($discount ?? 0) > 0)
+                        <div class="flex items-center justify-between mt-1 text-emerald-700">
                             <span>الخصم</span>
-                            <span class="font-extrabold">{{ number_format((float) $discount, 2) }} ج.م</span>
+                            <span class="font-extrabold">- {{ number_format((float) $discount, 2) }} ج.م</span>
                         </div>
+                        @endif
                         <div class="h-px bg-slate-200 my-3"></div>
                         <div class="flex items-center justify-between text-slate-900">
                             <span class="font-extrabold">الإجمالي</span>

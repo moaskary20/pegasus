@@ -59,6 +59,13 @@ class CompleteKashierOrder
                 );
             }
 
+            if ($order->store_order_id) {
+                $storeOrder = \App\Models\StoreOrder::find($order->store_order_id);
+                if ($storeOrder) {
+                    $storeOrder->markAsPaid();
+                }
+            }
+
             DB::commit();
 
             session()->forget('cart');

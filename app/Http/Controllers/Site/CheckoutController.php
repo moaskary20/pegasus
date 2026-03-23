@@ -7,6 +7,9 @@ use App\Models\Coupon;
 use App\Models\Course;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\StoreCart;
+use App\Models\StoreOrder;
+use App\Models\StoreOrderItem;
 use App\Services\PaymentGatewaysService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,6 +27,9 @@ class CheckoutController extends Controller
             return redirect(route('site.auth'));
         }
 
+        $user = auth()->user();
+        $this->mergeSessionStoreCartToUser($user);
+
         $courseCartIds = session('cart', []);
         $courseCartIds = is_array($courseCartIds) ? array_values(array_unique(array_map('intval', $courseCartIds))) : [];
 
@@ -36,20 +42,25 @@ class CheckoutController extends Controller
                 ->get();
         }
 
-        if ($courseCart->count() === 0) {
-            return redirect()->route('site.cart')->with('notice', ['type' => 'error', 'message' => 'السلة فارغة. أضف دورة أولاً.']);
+        $storeCart = StoreCart::with(['product', 'variant'])->where('user_id', $user->id)->get();
+
+        $coursesCount = $courseCart->count();
+        $storeCount = $storeCart->count();
+        if ($coursesCount === 0 && $storeCount === 0) {
+            return redirect()->route('site.cart')->with('notice', ['type' => 'error', 'message' => 'السلة فارغة. أضف دورة أو منتج من المتجر أولاً.']);
         }
 
         $couponCode = (string) session('cart_coupon', '');
         $couponCode = strtoupper(trim($couponCode));
         $appliedCoupon = null;
         $discount = 0.0;
-        $subtotal = (float) $courseCart->sum(fn ($c) => (float) ($c->offer_price ?? $c->price ?? 0));
+        $coursesSubtotal = (float) $courseCart->sum(fn ($c) => (float) ($c->offer_price ?? $c->price ?? 0));
+        $storeSubtotal = (float) $storeCart->sum(fn ($i) => (float) ($i->total ?? 0));
 
-        if ($couponCode !== '') {
+        if ($couponCode !== '' && $coursesSubtotal > 0) {
             $appliedCoupon = Coupon::query()->where('code', $couponCode)->first();
             if ($appliedCoupon && $appliedCoupon->isValid()) {
-                $discount = (float) $appliedCoupon->calculateDiscount($subtotal);
+                $discount = (float) $appliedCoupon->calculateDiscount($coursesSubtotal);
             } else {
                 session()->forget('cart_coupon');
                 $appliedCoupon = null;
@@ -58,7 +69,7 @@ class CheckoutController extends Controller
             }
         }
 
-        $total = max(0, $subtotal - $discount);
+        $total = max(0, $coursesSubtotal - $discount) + $storeSubtotal;
         $paymentMethods = PaymentGatewaysService::getEnabledPaymentMethods();
 
         if (empty($paymentMethods)) {
@@ -67,7 +78,9 @@ class CheckoutController extends Controller
 
         return view('checkout.index', [
             'courseCart' => $courseCart,
-            'subtotal' => $subtotal,
+            'storeCart' => $storeCart,
+            'coursesSubtotal' => $coursesSubtotal,
+            'storeSubtotal' => $storeSubtotal,
             'couponCode' => $couponCode,
             'discount' => $discount,
             'total' => $total,
@@ -82,6 +95,9 @@ class CheckoutController extends Controller
 
             return redirect(route('site.auth'));
         }
+
+        $user = auth()->user();
+        $this->mergeSessionStoreCartToUser($user);
 
         $gateway = (string) $request->input('payment_gateway', '');
         $paymentMethods = PaymentGatewaysService::getEnabledPaymentMethods();
@@ -109,21 +125,24 @@ class CheckoutController extends Controller
             ->whereIn('id', $courseCartIds)
             ->get();
 
-        if ($courses->count() === 0) {
+        $storeCart = StoreCart::with(['product', 'variant'])->where('user_id', $user->id)->get();
+
+        if ($courses->count() === 0 && $storeCart->count() === 0) {
             return redirect()->route('site.cart')->with('notice', ['type' => 'error', 'message' => 'السلة فارغة.']);
         }
 
-        $subtotal = (float) $courses->sum(fn ($c) => (float) ($c->offer_price ?? $c->price ?? 0));
+        $coursesSubtotal = (float) $courses->sum(fn ($c) => (float) ($c->offer_price ?? $c->price ?? 0));
+        $storeSubtotal = (float) $storeCart->sum(fn ($i) => (float) ($i->total ?? 0));
 
         $couponCode = (string) session('cart_coupon', '');
         $couponCode = strtoupper(trim($couponCode));
         $coupon = null;
         $discount = 0.0;
 
-        if ($couponCode !== '') {
+        if ($couponCode !== '' && $coursesSubtotal > 0) {
             $coupon = Coupon::query()->where('code', $couponCode)->first();
             if ($coupon && $coupon->isValid()) {
-                $discount = (float) $coupon->calculateDiscount($subtotal);
+                $discount = (float) $coupon->calculateDiscount($coursesSubtotal);
             } else {
                 $coupon = null;
                 $discount = 0.0;
@@ -132,7 +151,7 @@ class CheckoutController extends Controller
             }
         }
 
-        $total = max(0, $subtotal - $discount);
+        $total = max(0, $coursesSubtotal - $discount) + $storeSubtotal;
 
         try {
             DB::beginTransaction();
@@ -145,11 +164,67 @@ class CheckoutController extends Controller
                 $receiptPath = $file?->storePublicly('manual-receipts', 'public');
             }
 
+            $storeOrder = null;
+            if ($storeCart->count() > 0) {
+                $storeOrder = StoreOrder::create([
+                    'user_id' => $user->id,
+                    'status' => StoreOrder::STATUS_PENDING,
+                    'payment_status' => StoreOrder::PAYMENT_PENDING,
+                    'payment_method' => $gateway,
+                    'customer_name' => $user->name,
+                    'customer_email' => $user->email,
+                    'customer_phone' => $user->phone ?? 'سيتم التواصل',
+                    'shipping_address' => 'سيتم التواصل',
+                    'shipping_city' => $user->city ?? 'غير محدد',
+                    'shipping_state' => null,
+                    'shipping_country' => 'مصر',
+                    'shipping_postal_code' => null,
+                    'subtotal' => $storeSubtotal,
+                    'shipping_cost' => 0,
+                    'tax_amount' => 0,
+                    'discount_amount' => 0,
+                    'total' => $storeSubtotal,
+                ]);
+
+                foreach ($storeCart as $item) {
+                    $product = $item->product;
+                    if (! $product) {
+                        continue;
+                    }
+                    $unitPrice = (float) $item->unit_price;
+                    $qty = (int) $item->quantity;
+                    $itemTotal = $unitPrice * $qty;
+
+                    StoreOrderItem::create([
+                        'store_order_id' => $storeOrder->id,
+                        'product_id' => $product->id,
+                        'variant_id' => $item->variant_id,
+                        'product_name' => $product->name,
+                        'variant_name' => $item->variant?->name,
+                        'sku' => $product->sku,
+                        'price' => $unitPrice,
+                        'quantity' => $qty,
+                        'total' => $itemTotal,
+                    ]);
+
+                    if ($product->track_quantity) {
+                        $product->decrement('quantity', $qty);
+                    }
+                }
+
+                StoreCart::where('user_id', $user->id)->delete();
+            }
+
+            $coursesSubtotalForOrder = $coursesSubtotal;
+            $coursesDiscountForOrder = $discount;
+            $orderTotal = max(0, $coursesSubtotalForOrder - $coursesDiscountForOrder) + $storeSubtotal;
+
             $order = Order::create([
-                'user_id' => auth()->id(),
-                'subtotal' => $subtotal,
-                'discount' => $discount,
-                'total' => $total,
+                'user_id' => $user->id,
+                'store_order_id' => $storeOrder?->id,
+                'subtotal' => $coursesSubtotalForOrder + $storeSubtotal,
+                'discount' => $coursesDiscountForOrder,
+                'total' => $orderTotal,
                 'coupon_code' => $couponCode ?: null,
                 'payment_gateway' => $gateway,
                 'status' => 'pending',
@@ -167,11 +242,12 @@ class CheckoutController extends Controller
                 ]);
             }
 
-            // الاشتراكات تُنشأ لاحقاً: للدفع اليدوي عند تأكيد الأدمن، للبوابات الإلكترونية عند تأكيد الدفع عبر callback
-
             if ($gateway === 'manual') {
                 if ($coupon) {
                     $coupon->increment('used_count');
+                }
+                if ($storeOrder) {
+                    $storeOrder->markAsPaid();
                 }
                 DB::commit();
                 session()->forget('cart');
@@ -186,16 +262,22 @@ class CheckoutController extends Controller
 
             DB::commit();
 
-            // لا نُفرغ السلة هنا؛ تُفرغ عند تأكيد الدفع في الـ callback
             $paymentUrl = PaymentGatewaysService::getPaymentRedirectUrl($order);
 
             if ($paymentUrl) {
                 return redirect()->away($paymentUrl);
             }
 
-            // فشل الحصول على رابط الدفع - حذف الطلب والرجوع مع رسالة خطأ
             if ($coupon) {
                 $coupon->decrement('used_count');
+            }
+            if ($storeOrder) {
+                foreach ($storeOrder->items as $soItem) {
+                    if ($soItem->product && $soItem->product->track_quantity) {
+                        $soItem->product->increment('quantity', $soItem->quantity);
+                    }
+                }
+                $storeOrder->delete();
             }
             $order->items()->delete();
             $order->delete();
@@ -228,6 +310,17 @@ class CheckoutController extends Controller
         }
     }
 
+    protected function mergeSessionStoreCartToUser($user): void
+    {
+        if (! $user) {
+            return;
+        }
+        $sessionId = session()->getId();
+        StoreCart::where('session_id', $sessionId)
+            ->whereNull('user_id')
+            ->update(['user_id' => $user->id, 'session_id' => null]);
+    }
+
     public function success(Order $order): View|RedirectResponse
     {
         if (! auth()->check()) {
@@ -240,7 +333,7 @@ class CheckoutController extends Controller
             abort(403);
         }
 
-        $order->load(['items.course']);
+        $order->load(['items.course', 'storeOrder.items.product']);
 
         return view('checkout.success', [
             'order' => $order,

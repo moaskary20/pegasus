@@ -1011,6 +1011,11 @@ Route::post('/courses/{course}/subscribe/coupon', function (Request $request, Co
 
 Route::get('/cart', function (Request $request) {
     $user = auth()->user();
+    if ($user) {
+        \App\Models\StoreCart::where('session_id', session()->getId())
+            ->whereNull('user_id')
+            ->update(['user_id' => $user->id, 'session_id' => null]);
+    }
 
     $courseCartIds = session('cart', []);
     $courseCartIds = is_array($courseCartIds) ? array_values(array_unique(array_map('intval', $courseCartIds))) : [];

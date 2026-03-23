@@ -10,6 +10,7 @@ class Order extends Model
 {
     protected $fillable = [
         'user_id',
+        'store_order_id',
         'order_number',
         'subtotal',
         'discount',
@@ -65,5 +66,10 @@ class Order extends Model
     public function enrollments(): HasMany
     {
         return $this->hasMany(Enrollment::class);
+    }
+
+    public function storeOrder(): BelongsTo
+    {
+        return $this->belongsTo(StoreOrder::class, 'store_order_id');
     }
 }
