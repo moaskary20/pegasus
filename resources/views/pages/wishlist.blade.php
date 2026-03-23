@@ -55,7 +55,7 @@
             <div class="divide-y divide-slate-100">
                 @foreach($courseWishlist as $course)
                     @php
-                        $coverUrl = $course->cover_image ? asset('storage/' . ltrim($course->cover_image, '/')) : null;
+                        $coverUrl = $course->cover_image;
                         $price = (float) ($course->offer_price ?? $course->price ?? 0);
                     @endphp
                     <div class="flex flex-col sm:flex-row gap-4 p-5 hover:bg-slate-50/50 transition">
