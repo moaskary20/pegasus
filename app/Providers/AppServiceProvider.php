@@ -13,7 +13,10 @@ use App\Observers\CourseRatingObserver;
 use App\Observers\EnrollmentObserver;
 use App\Observers\LessonObserver;
 use App\Observers\OrderObserver;
+use App\Listeners\CompleteKashierOrder;
+use Asciisd\Kashier\Events\KashierResponseHandled;
 use Filament\Auth\Http\Responses\Contracts\LogoutResponse as LogoutResponseContract;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -53,5 +56,7 @@ class AppServiceProvider extends ServiceProvider
         Enrollment::observe(EnrollmentObserver::class);
         Lesson::observe(LessonObserver::class);
         Order::observe(OrderObserver::class);
+
+        Event::listen(KashierResponseHandled::class, CompleteKashierOrder::class);
     }
 }

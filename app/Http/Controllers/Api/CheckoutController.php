@@ -12,6 +12,7 @@ use App\Models\OrderItem;
 use App\Models\StoreCart;
 use App\Models\StoreOrder;
 use App\Models\StoreOrderItem;
+use App\Models\PlatformSetting;
 use App\Models\StoreSetting;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -125,7 +126,10 @@ class CheckoutController extends Controller
         }
 
         $gateway = (string) $request->input('payment_gateway', '');
-        $allowed = ['kashier', 'manual'];
+        $allowed = ['kashier'];
+        if (PlatformSetting::get('manual_payment_enabled', true)) {
+            $allowed[] = 'manual';
+        }
         if (!in_array($gateway, $allowed, true)) {
             return response()->json([
                 'message' => 'يرجى اختيار طريقة دفع صحيحة.',
@@ -352,9 +356,12 @@ class CheckoutController extends Controller
 
     protected function getPaymentMethods(): array
     {
-        return [
+        $methods = [
             ['id' => 'kashier', 'label' => 'الدفع بالفيزا والبطاقات البنكية', 'description' => 'VISA • MasterCard • ميزة'],
-            ['id' => 'manual', 'label' => 'تحويل/دفع يدوي', 'description' => 'إرفاق إيصال التحويل'],
         ];
+        if (PlatformSetting::get('manual_payment_enabled', true)) {
+            $methods[] = ['id' => 'manual', 'label' => 'تحويل/دفع يدوي', 'description' => 'إرفاق إيصال التحويل'];
+        }
+        return $methods;
     }
 }

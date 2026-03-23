@@ -77,7 +77,7 @@
                     enctype="multipart/form-data"
                     class="rounded-3xl border bg-white p-6"
                     x-data="{
-                        gateway: 'kashier',
+                        gateway: '{{ array_key_first($paymentMethods ?? ['kashier' => '']) }}',
                         manualOpen: false,
                         receiptName: '',
                         requireReceipt() {
@@ -92,7 +92,7 @@
                         closeManual() {
                             const input = this.$refs.receipt;
                             if (!input || !input.files || !input.files.length) {
-                                this.gateway = 'kashier';
+                                this.gateway = '{{ array_key_first($paymentMethods ?? ['kashier' => '']) }}';
                             }
                             this.manualOpen = false;
                         },
@@ -102,13 +102,7 @@
                     @csrf
                     <div class="text-sm font-extrabold text-slate-900">طريقة الدفع</div>
                     <div class="mt-4 space-y-2 text-sm">
-                        @php
-                            $methods = [
-                                'kashier' => 'الدفع بالفيزا والبطاقات البنكية',
-                                'manual' => 'تحويل/دفع يدوي (مؤقت)',
-                            ];
-                        @endphp
-                        @foreach($methods as $val => $label)
+                        @foreach($paymentMethods ?? ['kashier' => 'الدفع بالفيزا والبطاقات البنكية'] as $val => $label)
                             <label class="flex items-center justify-between gap-3 cursor-pointer rounded-2xl border px-4 py-3 hover:bg-slate-50 transition">
                                 <span class="font-bold text-slate-800">
                                     {{ $label }}
@@ -127,7 +121,7 @@
                                     class="accent-[#3d195c]"
                                     x-model="gateway"
                                     @change="if (gateway === 'manual') manualOpen = true"
-                                    @checked($loop->first)
+                                    @checked($loop->first && count($paymentMethods ?? []) > 0)
                                 >
                             </label>
                         @endforeach

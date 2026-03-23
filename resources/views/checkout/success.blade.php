@@ -59,7 +59,7 @@
                 </div>
 
                 <div class="mt-7 flex flex-col sm:flex-row gap-3">
-                    <a href="{{ url('/admin/my-courses') }}" class="inline-flex items-center justify-center px-5 py-3 rounded-2xl bg-[#3d195c] text-white font-extrabold hover:bg-[#3d195c]/95 transition">
+                    <a href="{{ route('site.my-courses') }}" class="inline-flex items-center justify-center px-5 py-3 rounded-2xl bg-[#3d195c] text-white font-extrabold hover:bg-[#3d195c]/95 transition">
                         الذهاب إلى دوراتي
                     </a>
                     <a href="{{ route('site.courses') }}" class="inline-flex items-center justify-center px-5 py-3 rounded-2xl bg-slate-100 text-slate-900 font-extrabold hover:bg-slate-200 transition">

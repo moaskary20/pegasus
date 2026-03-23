@@ -167,6 +167,7 @@ class PlatformSettings extends Page
     public function savePaymentGatewaysSettings(): void
     {
         $keys = [
+            'manual_payment_enabled',
             'kashier_enabled', 'kashier_mode', 'kashier_merchant_id', 'kashier_api_key', 'kashier_encryption_key',
             'paypal_enabled', 'paypal_mode', 'paypal_client_id', 'paypal_client_secret',
             'paymob_enabled', 'paymob_mode', 'paymob_api_key', 'paymob_integration_id', 'paymob_hmac_key', 'paymob_iframe_id',
@@ -254,21 +255,31 @@ class PlatformSettings extends Page
     protected function saveSettingsGroup(array $keys, string $group): void
     {
         foreach ($keys as $key) {
-            if (isset($this->settings[$key])) {
-                $value = $this->settings[$key];
-                
-                // Convert boolean to string for storage
-                if (is_bool($value)) {
-                    $value = $value ? 'true' : 'false';
-                }
-                if (is_array($value)) {
-                    $value = json_encode($value, JSON_UNESCAPED_UNICODE);
-                }
-                
-                PlatformSetting::where('key', $key)->update(['value' => $value]);
+            if (! array_key_exists($key, $this->settings)) {
+                continue;
             }
+
+            $value = $this->settings[$key];
+
+            if (is_bool($value)) {
+                $value = $value ? 'true' : 'false';
+            }
+            if (is_array($value)) {
+                $value = json_encode($value, JSON_UNESCAPED_UNICODE);
+            }
+
+            $existing = PlatformSetting::where('key', $key)->first();
+            PlatformSetting::updateOrCreate(
+                ['key' => $key],
+                [
+                    'value' => (string) $value,
+                    'group' => $group,
+                    'type' => $existing?->type ?? (str_ends_with($key, '_enabled') ? 'boolean' : 'string'),
+                    'description' => $existing?->description ?? '',
+                ]
+            );
         }
-        
+
         PlatformSetting::clearGroupCache($group);
     }
 

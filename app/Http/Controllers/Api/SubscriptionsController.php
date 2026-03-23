@@ -102,7 +102,10 @@ class SubscriptionsController extends Controller
             }
         }
 
-        $allowed = ['kashier', 'manual', 'voucher'];
+        $allowed = ['kashier', 'voucher'];
+        if (\App\Models\PlatformSetting::get('manual_payment_enabled', true)) {
+            $allowed[] = 'manual';
+        }
         if (!in_array($gateway, $allowed, true)) {
             return response()->json([
                 'message' => 'يرجى اختيار طريقة دفع صحيحة.',

@@ -1365,6 +1365,27 @@
                     </div>
                 </div>
 
+                {{-- تحويل/دفع يدوي --}}
+                <div class="settings-card">
+                    <div class="card-title">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        تحويل / دفع يدوي (مؤقت)
+                    </div>
+                    <p style="color: #cbd5e1; font-size: 0.875rem; margin-bottom: 1rem;">السماح للعملاء بدفع الطلب عبر تحويل بنكي أو دفع يدوي مع إرفاق إيصال للمراجعة.</p>
+                    <div class="toggle-group">
+                        <div class="toggle-info">
+                            <span class="toggle-label">تفعيل الدفع اليدوي</span>
+                            <span class="toggle-hint">إظهار خيار تحويل/دفع يدوي في صفحة الدفع</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" wire:model="settings.manual_payment_enabled">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
                 {{-- Kashier --}}
                 <div class="settings-card">
                     <div class="card-title">

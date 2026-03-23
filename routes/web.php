@@ -1073,202 +1073,23 @@ Route::post('/cart/coupon/clear', function () {
     return redirect()->route('site.cart')->with('notice', ['type' => 'success', 'message' => 'تم إزالة الكوبون.']);
 })->name('site.cart.coupon.clear');
 
-Route::get('/checkout', function () {
-    if (!auth()->check()) {
-        session(['url.intended' => route('site.checkout')]);
-        return redirect(route('site.auth'));
+Route::get('/checkout', [\App\Http\Controllers\Site\CheckoutController::class, 'index'])->name('site.checkout');
+Route::post('/checkout', [\App\Http\Controllers\Site\CheckoutController::class, 'process'])->name('site.checkout.process');
+Route::get('/checkout/success/{order}', [\App\Http\Controllers\Site\CheckoutController::class, 'success'])->name('site.checkout.success');
+
+Route::get('/checkout/kashier/complete', function (Request $request) {
+    $merchantOrderId = (string) ($request->query('merchantOrderId') ?? '');
+    if ($merchantOrderId === '') {
+        return redirect()->route('site.cart')->with('notice', ['type' => 'error', 'message' => 'لم يتم العثور على بيانات الطلب.']);
     }
 
-    $courseCartIds = session('cart', []);
-    $courseCartIds = is_array($courseCartIds) ? array_values(array_unique(array_map('intval', $courseCartIds))) : [];
-
-    $courseCart = collect();
-    if (count($courseCartIds)) {
-        $courseCart = Course::query()
-            ->published()
-            ->whereIn('id', $courseCartIds)
-            ->with(['instructor', 'category', 'subCategory'])
-            ->get();
+    $order = \App\Models\Order::query()->where('order_number', $merchantOrderId)->first();
+    if (! $order) {
+        return redirect()->route('site.cart')->with('notice', ['type' => 'error', 'message' => 'لم يتم العثور على الطلب.']);
     }
 
-    if ($courseCart->count() === 0) {
-        return redirect()->route('site.cart')->with('notice', ['type' => 'error', 'message' => 'السلة فارغة. أضف دورة أولاً.']);
-    }
-
-    $couponCode = (string) session('cart_coupon', '');
-    $couponCode = strtoupper(trim($couponCode));
-    $appliedCoupon = null;
-    $discount = 0.0;
-    $subtotal = (float) $courseCart->sum(fn ($c) => (float) ($c->offer_price ?? $c->price ?? 0));
-
-    if ($couponCode !== '') {
-        $appliedCoupon = Coupon::query()->where('code', $couponCode)->first();
-        if ($appliedCoupon && $appliedCoupon->isValid()) {
-            $discount = (float) $appliedCoupon->calculateDiscount($subtotal);
-        } else {
-            session()->forget('cart_coupon');
-            $appliedCoupon = null;
-            $discount = 0.0;
-            $couponCode = '';
-        }
-    }
-
-    $total = max(0, $subtotal - $discount);
-
-    return view('checkout.index', [
-        'courseCart' => $courseCart,
-        'subtotal' => $subtotal,
-        'couponCode' => $couponCode,
-        'discount' => $discount,
-        'total' => $total,
-    ]);
-})->name('site.checkout');
-
-Route::post('/checkout', function (Request $request) {
-    if (!auth()->check()) {
-        session(['url.intended' => route('site.checkout')]);
-        return redirect(route('site.auth'));
-    }
-
-    $gateway = (string) $request->input('payment_gateway', '');
-    $allowed = ['kashier', 'manual'];
-    if (!in_array($gateway, $allowed, true)) {
-        return redirect()->route('site.checkout')->with('notice', ['type' => 'error', 'message' => 'يرجى اختيار طريقة دفع صحيحة.']);
-    }
-
-    if ($gateway === 'manual') {
-        $request->validate([
-            'manual_receipt' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
-        ], [
-            'manual_receipt.required' => 'يرجى إرفاق إيصال الدفع.',
-            'manual_receipt.mimes' => 'صيغة الإيصال يجب أن تكون JPG/PNG/PDF.',
-            'manual_receipt.max' => 'حجم الإيصال كبير جداً (الحد 5MB).',
-        ]);
-    }
-
-    $courseCartIds = session('cart', []);
-    $courseCartIds = is_array($courseCartIds) ? array_values(array_unique(array_map('intval', $courseCartIds))) : [];
-
-    $courses = Course::query()
-        ->published()
-        ->whereIn('id', $courseCartIds)
-        ->get();
-
-    if ($courses->count() === 0) {
-        return redirect()->route('site.cart')->with('notice', ['type' => 'error', 'message' => 'السلة فارغة.']);
-    }
-
-    $subtotal = (float) $courses->sum(fn ($c) => (float) ($c->offer_price ?? $c->price ?? 0));
-
-    $couponCode = (string) session('cart_coupon', '');
-    $couponCode = strtoupper(trim($couponCode));
-    $coupon = null;
-    $discount = 0.0;
-
-    if ($couponCode !== '') {
-        $coupon = Coupon::query()->where('code', $couponCode)->first();
-        if ($coupon && $coupon->isValid()) {
-            $discount = (float) $coupon->calculateDiscount($subtotal);
-        } else {
-            $coupon = null;
-            $discount = 0.0;
-            $couponCode = '';
-            session()->forget('cart_coupon');
-        }
-    }
-
-    $total = max(0, $subtotal - $discount);
-
-    try {
-        DB::beginTransaction();
-
-        $receiptPath = null;
-        $receiptName = null;
-        if ($gateway === 'manual' && $request->hasFile('manual_receipt')) {
-            $file = $request->file('manual_receipt');
-            $receiptName = $file?->getClientOriginalName();
-            $receiptPath = $file?->storePublicly('manual-receipts', 'public');
-        }
-
-        $order = Order::create([
-            'user_id' => auth()->id(),
-            'subtotal' => $subtotal,
-            'discount' => $discount,
-            'total' => $total,
-            'coupon_code' => $couponCode ?: null,
-            'payment_gateway' => $gateway,
-            'status' => 'pending',
-            'manual_receipt_path' => $receiptPath,
-            'manual_receipt_original_name' => $receiptName,
-            'manual_receipt_uploaded_at' => $receiptPath ? now() : null,
-        ]);
-
-        foreach ($courses as $c) {
-            $price = (float) ($c->offer_price ?? $c->price ?? 0);
-            OrderItem::create([
-                'order_id' => $order->id,
-                'course_id' => $c->id,
-                'price' => $price,
-            ]);
-
-            // For manual payments: wait for admin review before granting enrollment
-            if ($gateway !== 'manual') {
-                Enrollment::firstOrCreate(
-                    [
-                        'user_id' => auth()->id(),
-                        'course_id' => $c->id,
-                    ],
-                    [
-                        'order_id' => $order->id,
-                        'price_paid' => $price,
-                        'enrolled_at' => now(),
-                    ]
-                );
-            }
-        }
-
-        if ($coupon) {
-            $coupon->increment('used_count');
-        }
-
-        DB::commit();
-
-        session()->forget('cart');
-        session()->forget('cart_coupon');
-
-        return redirect()->route('site.checkout.success', ['order' => $order->id]);
-    } catch (\Throwable $e) {
-        DB::rollBack();
-        Log::error('Checkout create order failed', [
-            'user_id' => auth()->id(),
-            'gateway' => $gateway,
-            'coupon_code' => $couponCode ?: null,
-            'cart_ids' => $courseCartIds,
-            'error' => $e->getMessage(),
-        ]);
-
-        $message = config('app.debug')
-            ? ('حدث خطأ أثناء إنشاء الطلب: ' . $e->getMessage())
-            : 'حدث خطأ أثناء إنشاء الطلب. حاول مرة أخرى.';
-
-        return redirect()->route('site.checkout')->with('notice', ['type' => 'error', 'message' => $message]);
-    }
-})->name('site.checkout.process');
-
-Route::get('/checkout/success/{order}', function (Order $order) {
-    if (!auth()->check()) {
-        session(['url.intended' => route('site.checkout.success', ['order' => $order->id])]);
-        return redirect(route('site.auth'));
-    }
-
-    abort_unless((int) $order->user_id === (int) auth()->id(), 403);
-
-    $order->load(['items.course']);
-
-    return view('checkout.success', [
-        'order' => $order,
-    ]);
-})->name('site.checkout.success');
+    return redirect()->route('site.checkout.success', ['order' => $order->id]);
+})->name('site.checkout.kashier.complete');
 
 Route::post('/cart/courses/{course}', function (Request $request, Course $course) {
     abort_unless((bool) $course->is_published, 404);
