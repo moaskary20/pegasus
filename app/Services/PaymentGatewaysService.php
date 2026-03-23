@@ -5,10 +5,14 @@ namespace App\Services;
 use App\Models\Order;
 use App\Models\PlatformSetting;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class PaymentGatewaysService
 {
+    /** سبب فشل آخر محاولة للحصول على رابط الدفع (للتشخيص) */
+    public static ?string $lastFailureReason = null;
+
     protected static array $gatewayLabels = [
         'kashier' => 'الدفع بالفيزا والبطاقات البنكية',
         'paypal' => 'باي بال',
@@ -55,19 +59,22 @@ class PaymentGatewaysService
 
     /**
      * قراءة إعدادات الدفع مباشرة من DB بدون cache.
-     * يستخدم الاتصال الرئيسي (write) لتجنّب تأخر النسخ في بيئات read replica على السيرفر الخارجي.
+     * يستخدم Query Builder مباشرة (بدون Eloquent) لتجنّب أي كاش أو مشاكل في بيئات الإنتاج.
      */
     protected static function getPaymentSettingsFresh(): array
     {
+        $result = [];
+
         try {
-            $rows = PlatformSetting::onWriteConnection()
+            $rows = DB::table('platform_settings')
                 ->where('group', 'payment')
                 ->get(['key', 'value', 'type']);
         } catch (\Throwable $e) {
-            $rows = PlatformSetting::where('group', 'payment')->get(['key', 'value', 'type']);
+            Log::error('PaymentGatewaysService: فشل قراءة إعدادات الدفع من DB', ['error' => $e->getMessage()]);
+
+            return [];
         }
 
-        $result = [];
         foreach ($rows as $row) {
             $result[$row->key] = PlatformSetting::castValueStatic($row->value ?? '', (string) ($row->type ?? 'string'));
         }
@@ -100,15 +107,20 @@ class PaymentGatewaysService
      */
     public static function getPaymentRedirectUrl(Order $order): ?string
     {
+        self::$lastFailureReason = null;
         $gateway = $order->payment_gateway;
         $settings = self::getPaymentSettingsFresh();
 
         $kashierEnabled = self::isTruthy($settings['kashier_enabled'] ?? false);
         if ($gateway === 'kashier' && $kashierEnabled) {
-            return self::buildKashierPaymentUrl($order, $settings);
+            $url = self::buildKashierPaymentUrl($order, $settings);
+            if ($url) {
+                return $url;
+            }
+            return null; // lastFailureReason يحدّده buildKashierPaymentUrl
         }
 
-        // TODO: PayPal, Paymob, Stripe, Moyasar, PayTabs
+        self::$lastFailureReason = 'gateway_not_supported';
         return null;
     }
 
@@ -122,10 +134,12 @@ class PaymentGatewaysService
         $mode = (string) ($settings['kashier_mode'] ?? 'test');
 
         if ($mid === '' || $encryptionKey === '') {
+            self::$lastFailureReason = 'missing_credentials';
             Log::warning('Kashier: بيانات غير مكتملة في platform_settings', [
                 'has_mid' => $mid !== '',
                 'has_encryption_key' => $encryptionKey !== '',
-                'hint' => 'تأكد من حفظ الإعدادات في لوحة التحكم → الإعدادات العامة → بوابات الدفع',
+                'order_id' => $order->id,
+                'keys_from_db' => array_keys($settings),
             ]);
 
             return null;
@@ -140,16 +154,30 @@ class PaymentGatewaysService
         try {
             $amount = (int) round((float) $order->total * 100);
             if ($amount <= 0) {
+                self::$lastFailureReason = 'zero_amount';
+                Log::warning('Kashier: مبلغ الطلب صفر أو سالب', [
+                    'order_id' => $order->id,
+                    'order_total' => $order->total,
+                    'amount_cents' => $amount,
+                ]);
+
                 return null;
             }
             $orderId = $order->order_number ?: (string) $order->id;
-
-            return \Asciisd\Kashier\Facades\Kashier::buildPaymentUrl(
+            $url = \Asciisd\Kashier\Facades\Kashier::buildPaymentUrl(
                 $amount,
                 $orderId,
                 []
             );
+
+            return $url;
         } catch (\Throwable $e) {
+            self::$lastFailureReason = 'exception:'.$e->getMessage();
+            Log::error('Kashier: فشل إنشاء رابط الدفع', [
+                'order_id' => $order->id,
+                'exception' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
             report($e);
 
             return null;

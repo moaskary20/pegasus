@@ -200,9 +200,17 @@ class CheckoutController extends Controller
             $order->items()->delete();
             $order->delete();
 
+            $reason = PaymentGatewaysService::$lastFailureReason ?? '';
+            $message = match (true) {
+                str_starts_with($reason, 'zero_amount') => 'المبلغ الإجمالي صفر. يرجى التحقق من السلة أو الكوبون.',
+                str_starts_with($reason, 'missing_credentials') => 'لم يتم إعداد بيانات بوابة الدفع في لوحة التحكم. يرجى تفعيل كاشير وإدخال Merchant ID ومفتاح التشفير، أو اختيار طريقة دفع يدوي.',
+                str_starts_with($reason, 'exception:') => 'حدث خطأ تقني أثناء الاتصال ببوابة الدفع. يرجى المحاولة لاحقاً أو اختيار طريقة الدفع اليدوي.',
+                default => 'لم يتم إعداد بيانات بوابة الدفع في لوحة التحكم. يرجى تفعيل البوابة وإدخال بيانات التاجر، أو اختيار طريقة دفع يدوي.',
+            };
+
             return redirect()->route('site.checkout')->with('notice', [
                 'type' => 'error',
-                'message' => 'لم يتم إعداد بيانات بوابة الدفع في لوحة التحكم. يرجى تفعيل البوابة وإدخال بيانات التاجر، أو اختيار طريقة دفع يدوي.',
+                'message' => $message,
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
