@@ -32,6 +32,10 @@
                     <h2 class="text-xl font-extrabold text-slate-900">تسجيل الدخول</h2>
                 </div>
 
+                @if(session('notice'))
+                    <div class="mb-4 p-3 rounded-xl {{ session('notice')['type'] === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700' }} text-sm">{{ session('notice')['message'] ?? '' }}</div>
+                @endif
+
                 @if($errors->has('email') && !$errors->has('register'))
                     <div class="mb-4 p-3 rounded-xl bg-rose-50 text-rose-700 text-sm">{{ $errors->first('email') }}</div>
                 @endif
@@ -50,6 +54,9 @@
                             <input type="password" name="password" id="login_password" required
                                 class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-[#2c004d] focus:ring-2 focus:ring-[#2c004d]/20 outline-none transition"
                                 placeholder="••••••••">
+                            <a href="{{ route('site.auth.forgot-password') }}" class="inline-block mt-2 text-sm text-[#2c004d] hover:underline font-medium">
+                                نسيت كلمة المرور؟
+                            </a>
                         </div>
                         <div class="flex items-center gap-2">
                             <input type="checkbox" name="remember" id="remember" value="1"

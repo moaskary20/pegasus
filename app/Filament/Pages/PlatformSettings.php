@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Models\PlatformSetting;
+use App\Services\PlatformMailConfig;
 use BackedEnum;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
@@ -527,7 +528,10 @@ class PlatformSettings extends Page
             session()->flash('error', 'يرجى إدخال بريد إلكتروني للاختبار');
             return;
         }
-        
+
+        PlatformSetting::clearGroupCache('email');
+        PlatformMailConfig::apply();
+
         try {
             \Mail::raw('هذا بريد اختباري من منصة Pegasus Academy', function ($message) {
                 $message->to($this->testEmailAddress)

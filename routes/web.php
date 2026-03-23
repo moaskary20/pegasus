@@ -272,6 +272,12 @@ Route::get('/auth', [\App\Http\Controllers\Site\AuthController::class, 'show'])-
 Route::post('/auth/login', [\App\Http\Controllers\Site\AuthController::class, 'login'])->name('site.auth.login');
 Route::post('/auth/register', [\App\Http\Controllers\Site\AuthController::class, 'register'])->name('site.auth.register');
 
+// استرجاع كلمة المرور
+Route::get('/auth/forgot-password', [\App\Http\Controllers\Site\AuthController::class, 'showForgotPasswordForm'])->name('site.auth.forgot-password');
+Route::post('/auth/forgot-password', [\App\Http\Controllers\Site\AuthController::class, 'sendResetLink'])->middleware('throttle:5,1')->name('site.auth.forgot-password.send');
+Route::get('/auth/reset-password/{token}', [\App\Http\Controllers\Site\AuthController::class, 'showResetPasswordForm'])->name('site.auth.reset-password.form');
+Route::post('/auth/reset-password', [\App\Http\Controllers\Site\AuthController::class, 'resetPassword'])->middleware('throttle:5,1')->name('site.auth.reset-password');
+
 // API للموبايل: تسجيل الدخول والتسجيل (بدون مصادقة)
 Route::prefix('api/auth')->middleware(['throttle:60,1'])->group(function () {
     Route::post('/login', [ApiAuthController::class, 'login'])->name('api.auth.login');

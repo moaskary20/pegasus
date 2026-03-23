@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Http\Responses\LogoutResponse;
+use App\Services\PlatformMailConfig;
+use Illuminate\Auth\Notifications\ResetPassword;
 use App\Models\CourseRating;
 use App\Models\Enrollment;
 use App\Models\Lesson;
@@ -30,6 +32,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->app->booted(function () {
+            PlatformMailConfig::apply();
+        });
+
+        ResetPassword::createUrlUsing(function ($notifiable, $token) {
+            return url(route('site.auth.reset-password.form', [
+                'token' => $token,
+                'email' => $notifiable->getEmailForPasswordReset(),
+            ], false));
+        });
+
         Password::defaults(function () {
             return Password::min(8)
                 ->mixedCase()

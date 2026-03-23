@@ -40,7 +40,7 @@ class CourseForm
                 Select::make('preview_lesson_id')
                     ->label('درس المعاينة')
                     ->options(function ($get, $livewire) {
-                        $record = $livewire->getRecord() ?? $livewire->data ?? null;
+                        $record = (method_exists($livewire, 'getRecord') ? $livewire->getRecord() : null) ?? $livewire->data ?? null;
                         if (!$record || !($record->id ?? null)) return [];
                         return Lesson::whereHas('section', fn ($q) => $q->where('course_id', $record->id))
                             ->with('section')

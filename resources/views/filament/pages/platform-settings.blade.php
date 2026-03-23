@@ -1184,6 +1184,9 @@
 
             <!-- Email Settings -->
             @if($activeTab === 'email')
+                <div class="mb-4 p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 text-sm">
+                    <strong>ملاحظة:</strong> إعدادات البريد هنا تُستخدم لجميع بريد التطبيق (استرجاع كلمة المرور، الإشعارات، التذكيرات، إلخ) وتُغلق إعدادات ملف .env عند تعبئتها.
+                </div>
                 <div class="content-header">
                     <div>
                         <h2>
