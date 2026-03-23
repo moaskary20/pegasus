@@ -59,7 +59,13 @@ class PaymentGatewaysService
      */
     protected static function getPaymentSettingsFresh(): array
     {
-        $rows = PlatformSetting::where('group', 'payment')->get(['key', 'value', 'type']);
+        try {
+            $rows = PlatformSetting::onWriteConnection()
+                ->where('group', 'payment')
+                ->get(['key', 'value', 'type']);
+        } catch (\Throwable $e) {
+            $rows = PlatformSetting::where('group', 'payment')->get(['key', 'value', 'type']);
+        }
 
         $result = [];
         foreach ($rows as $row) {
