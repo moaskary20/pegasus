@@ -181,7 +181,7 @@
                     {{ config('app.name', 'Pegasus Academy') }} © {{ now()->year }} — جميع الحقوق محفوظة
                 </div>
                 <div class="text-xs text-white/70 flex items-center gap-3">
-                    <a href="{{ route('site.support') }}" class="hover:text-white transition">سياسة الخصوصية</a>
+                    <a href="{{ route('site.privacy-policy') }}" class="hover:text-white transition">Privacy Policy</a>
                     <span class="opacity-40">•</span>
                     <a href="{{ route('site.support') }}" class="hover:text-white transition">الشروط والأحكام</a>
                 </div>
