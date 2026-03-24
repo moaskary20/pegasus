@@ -268,6 +268,7 @@ Route::post('/support/contact', [\App\Http\Controllers\Site\SupportController::c
 Route::view('/contact', 'pages.contact')->name('site.contact');
 Route::view('/about', 'pages.about')->name('site.about');
 Route::view('/privacy-policy', 'pages.privacy-policy-en')->name('site.privacy-policy');
+Route::view('/delete-account', 'pages.delete-account-en')->name('site.delete-account');
 
 Route::get('/auth', [\App\Http\Controllers\Site\AuthController::class, 'show'])->name('site.auth');
 // اسم بديل لـ route('login') للتوافق مع Laravel والمراجع الخارجية

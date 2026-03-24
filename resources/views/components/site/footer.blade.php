@@ -180,8 +180,10 @@
                 <div class="text-xs text-white/70">
                     {{ config('app.name', 'Pegasus Academy') }} © {{ now()->year }} — جميع الحقوق محفوظة
                 </div>
-                <div class="text-xs text-white/70 flex items-center gap-3">
+                <div class="text-xs text-white/70 flex flex-wrap items-center gap-x-3 gap-y-1">
                     <a href="{{ route('site.privacy-policy') }}" class="hover:text-white transition">Privacy Policy</a>
+                    <span class="opacity-40">•</span>
+                    <a href="{{ route('site.delete-account') }}" class="hover:text-white transition">Delete account</a>
                     <span class="opacity-40">•</span>
                     <a href="{{ route('site.support') }}" class="hover:text-white transition">الشروط والأحكام</a>
                 </div>
