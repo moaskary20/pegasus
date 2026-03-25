@@ -13,7 +13,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable, HasRoles;
+    use HasApiTokens, HasFactory, HasRoles, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -60,6 +60,31 @@ class User extends Authenticatable implements FilamentUser
     }
 
     /**
+     * توحيد صيغة رقم الهاتف للمقارنة والتخزين (مثال مصر: 01xxxxxxxxx).
+     */
+    public static function normalizePhone(?string $phone): string
+    {
+        if ($phone === null || trim($phone) === '') {
+            return '';
+        }
+
+        $digits = preg_replace('/\D+/', '', $phone) ?? '';
+        if ($digits === '') {
+            return '';
+        }
+
+        if (str_starts_with($digits, '20') && strlen($digits) >= 11) {
+            $digits = '0'.substr($digits, 2);
+        }
+
+        if (strlen($digits) === 10 && str_starts_with($digits, '1')) {
+            $digits = '0'.$digits;
+        }
+
+        return $digits;
+    }
+
+    /**
      * Check if user can access Filament panel
      */
     public function canAccessPanel(Panel $panel): bool
@@ -92,7 +117,7 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->hasMany(InstructorEarning::class);
     }
-    
+
     public function instructorEarnings(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(InstructorEarning::class);
@@ -102,7 +127,7 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->hasMany(Course::class, 'user_id');
     }
-    
+
     /**
      * Search history relationship
      */
@@ -110,7 +135,7 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->hasMany(SearchHistory::class);
     }
-    
+
     /**
      * Conversations the user participates in
      */
@@ -121,7 +146,7 @@ class User extends Authenticatable implements FilamentUser
             ->withTimestamps()
             ->orderByDesc('last_message_at');
     }
-    
+
     /**
      * Messages sent by this user
      */
@@ -129,7 +154,7 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->hasMany(Message::class);
     }
-    
+
     /**
      * Get unread messages count
      */
@@ -144,7 +169,7 @@ class User extends Authenticatable implements FilamentUser
             )', [$this->id])
             ->count();
     }
-    
+
     /**
      * Point transactions relationship
      */
@@ -152,7 +177,7 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->hasMany(PointTransaction::class)->orderByDesc('created_at');
     }
-    
+
     /**
      * Reward redemptions relationship
      */
@@ -160,7 +185,7 @@ class User extends Authenticatable implements FilamentUser
     {
         return $this->hasMany(RewardRedemption::class);
     }
-    
+
     /**
      * Get rank label
      */
@@ -175,7 +200,7 @@ class User extends Authenticatable implements FilamentUser
             default => 'برونزي',
         };
     }
-    
+
     /**
      * Get rank color
      */
@@ -190,7 +215,7 @@ class User extends Authenticatable implements FilamentUser
             default => '#cd7f32',
         };
     }
-    
+
     /**
      * Update rank based on total points
      */
@@ -203,12 +228,12 @@ class User extends Authenticatable implements FilamentUser
             $this->total_points >= 500 => 'silver',
             default => 'bronze',
         };
-        
+
         if ($this->rank !== $rank) {
             $this->update(['rank' => $rank]);
         }
     }
-    
+
     /**
      * Get the full URL for avatar (يدعم المسار أو الرابط الكامل)
      */
@@ -221,7 +246,8 @@ class User extends Authenticatable implements FilamentUser
         if (str_starts_with($value, 'http')) {
             return $value;
         }
-        return asset('storage/' . ltrim($value, '/'));
+
+        return asset('storage/'.ltrim($value, '/'));
     }
 
     /**
@@ -230,35 +256,35 @@ class User extends Authenticatable implements FilamentUser
     public function scopeSearch($query, string $search)
     {
         $search = trim($search);
-        
+
         if (strlen($search) < 2) {
             return $query;
         }
-        
+
         return $query->where(function ($q) use ($search) {
             $q->where('name', 'LIKE', "%{$search}%")
-              ->orWhere('email', 'LIKE', "%{$search}%")
-              ->orWhere('job', 'LIKE', "%{$search}%")
-              ->orWhere('city', 'LIKE', "%{$search}%");
+                ->orWhere('email', 'LIKE', "%{$search}%")
+                ->orWhere('job', 'LIKE', "%{$search}%")
+                ->orWhere('city', 'LIKE', "%{$search}%");
         });
     }
-    
+
     /**
      * Scope to filter instructors only
      */
     public function scopeInstructors($query)
     {
-        return $query->whereHas('roles', fn($q) => $q->where('name', 'instructor'));
+        return $query->whereHas('roles', fn ($q) => $q->where('name', 'instructor'));
     }
-    
+
     /**
      * Scope to filter students only
      */
     public function scopeStudents($query)
     {
-        return $query->whereHas('roles', fn($q) => $q->where('name', 'student'));
+        return $query->whereHas('roles', fn ($q) => $q->where('name', 'student'));
     }
-    
+
     /**
      * Get published courses count for instructor
      */

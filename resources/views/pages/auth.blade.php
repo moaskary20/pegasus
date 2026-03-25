@@ -107,7 +107,7 @@
                             </div>
                             <div>
                                 <label for="reg_phone" class="block text-sm font-bold text-slate-700 mb-1">رقم الهاتف</label>
-                                <input type="tel" name="phone" id="reg_phone" value="{{ old('phone') }}"
+                                <input type="tel" name="phone" id="reg_phone" value="{{ old('phone') }}" required
                                     class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-[#2c004d] focus:ring-2 focus:ring-[#2c004d]/20 outline-none transition"
                                     placeholder="01xxxxxxxxx">
                                 @error('phone')<span class="text-rose-600 text-xs mt-1">{{ $message }}</span>@enderror

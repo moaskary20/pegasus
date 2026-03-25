@@ -5,10 +5,9 @@ namespace App\Filament\Resources\Users\Schemas;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
-use Spatie\Permission\Models\Role;
 
 class UserForm
 {
@@ -22,7 +21,11 @@ class UserForm
                 TextInput::make('email')
                     ->label('البريد الإلكتروني')
                     ->email()
-                    ->required(),
+                    ->required()
+                    ->unique(ignoreRecord: true)
+                    ->validationMessages([
+                        'unique' => 'هذا البريد الإلكتروني مسجّل مسبقاً.',
+                    ]),
                 TextInput::make('password')
                     ->label('كلمة المرور')
                     ->password()
@@ -34,7 +37,11 @@ class UserForm
                     ->label('رقم الهاتف')
                     ->tel()
                     ->maxLength(20)
-                    ->placeholder('01xxxxxxxxx'),
+                    ->placeholder('01xxxxxxxxx')
+                    ->unique(ignoreRecord: true)
+                    ->validationMessages([
+                        'unique' => 'هذا رقم الهاتف مسجّل مسبقاً.',
+                    ]),
                 FileUpload::make('avatar')
                     ->label('الصورة الشخصية')
                     ->image()

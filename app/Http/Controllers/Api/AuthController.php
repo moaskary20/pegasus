@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\PlatformSetting;
 use App\Models\User;
+use App\Rules\UniqueNormalizedPhone;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -25,11 +26,12 @@ class AuthController extends Controller
         ]);
 
         $email = strtolower(trim($validated['email']));
-        $lockoutKey = 'login_lockout:' . md5($email);
-        $attemptsKey = 'login_attempts:' . md5($email);
+        $lockoutKey = 'login_lockout:'.md5($email);
+        $attemptsKey = 'login_attempts:'.md5($email);
 
         if (Cache::has($lockoutKey)) {
             $mins = (int) PlatformSetting::get('lockout_duration_minutes', 30);
+
             return response()->json([
                 'message' => "تم قفل الحساب مؤقتاً بعد عدد كبير من المحاولات الفاشلة. حاول بعد {$mins} دقيقة.",
                 'errors' => ['email' => ['الحساب مقفل مؤقتاً.']],
@@ -48,6 +50,7 @@ class AuthController extends Controller
                 $lockoutMins = (int) PlatformSetting::get('lockout_duration_minutes', 30);
                 Cache::put($lockoutKey, true, now()->addMinutes($lockoutMins));
                 Cache::forget($attemptsKey);
+
                 return response()->json([
                     'message' => "تم قفل الحساب مؤقتاً بعد {$maxAttempts} محاولات فاشلة. حاول بعد {$lockoutMins} دقيقة.",
                     'errors' => ['email' => ['تم قفل الحساب مؤقتاً.']],
@@ -101,18 +104,25 @@ class AuthController extends Controller
             ], 422);
         }
 
+        $request->merge([
+            'email' => strtolower(trim((string) $request->input('email', ''))),
+            'phone' => User::normalizePhone(trim((string) $request->input('phone', ''))),
+        ]);
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'phone' => ['required', 'string', 'max:20'],
+            'phone' => ['required', 'string', 'max:20', new UniqueNormalizedPhone],
             'password' => ['required', 'string', 'confirmed', Password::defaults()],
             'user_type' => ['required', 'string', 'in:student,instructor'],
+        ], [
+            'email.unique' => 'هذا البريد الإلكتروني مسجّل مسبقاً.',
         ]);
 
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'phone' => trim((string) $validated['phone']),
+            'phone' => $validated['phone'],
             'password' => Hash::make($validated['password']),
         ]);
 
@@ -176,19 +186,35 @@ class AuthController extends Controller
     {
         $user = $request->user();
 
+        $request->merge([
+            'email' => strtolower(trim((string) $request->input('email', ''))),
+        ]);
+        if ($request->has('phone')) {
+            $rawPhone = $request->input('phone');
+            $request->merge([
+                'phone' => ($rawPhone === null || trim((string) $rawPhone) === '')
+                    ? ''
+                    : User::normalizePhone(trim((string) $rawPhone)),
+            ]);
+        }
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
-            'phone' => ['nullable', 'string', 'max:20'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$user->id],
+            'phone' => ['nullable', 'string', 'max:20', new UniqueNormalizedPhone($user->id)],
             'city' => ['nullable', 'string', 'max:100'],
             'job' => ['nullable', 'string', 'max:100'],
             'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,gif,png', 'max:2048'],
+        ], [
+            'email.unique' => 'هذا البريد الإلكتروني مسجّل مسبقاً.',
         ]);
 
         $updateData = [
             'name' => $validated['name'],
             'email' => $validated['email'],
-            'phone' => $validated['phone'] ?? $user->phone,
+            'phone' => $request->has('phone')
+                ? (filled($validated['phone'] ?? null) ? $validated['phone'] : null)
+                : $user->phone,
             'city' => $validated['city'] ?? $user->city,
             'job' => $validated['job'] ?? $user->job,
         ];
