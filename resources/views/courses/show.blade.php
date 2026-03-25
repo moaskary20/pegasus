@@ -91,7 +91,12 @@
                                         ? $course->previewLesson->youtube_iframe_player_src
                                         : $course->preview_youtube_iframe_player_src;
                                 @endphp
-                                <iframe class="w-full h-full" src="{{ $embedUrl }}" title="معاينة الدورة" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" x-ref="previewVideo"></iframe>
+                                <x-site.youtube-embed
+                                    fill-container
+                                    alpine-iframe-ref="previewVideo"
+                                    :src="$embedUrl"
+                                    title="معاينة الدورة"
+                                />
                                 @else
                                 <video class="w-full h-full object-contain" controls autoplay controlsList="nodownload noplaybackrate nopictureinpicture" x-ref="previewVideo">
                                     <source src="{{ $course->preview_video_url }}" type="video/mp4">
