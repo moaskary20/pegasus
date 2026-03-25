@@ -7,9 +7,15 @@ use App\Models\PlatformSetting;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\URL;
 
 class PaymentGatewaysService
 {
+    /** يطابق حزمة asciisd/kashier — المبلغ بالعملة الأساسية (جنيه) وليس بالقرش */
+    private const KASHIER_CHECKOUT_BASE_URL = 'https://checkout.kashier.io/';
+
+    private const KASHIER_DEFAULT_ALLOWED_METHODS = 'card,wallet,bank_installments';
+
     /** سبب فشل آخر محاولة للحصول على رابط الدفع (للتشخيص) */
     public static ?string $lastFailureReason = null;
 
@@ -152,25 +158,43 @@ class PaymentGatewaysService
         Config::set('kashier.currency', 'EGP');
 
         try {
-            $amount = (int) round((float) $order->total * 100);
-            if ($amount <= 0) {
+            $total = round((float) $order->total, 2);
+            if ($total <= 0) {
                 self::$lastFailureReason = 'zero_amount';
                 Log::warning('Kashier: مبلغ الطلب صفر أو سالب', [
                     'order_id' => $order->id,
                     'order_total' => $order->total,
-                    'amount_cents' => $amount,
                 ]);
 
                 return null;
             }
-            $orderId = $order->order_number ?: (string) $order->id;
-            $url = \Asciisd\Kashier\Facades\Kashier::buildPaymentUrl(
-                $amount,
-                $orderId,
-                []
-            );
 
-            return $url;
+            // كاشير يبني الـ hash من المسار: /?payment={mid}.{orderId}.{amount}.{currency}
+            // المبلغ يجب أن يكون بالجنيه (نفس WooCommerce: order total) وليس ×100 — وإلا يظهر على البوابة ضعف منزلتين (00 زائدة).
+            $amountStr = number_format($total, 2, '.', '');
+            $orderId = $order->order_number ?: (string) $order->id;
+            $currency = (string) config('kashier.currency');
+            $path = "/?payment={$mid}.{$orderId}.{$amountStr}.{$currency}";
+            $hash = hash_hmac('sha256', $path, $encryptionKey, false);
+
+            $callbackUrl = URL::to('/kashier/response');
+            $webhookUrl = URL::to('/kashier/webhook');
+
+            $queryParams = [
+                'merchantId' => $mid,
+                'orderId' => $orderId,
+                'amount' => $amountStr,
+                'currency' => $currency,
+                'mode' => (string) config('kashier.mode'),
+                'hash' => $hash,
+                'merchantRedirect' => $callbackUrl,
+                'serverWebhook' => $webhookUrl,
+                'allowedMethods' => self::KASHIER_DEFAULT_ALLOWED_METHODS,
+                'display' => 'en',
+                'redirectMethod' => 'post',
+            ];
+
+            return self::KASHIER_CHECKOUT_BASE_URL.'?'.http_build_query($queryParams);
         } catch (\Throwable $e) {
             self::$lastFailureReason = 'exception:'.$e->getMessage();
             Log::error('Kashier: فشل إنشاء رابط الدفع', [

@@ -214,7 +214,7 @@ class _OrderCard extends StatelessWidget {
               Text('+ ${item.itemsSummary.length - 3} عناصر أخرى', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.grey.shade500)),
             const Divider(height: 16),
             Text(
-              'الإجمالي: ${item.total.toStringAsFixed(1)} ر.س',
+              'الإجمالي: ${item.total.toStringAsFixed(1)} ج.م',
               style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: AppTheme.primary),
             ),
           ],

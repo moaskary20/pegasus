@@ -379,7 +379,7 @@ class _ProductCard extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                            '${product.price.toStringAsFixed(0)} ر.س',
+                            '${product.price.toStringAsFixed(0)} ج.م',
                             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: AppTheme.primary,
@@ -388,7 +388,7 @@ class _ProductCard extends StatelessWidget {
                           if (product.hasDiscount && product.comparePrice != null) ...[
                             const SizedBox(width: 8),
                             Text(
-                              '${product.comparePrice!.toStringAsFixed(0)} ر.س',
+                              '${product.comparePrice!.toStringAsFixed(0)} ج.م',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.grey.shade600,

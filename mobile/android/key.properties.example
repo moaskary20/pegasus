@@ -1,0 +1,11 @@
+# انسخ هذا الملف إلى key.properties واملأ القيم (لا ترفع key.properties أو ملف الـ keystore إلى Git)
+#
+# إنشاء المفتاح لمرة واحدة من مجلد android/app:
+#   keytool -genkey -v -keystore upload-keystore.jks -storetype JKS -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+#
+# احفظ upload-keystore.jks في مكان آمن (نسخة احتياطية). فقدان الملف يمنع تحديث التطبيق على Play بنفس الحزمة.
+
+storePassword=ضع_كلمة_مرور_المتجر_هنا
+keyPassword=نفس_كلمة_المتجر_أو_مفتاح_منفصل
+keyAlias=upload
+storeFile=app/upload-keystore.jks

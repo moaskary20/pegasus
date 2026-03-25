@@ -7,6 +7,7 @@ import '../../api/home_api.dart';
 import '../../api/config.dart';
 import '../../api/wishlist_api.dart';
 import '../../app_theme.dart';
+import '../../widgets/app_network_image.dart';
 
 /// تبويب الرئيسية: دورات مميزة أفقياً + أحدث الدورات عمودياً (مطابق للتصميم المطلوب)
 class HomeTab extends StatefulWidget {
@@ -198,13 +199,6 @@ class _HomeTabState extends State<HomeTab> {
     if (d.topCourses.isNotEmpty || d.recentCourses.isNotEmpty) return false;
     if (d.categories.any((c) => c.courses.isNotEmpty)) return false;
     return true;
-  }
-
-  String _fullImageUrl(String? url) {
-    if (url == null || url.isEmpty) return '';
-    if (url.startsWith('http')) return url;
-    final base = apiBaseUrl.endsWith('/') ? apiBaseUrl.substring(0, apiBaseUrl.length - 1) : apiBaseUrl;
-    return url.startsWith('/') ? '$base$url' : '$base/$url';
   }
 
   Widget _buildLoadErrorState() {
@@ -593,7 +587,7 @@ class _HomeSliderSlide extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             if (imageUrl != null && imageUrl.isNotEmpty)
-              Image.network(
+              appNetworkImage(
                 imageUrl,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) => Container(color: AppTheme.primary),
@@ -783,7 +777,7 @@ class _TopCourseCard extends StatelessWidget {
                         Row(
                           children: [
                             Text(
-                              '${course.price.toStringAsFixed(0)} ر.س',
+                              '${course.price.toStringAsFixed(0)} ج.م',
                               style: Theme.of(context).textTheme.titleSmall?.copyWith(
                                     fontWeight: FontWeight.bold,
                                     color: const Color(0xFF333333),
@@ -792,7 +786,7 @@ class _TopCourseCard extends StatelessWidget {
                             if (course.hasDiscount && course.originalPrice != null) ...[
                               const SizedBox(width: 6),
                               Text(
-                                '${course.originalPrice!.toStringAsFixed(0)} ر.س',
+                                '${course.originalPrice!.toStringAsFixed(0)} ج.م',
                                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                       color: Colors.grey,
                                       decoration: TextDecoration.lineThrough,
@@ -932,7 +926,7 @@ class _RecentCourseTile extends StatelessWidget {
                           Row(
                             children: [
                               Text(
-                                '${course.price.toStringAsFixed(0)} ر.س',
+                                '${course.price.toStringAsFixed(0)} ج.م',
                                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                                       fontWeight: FontWeight.bold,
                                       color: const Color(0xFF333333),
@@ -941,7 +935,7 @@ class _RecentCourseTile extends StatelessWidget {
                               if (course.hasDiscount && course.originalPrice != null) ...[
                                 const SizedBox(width: 6),
                                 Text(
-                                  '${course.originalPrice!.toStringAsFixed(0)} ر.س',
+                                  '${course.originalPrice!.toStringAsFixed(0)} ج.م',
                                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                         color: Colors.grey,
                                         decoration: TextDecoration.lineThrough,
@@ -1022,7 +1016,7 @@ Widget _courseImage(String? url, {double? width, double? height}) {
       child: Icon(Icons.school_rounded, size: 48, color: Colors.grey.shade500),
     );
   }
-  return Image.network(
+  return appNetworkImage(
     fullUrl,
     width: w == double.infinity ? null : w,
     height: h,

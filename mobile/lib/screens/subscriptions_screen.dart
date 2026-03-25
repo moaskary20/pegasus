@@ -224,7 +224,7 @@ class _PlanCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        '${plan.price.toStringAsFixed(1)} ر.س',
+                        '${plan.price.toStringAsFixed(1)} ج.م',
                         style: const TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
@@ -525,7 +525,7 @@ class _SubscribeSheetState extends State<_SubscribeSheet> {
               textDirection: TextDirection.rtl,
             ),
             Text(
-              '${widget.plan.price.toStringAsFixed(1)} ر.س — ${widget.plan.typeLabelAr}',
+              '${widget.plan.price.toStringAsFixed(1)} ج.م — ${widget.plan.typeLabelAr}',
               style: TextStyle(color: AppTheme.primary, fontWeight: FontWeight.w600),
               textDirection: TextDirection.rtl,
             ),

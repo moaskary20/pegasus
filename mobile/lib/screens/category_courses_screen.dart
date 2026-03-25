@@ -526,7 +526,7 @@ class _CourseCard extends StatelessWidget {
                       Row(
                         children: [
                           Text(
-                            '${course.price.toStringAsFixed(0)} ر.س',
+                            '${course.price.toStringAsFixed(0)} ج.م',
                             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: AppTheme.primary,
@@ -535,7 +535,7 @@ class _CourseCard extends StatelessWidget {
                           if (course.hasDiscount && course.originalPrice != null) ...[
                             const SizedBox(width: 8),
                             Text(
-                              '${course.originalPrice!.toStringAsFixed(0)} ر.س',
+                              '${course.originalPrice!.toStringAsFixed(0)} ج.م',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.grey.shade600,

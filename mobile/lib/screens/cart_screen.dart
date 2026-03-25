@@ -213,13 +213,13 @@ class _CartScreenState extends State<CartScreen> {
           ),
           const SizedBox(height: 12),
           if (_courses.isNotEmpty)
-            _SummaryRow(label: 'مجموع الدورات', value: '${_coursesSubtotal.toStringAsFixed(1)} ر.س'),
+            _SummaryRow(label: 'مجموع الدورات', value: '${_coursesSubtotal.toStringAsFixed(1)} ج.م'),
           if (_products.isNotEmpty)
-            _SummaryRow(label: 'مجموع المنتجات', value: '${_productsSubtotal.toStringAsFixed(1)} ر.س'),
+            _SummaryRow(label: 'مجموع المنتجات', value: '${_productsSubtotal.toStringAsFixed(1)} ج.م'),
           const Divider(height: 24),
           _SummaryRow(
             label: 'الإجمالي',
-            value: '${_total.toStringAsFixed(1)} ر.س',
+            value: '${_total.toStringAsFixed(1)} ج.م',
             valueStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.primary),
           ),
           const SizedBox(height: 16),
@@ -388,7 +388,7 @@ class _CartCourseTile extends StatelessWidget {
                       ],
                       const SizedBox(height: 6),
                       Text(
-                        '${course.price} ر.س',
+                        '${course.price} ج.م',
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           color: AppTheme.primary,
@@ -476,12 +476,12 @@ class _CartProductTile extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${item.quantity} × ${item.unitPrice} ر.س',
+                        '${item.quantity} × ${item.unitPrice} ج.م',
                         style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '${item.total} ر.س',
+                        '${item.total} ج.م',
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           color: AppTheme.primary,

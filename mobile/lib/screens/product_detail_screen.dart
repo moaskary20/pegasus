@@ -356,7 +356,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> with SingleTi
               textBaseline: TextBaseline.alphabetic,
               children: [
                 Text(
-                  '${p.price.toStringAsFixed(0)} ر.س',
+                  '${p.price.toStringAsFixed(0)} ج.م',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: AppTheme.primary,
@@ -365,7 +365,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> with SingleTi
                 if (p.hasDiscount && p.comparePrice != null) ...[
                   const SizedBox(width: 8),
                   Text(
-                    '${p.comparePrice!.toStringAsFixed(0)} ر.س',
+                    '${p.comparePrice!.toStringAsFixed(0)} ج.م',
                     style: TextStyle(fontSize: 14, color: Colors.grey.shade600, decoration: TextDecoration.lineThrough),
                   ),
                 ],

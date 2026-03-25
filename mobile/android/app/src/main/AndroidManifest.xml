@@ -1,13 +1,23 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- معرض الصور (صورة الملف الشخصي، إيصالات الدفع، مرفقات الواجبات كصور) — Android 12 وأقل -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
+    <!-- Android 13+ — صور المعرض فقط (لا نطلب فيديوهات المعرض) -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <!-- التقط صورة للكاميرا: إيصال تحويل، إلخ -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false"/>
+    <!-- لا نستخدم قراءة فيديوهات المعرض؛ أزل أي دمج من مكتبات -->
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" tools:node="remove"/>
     <application
         android:usesCleartextTraffic="true"
         android:label="Pegasus Academy"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:extractNativeLibs="false">
         <activity
             android:name=".MainActivity"
             android:exported="true"

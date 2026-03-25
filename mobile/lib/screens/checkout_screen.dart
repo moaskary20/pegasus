@@ -319,7 +319,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             textDirection: TextDirection.rtl,
                           ),
                           Text(
-                            '${c.price.toStringAsFixed(1)} ر.س',
+                            '${c.price.toStringAsFixed(1)} ج.م',
                             style: const TextStyle(color: AppTheme.primary, fontWeight: FontWeight.bold),
                           ),
                         ],
@@ -355,7 +355,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                             textDirection: TextDirection.rtl,
                           ),
                           Text(
-                            '${p.quantity} × ${p.unitPrice.toStringAsFixed(1)} = ${p.total.toStringAsFixed(1)} ر.س',
+                            '${p.quantity} × ${p.unitPrice.toStringAsFixed(1)} = ${p.total.toStringAsFixed(1)} ج.م',
                             style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
                           ),
                         ],
@@ -446,7 +446,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           if (_couponResult != null && _couponResult!.valid) ...[
             const SizedBox(height: 8),
             Text(
-              '✓ تم تطبيق الكوبون ${_couponResult!.couponCode} — خصم ${_couponResult!.discount.toStringAsFixed(1)} ر.س',
+              '✓ تم تطبيق الكوبون ${_couponResult!.couponCode} — خصم ${_couponResult!.discount.toStringAsFixed(1)} ج.م',
               style: TextStyle(color: Colors.green.shade700, fontSize: 13),
               textDirection: TextDirection.rtl,
             ),
@@ -563,15 +563,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (_preview!.courses.isNotEmpty)
-            _SummaryRow(label: 'مجموع الدورات', value: '${_preview!.coursesSubtotal.toStringAsFixed(1)} ر.س'),
+            _SummaryRow(label: 'مجموع الدورات', value: '${_preview!.coursesSubtotal.toStringAsFixed(1)} ج.م'),
           if (_preview!.cartProducts.isNotEmpty)
-            _SummaryRow(label: 'مجموع المنتجات', value: '${_preview!.productsSubtotal.toStringAsFixed(1)} ر.س'),
+            _SummaryRow(label: 'مجموع المنتجات', value: '${_preview!.productsSubtotal.toStringAsFixed(1)} ج.م'),
           if (_couponResult != null && _couponResult!.valid && _couponResult!.discount > 0)
-            _SummaryRow(label: 'الخصم (${_couponResult!.couponCode})', value: '-${_couponResult!.discount.toStringAsFixed(1)} ر.س', valueStyle: TextStyle(color: Colors.green.shade700)),
+            _SummaryRow(label: 'الخصم (${_couponResult!.couponCode})', value: '-${_couponResult!.discount.toStringAsFixed(1)} ج.م', valueStyle: TextStyle(color: Colors.green.shade700)),
           const Divider(height: 24),
           _SummaryRow(
             label: 'الإجمالي',
-            value: '${(_couponResult != null && _couponResult!.valid ? _couponResult!.total : _preview!.total).toStringAsFixed(1)} ر.س',
+            value: '${(_couponResult != null && _couponResult!.valid ? _couponResult!.total : _preview!.total).toStringAsFixed(1)} ج.م',
             valueStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppTheme.primary),
           ),
           const SizedBox(height: 20),

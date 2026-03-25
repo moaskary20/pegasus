@@ -282,7 +282,7 @@ class _CourseCard extends StatelessWidget {
                           const SizedBox(width: 12),
                         ],
                         Text(
-                          '${course.price} ر.س',
+                          '${course.price} ج.م',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             color: AppTheme.primary,

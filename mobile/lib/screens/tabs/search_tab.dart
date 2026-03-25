@@ -471,7 +471,7 @@ class _SearchTabState extends State<SearchTab> {
                         const SizedBox(width: 4),
                         Text('${c.rating}', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
                         const SizedBox(width: 12),
-                        Text('${c.price.toStringAsFixed(0)} ر.س', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary, fontSize: 13)),
+                        Text('${c.price.toStringAsFixed(0)} ج.م', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary, fontSize: 13)),
                       ],
                     ),
                   ],

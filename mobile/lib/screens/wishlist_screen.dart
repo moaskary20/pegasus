@@ -280,7 +280,7 @@ class _WishlistCourseTile extends StatelessWidget {
                         textDirection: TextDirection.rtl,
                         children: [
                           Text(
-                            '${course.price} ر.س',
+                            '${course.price} ج.م',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               color: AppTheme.primary,
@@ -290,7 +290,7 @@ class _WishlistCourseTile extends StatelessWidget {
                           if (course.hasDiscount) ...[
                             const SizedBox(width: 8),
                             Text(
-                              '${course.originalPrice} ر.س',
+                              '${course.originalPrice} ج.م',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.grey.shade600,
@@ -392,7 +392,7 @@ class _WishlistProductTile extends StatelessWidget {
                         textDirection: TextDirection.rtl,
                         children: [
                           Text(
-                            '${product.price} ر.س',
+                            '${product.price} ج.م',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               color: AppTheme.primary,
@@ -402,7 +402,7 @@ class _WishlistProductTile extends StatelessWidget {
                           if (product.comparePrice != null && product.comparePrice! > product.price) ...[
                             const SizedBox(width: 8),
                             Text(
-                              '${product.comparePrice} ر.س',
+                              '${product.comparePrice} ج.م',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.grey.shade600,

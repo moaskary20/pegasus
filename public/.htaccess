@@ -1,3 +1,9 @@
+# CORS لملفات التخزين: يسمح لمتصفح Chrome بعرض الصور في تطبيق Flutter Web من نطاق آخر
+<IfModule mod_headers.c>
+    SetEnvIf Request_URI "^/storage/" cors_storage_static=1
+    Header set Access-Control-Allow-Origin "*" env=cors_storage_static
+</IfModule>
+
 # حدود رفع الملفات - أباتشي + mod_php (220 ميجا لفيديوهات المعاينة)
 <IfModule mod_php5.c>
     php_value upload_max_filesize 220M

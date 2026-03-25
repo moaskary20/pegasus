@@ -549,7 +549,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> with SingleTick
                 ),
                 const Spacer(),
                 Text(
-                  '${c.price.toStringAsFixed(0)} ر.س',
+                  '${c.price.toStringAsFixed(0)} ج.م',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: AppTheme.primary,
@@ -558,7 +558,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> with SingleTick
                 if (c.hasDiscount && c.originalPrice != null) ...[
                   const SizedBox(width: 6),
                   Text(
-                    '${c.originalPrice!.toStringAsFixed(0)} ر.س',
+                    '${c.originalPrice!.toStringAsFixed(0)} ج.م',
                     style: TextStyle(
                       fontSize: 13,
                       color: Colors.grey.shade600,
@@ -626,7 +626,7 @@ class _PriceChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
-        '$label: ${price.toStringAsFixed(0)} ر.س',
+        '$label: ${price.toStringAsFixed(0)} ج.م',
         style: TextStyle(
           fontSize: 12,
           fontWeight: isPrimary ? FontWeight.bold : FontWeight.w500,
@@ -1092,7 +1092,7 @@ class _OptionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       title: Text(title, textDirection: TextDirection.rtl),
-      trailing: Text('${price.toStringAsFixed(0)} ر.س', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary)),
+      trailing: Text('${price.toStringAsFixed(0)} ج.م', style: const TextStyle(fontWeight: FontWeight.bold, color: AppTheme.primary)),
       onTap: onTap,
     );
   }
