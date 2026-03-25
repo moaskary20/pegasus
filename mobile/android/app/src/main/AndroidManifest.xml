@@ -2,10 +2,11 @@
     xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-    <!-- معرض الصور (صورة الملف الشخصي، إيصالات الدفع، مرفقات الواجبات كصور) — Android 12 وأقل -->
+    <!-- Android 12 وأقل: اختيار ملفات/صور عبر النظام (SAF / معرض قديم). على Android 13+ لا نستخدم READ_MEDIA_IMAGES
+         حتى لا يطلب Play Console إعلان الإذن؛ image_picker يستخدم Photo Picker بدون إذن قراءة المعرض. -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
-    <!-- Android 13+ — صور المعرض فقط (لا نطلب فيديوهات المعرض) -->
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <!-- أزل أي دمج من مكتبات قديمة قد يضيف READ_MEDIA_IMAGES -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" tools:node="remove"/>
     <!-- التقط صورة للكاميرا: إيصال تحويل، إلخ -->
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-feature android:name="android.hardware.camera" android:required="false"/>

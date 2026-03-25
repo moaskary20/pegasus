@@ -98,6 +98,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         :src="$lesson->youtube_iframe_player_src"
                         :title="$lesson->title"
                         iframe-id="lesson-video-player"
+                        :watermark-user="auth()->check() ? trim((string) (auth()->user()->name ?? '')) ?: auth()->user()->email : null"
                     />
                 @elseif($lesson->video_url)
                     <div class="aspect-video bg-slate-900 relative">
@@ -110,6 +111,9 @@ document.addEventListener('DOMContentLoaded', function() {
                             @endif
                             متصفحك لا يدعم تشغيل الفيديو.
                         </video>
+                        @auth
+                            <x-site.video-user-watermark :name="trim((string) (auth()->user()->name ?? '')) ?: auth()->user()->email" />
+                        @endauth
                     </div>
                 @endif
 

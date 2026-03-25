@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker_android/image_picker_android.dart';
+import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:video_player/video_player.dart';
 import 'api/auth_api.dart';
@@ -12,6 +14,13 @@ import 'services/local_notifications_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Android 13+: اختيار الصور عبر Photo Picker بدون READ_MEDIA_IMAGES (متطلبات Play Console).
+  if (defaultTargetPlatform == TargetPlatform.android) {
+    final pickerImpl = ImagePickerPlatform.instance;
+    if (pickerImpl is ImagePickerAndroid) {
+      pickerImpl.useAndroidPhotoPicker = true;
+    }
+  }
   await LocalNotificationsService.init();
   if (kDebugMode) {
     FlutterError.onError = (details) {
