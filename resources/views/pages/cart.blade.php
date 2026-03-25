@@ -212,15 +212,9 @@
                         </div>
                     </div>
 
-                    <div class="mt-6 grid gap-2">
+                    <div class="mt-6">
                         <a href="{{ route('site.checkout') }}" class="w-full inline-flex items-center justify-center px-5 py-3 rounded-2xl bg-[#3d195c] text-white font-extrabold hover:bg-[#3d195c]/95 transition">
                             متابعة الدفع
-                        </a>
-                        <a href="{{ route('site.courses') }}" class="w-full inline-flex items-center justify-center px-5 py-3 rounded-2xl bg-slate-100 text-slate-900 font-extrabold hover:bg-slate-200 transition">
-                            إضافة دورات أخرى
-                        </a>
-                        <a href="{{ route('site.store') }}" class="w-full inline-flex items-center justify-center px-5 py-3 rounded-2xl border-2 border-[#3d195c] text-[#3d195c] font-extrabold hover:bg-[#3d195c]/5 transition">
-                            تصفّح المتجر
                         </a>
                     </div>
 

@@ -14,7 +14,9 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 
@@ -178,6 +180,53 @@ Route::put('/account/password', function (Request $request) {
     
     return redirect()->route('site.account')->with('notice', ['type' => 'success', 'message' => 'تم تحديث كلمة المرور بنجاح.']);
 })->name('site.account.password')->middleware('web', 'auth');
+
+Route::delete('/account', function (Request $request) {
+    if (! auth()->check()) {
+        return redirect()->route('site.auth');
+    }
+    $user = $request->user();
+
+    if (Course::query()->where('user_id', $user->id)->exists()) {
+        return redirect()->route('site.account')
+            ->with('notice', [
+                'type' => 'error',
+                'message' => 'لا يمكن حذف الحساب لأن لديك دورات منشورة كمدرب. يُرجى التواصل مع الإدارة.',
+            ]);
+    }
+
+    $request->validate([
+        'password' => [
+            'required',
+            'string',
+            function (string $attribute, mixed $value, \Closure $fail) use ($user): void {
+                if (! Hash::check((string) $value, $user->password)) {
+                    $fail('كلمة المرور غير صحيحة.');
+                }
+            },
+        ],
+    ], [], [
+        'password' => 'كلمة المرور',
+    ]);
+
+    DB::transaction(function () use ($user): void {
+        $user->tokens()->delete();
+        if (method_exists($user, 'syncRoles')) {
+            $user->syncRoles([]);
+        }
+        if (method_exists($user, 'syncPermissions')) {
+            $user->syncPermissions([]);
+        }
+        $user->delete();
+    });
+
+    Auth::logout();
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
+
+    return redirect()->route('site.home')
+        ->with('notice', ['type' => 'success', 'message' => 'تم حذف حسابك نهائياً.']);
+})->name('site.account.delete')->middleware('web', 'auth');
 
 Route::view('/subscriptions', 'pages.subscriptions')->name('site.subscriptions');
 Route::view('/purchase-history', 'pages.purchase-history')->name('site.purchase-history');

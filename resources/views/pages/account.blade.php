@@ -255,28 +255,15 @@
             </div>
             
             <div class="p-6 space-y-6">
-                {{-- Profile Visibility --}}
-                <div class="flex items-center justify-between py-4 border-b border-slate-100">
-                    <div>
-                        <h3 class="font-semibold text-slate-900">ظهور الملف الشخصي</h3>
-                        <p class="text-sm text-slate-500 mt-1">تحديد من يمكنه رؤية ملفك الشخصي</p>
-                    </div>
-                    <select class="px-4 py-2 rounded-xl border border-slate-200 focus:border-[#2c004d] focus:ring-2 focus:ring-[#2c004d]/20 outline-none bg-white">
-                        <option value="public">الجميع</option>
-                        <option value="students">الطلاب فقط</option>
-                        <option value="private">لا أحد</option>
-                    </select>
-                </div>
-
                 {{-- Show Email --}}
                 <div class="flex items-center justify-between py-4 border-b border-slate-100">
                     <div>
                         <h3 class="font-semibold text-slate-900">عرض البريد الإلكتروني</h3>
                         <p class="text-sm text-slate-500 mt-1">السماح للآخرين برؤية بريدك الإلكتروني</p>
                     </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" class="sr-only peer">
-                        <div class="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-[#2c004d]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2c004d]"></div>
+                    <label class="relative inline-flex cursor-pointer items-center shrink-0" dir="ltr">
+                        <input type="checkbox" class="peer sr-only">
+                        <span aria-hidden="true" class="relative h-6 w-11 shrink-0 rounded-full bg-slate-200 transition-colors peer-focus:ring-2 peer-focus:ring-[#2c004d]/20 peer-checked:bg-[#2c004d] after:absolute after:left-0.5 after:top-0.5 after:block after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow after:transition-transform after:duration-200 peer-checked:after:translate-x-[22px]"></span>
                     </label>
                 </div>
 
@@ -286,9 +273,9 @@
                         <h3 class="font-semibold text-slate-900">عرض تقدم الدورات</h3>
                         <p class="text-sm text-slate-500 mt-1">السماح للآخرين برؤية دوراتك والتقدم فيها</p>
                     </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" class="sr-only peer" checked>
-                        <div class="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-[#2c004d]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2c004d]"></div>
+                    <label class="relative inline-flex cursor-pointer items-center shrink-0" dir="ltr">
+                        <input type="checkbox" class="peer sr-only" checked>
+                        <span aria-hidden="true" class="relative h-6 w-11 shrink-0 rounded-full bg-slate-200 transition-colors peer-focus:ring-2 peer-focus:ring-[#2c004d]/20 peer-checked:bg-[#2c004d] after:absolute after:left-0.5 after:top-0.5 after:block after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow after:transition-transform after:duration-200 peer-checked:after:translate-x-[22px]"></span>
                     </label>
                 </div>
 
@@ -298,9 +285,9 @@
                         <h3 class="font-semibold text-slate-900">عرض الشهادات</h3>
                         <p class="text-sm text-slate-500 mt-1">السماح للآخرين برؤية شهاداتك</p>
                     </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" class="sr-only peer" checked>
-                        <div class="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-[#2c004d]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2c004d]"></div>
+                    <label class="relative inline-flex cursor-pointer items-center shrink-0" dir="ltr">
+                        <input type="checkbox" class="peer sr-only" checked>
+                        <span aria-hidden="true" class="relative h-6 w-11 shrink-0 rounded-full bg-slate-200 transition-colors peer-focus:ring-2 peer-focus:ring-[#2c004d]/20 peer-checked:bg-[#2c004d] after:absolute after:left-0.5 after:top-0.5 after:block after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow after:transition-transform after:duration-200 peer-checked:after:translate-x-[22px]"></span>
                     </label>
                 </div>
 
@@ -310,9 +297,9 @@
                         <h3 class="font-semibold text-slate-900">الفهرسة في محركات البحث</h3>
                         <p class="text-sm text-slate-500 mt-1">السماح لمحركات البحث بعرض ملفك الشخصي</p>
                     </div>
-                    <label class="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" class="sr-only peer">
-                        <div class="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-[#2c004d]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2c004d]"></div>
+                    <label class="relative inline-flex cursor-pointer items-center shrink-0" dir="ltr">
+                        <input type="checkbox" class="peer sr-only">
+                        <span aria-hidden="true" class="relative h-6 w-11 shrink-0 rounded-full bg-slate-200 transition-colors peer-focus:ring-2 peer-focus:ring-[#2c004d]/20 peer-checked:bg-[#2c004d] after:absolute after:left-0.5 after:top-0.5 after:block after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow after:transition-transform after:duration-200 peer-checked:after:translate-x-[22px]"></span>
                     </label>
                 </div>
             </div>
@@ -326,14 +313,22 @@
             </div>
             
             <div class="p-6">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h3 class="font-semibold text-red-900">حذف حسابك نهائياً</h3>
-                        <p class="text-sm text-red-700 mt-1">ستفقد جميع بياناتك والدورات المسجل فيها والشهادات</p>
-                    </div>
-                    <button type="button" class="px-4 py-2 rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700 transition">
-                        حذف الحساب
-                    </button>
+                <div class="max-w-xl">
+                    <h3 class="font-semibold text-red-900">حذف حسابك نهائياً</h3>
+                    <p class="text-sm text-red-700 mt-1">ستفقد جميع بياناتك والدورات المسجّل فيها والشهادات. أدخل كلمة المرور للتأكيد.</p>
+                    <form method="POST" action="{{ route('site.account.delete') }}" class="mt-5 space-y-4"
+                          onsubmit="return confirm('هل أنت متأكد من حذف الحساب نهائياً؟ لا يمكن التراجع عن هذا الإجراء.');">
+                        @csrf
+                        @method('DELETE')
+                        <div>
+                            <label for="delete-account-password" class="block text-xs font-bold text-red-900 mb-1">كلمة المرور</label>
+                            <input id="delete-account-password" type="password" name="password" required autocomplete="current-password"
+                                class="w-full max-w-sm px-4 py-2.5 rounded-xl border border-red-200 bg-white text-slate-900 focus:border-red-400 focus:ring-2 focus:ring-red-200 outline-none">
+                        </div>
+                        <button type="submit" class="px-5 py-2.5 rounded-xl bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition">
+                            حذف الحساب نهائياً
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -358,9 +353,9 @@
                                 <h4 class="text-sm font-medium text-slate-700">دورات جديدة</h4>
                                 <p class="text-xs text-slate-500">إشعار عند إضافة دورات جديدة في اهتماماتك</p>
                             </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" class="sr-only peer" checked>
-                                <div class="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-[#2c004d]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2c004d]"></div>
+                            <label class="relative inline-flex cursor-pointer items-center shrink-0" dir="ltr">
+                                <input type="checkbox" class="peer sr-only" checked>
+                                <span aria-hidden="true" class="relative h-6 w-11 shrink-0 rounded-full bg-slate-200 transition-colors peer-focus:ring-2 peer-focus:ring-[#2c004d]/20 peer-checked:bg-[#2c004d] after:absolute after:left-0.5 after:top-0.5 after:block after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow after:transition-transform after:duration-200 peer-checked:after:translate-x-[22px]"></span>
                             </label>
                         </div>
                         
@@ -369,9 +364,9 @@
                                 <h4 class="text-sm font-medium text-slate-700">عروض وخصومات</h4>
                                 <p class="text-xs text-slate-500">إشعار عند توفر عروض خاصة على الدورات</p>
                             </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" class="sr-only peer" checked>
-                                <div class="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-[#2c004d]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2c004d]"></div>
+                            <label class="relative inline-flex cursor-pointer items-center shrink-0" dir="ltr">
+                                <input type="checkbox" class="peer sr-only" checked>
+                                <span aria-hidden="true" class="relative h-6 w-11 shrink-0 rounded-full bg-slate-200 transition-colors peer-focus:ring-2 peer-focus:ring-[#2c004d]/20 peer-checked:bg-[#2c004d] after:absolute after:left-0.5 after:top-0.5 after:block after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow after:transition-transform after:duration-200 peer-checked:after:translate-x-[22px]"></span>
                             </label>
                         </div>
                         
@@ -380,9 +375,9 @@
                                 <h4 class="text-sm font-medium text-slate-700">نشاط الدورات</h4>
                                 <p class="text-xs text-slate-500">إشعار عند إضافة دروس جديدة في دوراتك</p>
                             </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" class="sr-only peer" checked>
-                                <div class="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-[#2c004d]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2c004d]"></div>
+                            <label class="relative inline-flex cursor-pointer items-center shrink-0" dir="ltr">
+                                <input type="checkbox" class="peer sr-only" checked>
+                                <span aria-hidden="true" class="relative h-6 w-11 shrink-0 rounded-full bg-slate-200 transition-colors peer-focus:ring-2 peer-focus:ring-[#2c004d]/20 peer-checked:bg-[#2c004d] after:absolute after:left-0.5 after:top-0.5 after:block after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow after:transition-transform after:duration-200 peer-checked:after:translate-x-[22px]"></span>
                             </label>
                         </div>
                         
@@ -391,9 +386,9 @@
                                 <h4 class="text-sm font-medium text-slate-700">شهادات وجوائز</h4>
                                 <p class="text-xs text-slate-500">إشعار عند الحصول على شهادة أو جائزة</p>
                             </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" class="sr-only peer" checked>
-                                <div class="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-[#2c004d]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2c004d]"></div>
+                            <label class="relative inline-flex cursor-pointer items-center shrink-0" dir="ltr">
+                                <input type="checkbox" class="peer sr-only" checked>
+                                <span aria-hidden="true" class="relative h-6 w-11 shrink-0 rounded-full bg-slate-200 transition-colors peer-focus:ring-2 peer-focus:ring-[#2c004d]/20 peer-checked:bg-[#2c004d] after:absolute after:left-0.5 after:top-0.5 after:block after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow after:transition-transform after:duration-200 peer-checked:after:translate-x-[22px]"></span>
                             </label>
                         </div>
                         
@@ -402,9 +397,9 @@
                                 <h4 class="text-sm font-medium text-slate-700">النشرة الأسبوعية</h4>
                                 <p class="text-xs text-slate-500">تلخيص أسبوعي لأحدث الدورات والمقالات</p>
                             </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" class="sr-only peer">
-                                <div class="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-[#2c004d]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2c004d]"></div>
+                            <label class="relative inline-flex cursor-pointer items-center shrink-0" dir="ltr">
+                                <input type="checkbox" class="peer sr-only">
+                                <span aria-hidden="true" class="relative h-6 w-11 shrink-0 rounded-full bg-slate-200 transition-colors peer-focus:ring-2 peer-focus:ring-[#2c004d]/20 peer-checked:bg-[#2c004d] after:absolute after:left-0.5 after:top-0.5 after:block after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow after:transition-transform after:duration-200 peer-checked:after:translate-x-[22px]"></span>
                             </label>
                         </div>
                     </div>
@@ -420,9 +415,9 @@
                                 <h4 class="text-sm font-medium text-slate-700">رسائل جديدة</h4>
                                 <p class="text-xs text-slate-500">إشعار عند وصول رسالة جديدة</p>
                             </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" class="sr-only peer" checked>
-                                <div class="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-[#2c004d]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2c004d]"></div>
+                            <label class="relative inline-flex cursor-pointer items-center shrink-0" dir="ltr">
+                                <input type="checkbox" class="peer sr-only" checked>
+                                <span aria-hidden="true" class="relative h-6 w-11 shrink-0 rounded-full bg-slate-200 transition-colors peer-focus:ring-2 peer-focus:ring-[#2c004d]/20 peer-checked:bg-[#2c004d] after:absolute after:left-0.5 after:top-0.5 after:block after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow after:transition-transform after:duration-200 peer-checked:after:translate-x-[22px]"></span>
                             </label>
                         </div>
                         
@@ -431,9 +426,9 @@
                                 <h4 class="text-sm font-medium text-slate-700">إشعارات المنصة</h4>
                                 <p class="text-xs text-slate-500">إشعارات مهمة من إدارة المنصة</p>
                             </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" class="sr-only peer" checked>
-                                <div class="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-[#2c004d]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2c004d]"></div>
+                            <label class="relative inline-flex cursor-pointer items-center shrink-0" dir="ltr">
+                                <input type="checkbox" class="peer sr-only" checked>
+                                <span aria-hidden="true" class="relative h-6 w-11 shrink-0 rounded-full bg-slate-200 transition-colors peer-focus:ring-2 peer-focus:ring-[#2c004d]/20 peer-checked:bg-[#2c004d] after:absolute after:left-0.5 after:top-0.5 after:block after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow after:transition-transform after:duration-200 peer-checked:after:translate-x-[22px]"></span>
                             </label>
                         </div>
                         
@@ -442,9 +437,9 @@
                                 <h4 class="text-sm font-medium text-slate-700">تذكيرات التعلم</h4>
                                 <p class="text-xs text-slate-500">تذكير بمواصلة الدورات المتروكة</p>
                             </div>
-                            <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" class="sr-only peer" checked>
-                                <div class="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-[#2c004d]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2c004d]"></div>
+                            <label class="relative inline-flex cursor-pointer items-center shrink-0" dir="ltr">
+                                <input type="checkbox" class="peer sr-only" checked>
+                                <span aria-hidden="true" class="relative h-6 w-11 shrink-0 rounded-full bg-slate-200 transition-colors peer-focus:ring-2 peer-focus:ring-[#2c004d]/20 peer-checked:bg-[#2c004d] after:absolute after:left-0.5 after:top-0.5 after:block after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow after:transition-transform after:duration-200 peer-checked:after:translate-x-[22px]"></span>
                             </label>
                         </div>
                     </div>
@@ -459,9 +454,9 @@
                             <h4 class="text-sm font-medium text-slate-700">رمز التحقق</h4>
                             <p class="text-xs text-slate-500">استلام رموز التحقق عبر الرسائل القصيرة</p>
                         </div>
-                        <label class="relative inline-flex items-center cursor-pointer">
-                            <input type="checkbox" class="sr-only peer" checked>
-                            <div class="w-11 h-6 bg-slate-200 peer-focus:ring-2 peer-focus:ring-[#2c004d]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:right-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#2c004d]"></div>
+                        <label class="relative inline-flex cursor-pointer items-center shrink-0" dir="ltr">
+                            <input type="checkbox" class="peer sr-only" checked>
+                            <span aria-hidden="true" class="relative h-6 w-11 shrink-0 rounded-full bg-slate-200 transition-colors peer-focus:ring-2 peer-focus:ring-[#2c004d]/20 peer-checked:bg-[#2c004d] after:absolute after:left-0.5 after:top-0.5 after:block after:h-5 after:w-5 after:rounded-full after:bg-white after:shadow after:transition-transform after:duration-200 peer-checked:after:translate-x-[22px]"></span>
                         </label>
                     </div>
                 </div>

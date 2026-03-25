@@ -85,6 +85,46 @@
         })();
     </script>
     @endunless
+
+    {{--
+        تقليل احتمال نسخ لقطة الشاشة إلى الحافظة + تنبيه عند مفتاح Print Screen (لا يعمل على كل الأنظمة/المتصفحات).
+        visibilitychange: يخفي وضوح الصفحة عند إخفاء التاب أو تصغير النافذة — ليس مرتبطاً حصرياً بلقطات الشاشة.
+    --}}
+    @unless(app()->environment('local'))
+    <script>
+        (function () {
+            'use strict';
+            function isPrintScreenKey(e) {
+                return e.key === 'PrintScreen' || e.code === 'PrintScreen';
+            }
+            function warnPrintScreen() {
+                try {
+                    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+                        navigator.clipboard.writeText('').catch(function () {});
+                    }
+                } catch (err) {}
+                alert('ممنوع تصوير الشاشة');
+            }
+            document.addEventListener('keyup', function (e) {
+                if (isPrintScreenKey(e)) {
+                    warnPrintScreen();
+                }
+            }, { capture: true });
+            document.addEventListener('keydown', function (e) {
+                if (isPrintScreenKey(e)) {
+                    e.preventDefault();
+                }
+            }, { capture: true });
+            document.addEventListener('visibilitychange', function () {
+                if (document.hidden) {
+                    document.body.style.filter = 'blur(20px)';
+                } else {
+                    document.body.style.filter = 'none';
+                }
+            });
+        })();
+    </script>
+    @endunless
 </body>
 </html>
 
