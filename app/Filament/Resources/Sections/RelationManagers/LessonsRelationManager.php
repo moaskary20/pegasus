@@ -8,16 +8,15 @@ use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Components\DateTimePicker;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
-use Filament\Forms\Components\Repeater;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -25,7 +24,7 @@ use Filament\Tables\Table;
 class LessonsRelationManager extends RelationManager
 {
     use \App\Filament\Resources\Courses\Traits\GeneratesQuestionsFromBank;
-    
+
     protected static string $relationship = 'lessons';
 
     public function form(Schema $schema): Schema
@@ -67,7 +66,7 @@ class LessonsRelationManager extends RelationManager
                             $set('has_zoom_meeting', false);
                         }
                     }),
-                
+
                 // Zoom Meeting Fields - موضوعة هنا مباشرة بعد content_type
                 Toggle::make('has_zoom_meeting')
                     ->label('إضافة اجتماع Zoom')
@@ -75,13 +74,13 @@ class LessonsRelationManager extends RelationManager
                     ->reactive()
                     ->visible(fn ($get) => $get('content_type') === 'zoom')
                     ->helperText('فعّل هذا الخيار لإنشاء اجتماع Zoom مرتبط بهذا الدرس'),
-                
+
                 DateTimePicker::make('zoom_scheduled_time')
                     ->label('موعد الاجتماع')
                     ->visible(fn ($get) => $get('content_type') === 'zoom' && $get('has_zoom_meeting'))
                     ->required(fn ($get) => $get('content_type') === 'zoom')
                     ->helperText('حدد التاريخ والوقت لاجتماع Zoom'),
-                
+
                 TextInput::make('zoom_duration')
                     ->label('مدة الاجتماع (بالدقائق)')
                     ->numeric()
@@ -91,13 +90,13 @@ class LessonsRelationManager extends RelationManager
                     ->step(15)
                     ->visible(fn ($get) => $get('content_type') === 'zoom' && $get('has_zoom_meeting'))
                     ->helperText('مدة الاجتماع بالدقائق (الحد الأدنى 15، الحد الأقصى 480)'),
-                
+
                 TextInput::make('zoom_password')
                     ->label('كلمة مرور الاجتماع (اختياري)')
                     ->placeholder('سيتم توليد كلمة مرور تلقائياً إذا لم تحدد واحدة')
                     ->visible(fn ($get) => $get('content_type') === 'zoom' && $get('has_zoom_meeting'))
                     ->helperText('إذا تركت هذا الحقل فارغاً، سيتم توليد كلمة مرور عشوائية'),
-                
+
                 TextInput::make('zoom_link')
                     ->label('رابط اجتماع Zoom (يملأ تلقائياً)')
                     ->placeholder('https://zoom.us/j/...')
@@ -105,22 +104,40 @@ class LessonsRelationManager extends RelationManager
                     ->disabled()
                     ->visible(fn ($get) => $get('content_type') === 'zoom' && $get('has_zoom_meeting'))
                     ->helperText('سيملأ تلقائياً بعد الحفظ عند إنشاء الاجتماع في Zoom'),
-                
+
                 TextInput::make('youtube_url')
                     ->label('رابط فيديو يوتيوب')
                     ->placeholder('https://www.youtube.com/watch?v=... أو https://youtu.be/...')
                     ->url()
                     ->maxLength(500)
-                    ->visible(fn ($get) => in_array($get('content_type'), ['video', 'mixed']))
-                    ->helperText('أو ارفع ملف فيديو أدناه. إذا أدخلت رابط يوتيوب فلن يُستخدم الملف المرفوع.'),
+                    ->live(onBlur: true)
+                    ->visible(function ($get) {
+                        if (! in_array($get('content_type'), ['video', 'mixed'], true)) {
+                            return false;
+                        }
+                        $yt = filled(trim((string) ($get('youtube_url') ?? '')));
+                        $file = filled($get('video_path'));
+
+                        return ! $file || $yt;
+                    })
+                    ->helperText('عند إدخال رابط يوتيوب يُخفى رفع الملف. لإظهار الرفع امسح الرابط. في واجهة الطالب يُقلّل المشغّل عناصر قائمة اليوتيوب قدر الإمكان.'),
                 FileUpload::make('video_path')
                     ->label('فيديو الدرس (ملف)')
                     ->disk('public')
                     ->directory('lessons/videos')
                     ->acceptedFileTypes(['video/mp4', 'video/quicktime', 'video/webm'])
                     ->maxSize(102400) // 100MB
-                    ->visible(fn ($get) => in_array($get('content_type'), ['video', 'mixed']))
-                    ->helperText('يمكن رفع ملفات فيديو بصيغة MP4, MOV, WebM'),
+                    ->live()
+                    ->visible(function ($get) {
+                        if (! in_array($get('content_type'), ['video', 'mixed'], true)) {
+                            return false;
+                        }
+                        $yt = filled(trim((string) ($get('youtube_url') ?? '')));
+                        $file = filled($get('video_path'));
+
+                        return ! $yt || $file;
+                    })
+                    ->helperText('عند وجود رابط يوتيوب فقط (بدون ملف) يُخفى هذا الحقل. امسح الرابط لرفع ملف.'),
                 FileUpload::make('image_path')
                     ->label('صورة الدرس')
                     ->disk('public')
@@ -171,20 +188,20 @@ class LessonsRelationManager extends RelationManager
                     ->default(fn ($record) => $record && $record->section?->course?->preview_lesson_id === $record->id)
                     ->helperText('فعّل لاستخدام فيديو هذا الدرس كمعاينة للدورة على الموقع')
                     ->dehydrated(false),
-                
+
                 // Zoom Meeting Fields
                 Toggle::make('has_zoom_meeting')
                     ->label('إضافة اجتماع Zoom')
                     ->default(false)
                     ->reactive()
                     ->helperText('فعّل هذا الخيار لإنشاء اجتماع Zoom مرتبط بهذا الدرس'),
-                
+
                 DateTimePicker::make('zoom_scheduled_time')
                     ->label('موعد الاجتماع')
                     ->visible(fn ($get) => $get('has_zoom_meeting'))
                     ->required(fn ($get) => $get('has_zoom_meeting'))
                     ->helperText('حدد التاريخ والوقت لاجتماع Zoom'),
-                
+
                 TextInput::make('zoom_duration')
                     ->label('مدة الاجتماع (بالدقائق)')
                     ->numeric()
@@ -194,7 +211,7 @@ class LessonsRelationManager extends RelationManager
                     ->step(15)
                     ->visible(fn ($get) => $get('has_zoom_meeting'))
                     ->helperText('مدة الاجتماع بالدقائق (الحد الأدنى 15، الحد الأقصى 480)'),
-                
+
                 TextInput::make('zoom_password')
                     ->label('كلمة مرور الاجتماع (اختياري)')
                     ->placeholder('سيتم توليد كلمة مرور تلقائياً إذا لم تحدد واحدة')
@@ -214,7 +231,7 @@ class LessonsRelationManager extends RelationManager
                     ->sortable(),
                 TextColumn::make('duration_minutes')
                     ->label('المدة')
-                    ->formatStateUsing(fn ($state) => $state . ' دقيقة')
+                    ->formatStateUsing(fn ($state) => $state.' دقيقة')
                     ->sortable(),
                 TextColumn::make('has_quiz')
                     ->label('اختبار')
@@ -244,9 +261,9 @@ class LessonsRelationManager extends RelationManager
                     ->color(fn ($record) => $record->can_unlock_without_completion ? 'warning' : 'gray'),
                 TextColumn::make('zoom_meeting')
                     ->label('اجتماع Zoom')
-                    ->getStateUsing(fn ($record) => $record->zoomMeeting ? '📹 ' . $record->zoomMeeting->status : 'لا يوجد')
+                    ->getStateUsing(fn ($record) => $record->zoomMeeting ? '📹 '.$record->zoomMeeting->status : 'لا يوجد')
                     ->badge()
-                    ->color(fn ($record) => $record->zoomMeeting ? match($record->zoomMeeting->status) {
+                    ->color(fn ($record) => $record->zoomMeeting ? match ($record->zoomMeeting->status) {
                         'scheduled' => 'info',
                         'started' => 'success',
                         'ended' => 'warning',
@@ -265,7 +282,7 @@ class LessonsRelationManager extends RelationManager
                 CreateAction::make()
                     ->after(function ($record) {
                         $data = $this->form->getState();
-                        if (!empty($data['use_as_course_preview']) && $record && $record->section?->course_id) {
+                        if (! empty($data['use_as_course_preview']) && $record && $record->section?->course_id) {
                             \App\Models\Course::where('id', $record->section->course_id)->update(['preview_lesson_id' => $record->id]);
                         }
                     }),
@@ -274,7 +291,7 @@ class LessonsRelationManager extends RelationManager
                 EditAction::make()
                     ->after(function ($record) {
                         $data = $this->form->getState();
-                        if (!empty($data['use_as_course_preview']) && $record && $record->section?->course_id) {
+                        if (! empty($data['use_as_course_preview']) && $record && $record->section?->course_id) {
                             \App\Models\Course::where('id', $record->section->course_id)->update(['preview_lesson_id' => $record->id]);
                         } elseif (empty($data['use_as_course_preview']) && $record && $record->section?->course?->preview_lesson_id == $record->id) {
                             \App\Models\Course::where('id', $record->section->course_id)->update(['preview_lesson_id' => null]);
@@ -287,7 +304,7 @@ class LessonsRelationManager extends RelationManager
                     ->form(function ($record) {
                         $quiz = $record->quiz;
                         $courseId = $record->section->course_id;
-                        
+
                         return [
                             \Filament\Forms\Components\TextInput::make('title')
                                 ->label('عنوان الاختبار')
@@ -322,16 +339,16 @@ class LessonsRelationManager extends RelationManager
                             \Filament\Forms\Components\Select::make('question_bank_id')
                                 ->label('بنك الأسئلة')
                                 ->options(function () use ($courseId) {
-                                    $banks = \App\Models\QuestionBank::where(function($q) use ($courseId) {
+                                    $banks = \App\Models\QuestionBank::where(function ($q) use ($courseId) {
                                         $q->whereNull('course_id')
-                                          ->orWhere('course_id', $courseId);
+                                            ->orWhere('course_id', $courseId);
                                     })
-                                    ->where('is_active', true)
-                                    ->with('questions')
-                                    ->get();
-                                    
+                                        ->where('is_active', true)
+                                        ->with('questions')
+                                        ->get();
+
                                     return $banks->mapWithKeys(fn ($bank) => [
-                                        $bank->id => $bank->title . ' (' . $bank->questions->count() . ' سؤال' . ($bank->course_id ? ' - خاص بالدورة' : ' - عام') . ')'
+                                        $bank->id => $bank->title.' ('.$bank->questions->count().' سؤال'.($bank->course_id ? ' - خاص بالدورة' : ' - عام').')',
                                     ])->toArray();
                                 })
                                 ->searchable()
@@ -357,27 +374,28 @@ class LessonsRelationManager extends RelationManager
                     ->fillForm(function ($record) {
                         $quiz = $record->quiz;
                         $data = $quiz ? $quiz->toArray() : [];
-                        $data['use_question_bank'] = !empty($quiz?->question_bank_id);
+                        $data['use_question_bank'] = ! empty($quiz?->question_bank_id);
+
                         return $data;
                     })
                     ->action(function ($record, array $data) {
                         $useQuestionBank = $data['use_question_bank'] ?? false;
                         unset($data['use_question_bank']);
-                        
+
                         if ($record->quiz) {
                             $record->quiz->update($data);
-                            
+
                             // If question bank changed, regenerate questions
-                            if ($useQuestionBank && isset($data['question_bank_id']) && 
+                            if ($useQuestionBank && isset($data['question_bank_id']) &&
                                 ($data['question_bank_id'] !== $record->quiz->question_bank_id ||
                                  $data['questions_count'] !== $record->quiz->questions_count ||
                                  $data['randomize_questions'] !== $record->quiz->randomize_questions)) {
                                 // Delete existing questions
                                 $record->quiz->questions()->delete();
-                                
+
                                 // Generate new questions from bank
                                 $this->generateQuestionsFromBank($record->quiz, $data);
-                            } elseif (!$useQuestionBank && $record->quiz->question_bank_id) {
+                            } elseif (! $useQuestionBank && $record->quiz->question_bank_id) {
                                 // If disabled question bank, clear it
                                 $record->quiz->update([
                                     'question_bank_id' => null,
@@ -387,7 +405,7 @@ class LessonsRelationManager extends RelationManager
                             }
                         } else {
                             $quiz = $record->quiz()->create($data);
-                            
+
                             // If using question bank, generate questions
                             if ($useQuestionBank && isset($data['question_bank_id'])) {
                                 $this->generateQuestionsFromBank($quiz, $data);
@@ -407,8 +425,7 @@ class LessonsRelationManager extends RelationManager
                     ->label('أسئلة الاختبار')
                     ->icon('heroicon-o-question-mark-circle')
                     ->color('info')
-                    ->url(fn ($record) => 
-                        $record->quiz 
+                    ->url(fn ($record) => $record->quiz
                             ? \App\Filament\Resources\Quizzes\QuizResource::getUrl('edit', ['record' => $record->quiz->id])
                             : null
                     )
@@ -419,6 +436,7 @@ class LessonsRelationManager extends RelationManager
                     ->color('success')
                     ->form(function ($record) {
                         $video = $record->video;
+
                         return [
                             \Filament\Forms\Components\FileUpload::make('path')
                                 ->label('ملف الفيديو')
@@ -460,10 +478,9 @@ class LessonsRelationManager extends RelationManager
                     ->label('الملفات')
                     ->icon('heroicon-o-document')
                     ->color('warning')
-                    ->url(fn ($record) => 
-                        \App\Filament\Resources\Courses\CourseResource::getUrl('edit', [
-                            'record' => $record->section->course_id,
-                        ]) . '?activeRelationManager=0&activeRelationManagerTab=1&activeRelationManagerRecord=' . $record->id . '&activeRelationManagerTab=files'
+                    ->url(fn ($record) => \App\Filament\Resources\Courses\CourseResource::getUrl('edit', [
+                        'record' => $record->section->course_id,
+                    ]).'?activeRelationManager=0&activeRelationManagerTab=1&activeRelationManagerRecord='.$record->id.'&activeRelationManagerTab=files'
                     )
                     ->openUrlInNewTab(false),
                 DeleteAction::make(),

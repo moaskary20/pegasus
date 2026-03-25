@@ -2,10 +2,11 @@
 
 namespace App\Models;
 
+use App\Support\YoutubeIframe;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Lesson extends Model
 {
@@ -81,7 +82,7 @@ class Lesson extends Model
     {
         return $this->hasMany(CourseQuestion::class);
     }
-    
+
     public function assignments(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Assignment::class);
@@ -91,39 +92,39 @@ class Lesson extends Model
     {
         return $this->hasOne(ZoomMeeting::class);
     }
-    
+
     /**
      * Scope to search lessons by title, description, and content
      */
     public function scopeSearch($query, string $search)
     {
         $search = trim($search);
-        
+
         if (strlen($search) < 2) {
             return $query;
         }
-        
+
         return $query->where(function ($q) use ($search) {
             $q->where('title', 'LIKE', "%{$search}%")
-              ->orWhere('description', 'LIKE', "%{$search}%")
-              ->orWhere('content', 'LIKE', "%{$search}%");
+                ->orWhere('description', 'LIKE', "%{$search}%")
+                ->orWhere('content', 'LIKE', "%{$search}%");
         });
     }
-    
+
     /**
      * Scope to filter lessons from published courses only
      */
     public function scopeFromPublishedCourses($query)
     {
-        return $query->whereHas('section.course', fn($q) => $q->where('is_published', true));
+        return $query->whereHas('section.course', fn ($q) => $q->where('is_published', true));
     }
-    
+
     /**
      * Check if lesson has YouTube video
      */
     public function isYoutubeVideo(): bool
     {
-        return !empty($this->youtube_url) && $this->getYoutubeVideoId() !== null;
+        return ! empty($this->youtube_url) && $this->getYoutubeVideoId() !== null;
     }
 
     /**
@@ -139,6 +140,7 @@ class Lesson extends Model
         if (preg_match('/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/', $url, $m)) {
             return $m[1];
         }
+
         return null;
     }
 
@@ -148,7 +150,16 @@ class Lesson extends Model
     public function getYoutubeEmbedUrlAttribute(): ?string
     {
         $id = $this->getYoutubeVideoId();
-        return $id ? 'https://www.youtube.com/embed/' . $id : null;
+
+        return $id ? 'https://www.youtube.com/embed/'.$id : null;
+    }
+
+    /**
+     * رابط iframe مع معاملات تقلّل عناصر واجهة اليوتيوب (للعرض في الموقع).
+     */
+    public function getYoutubeIframePlayerSrcAttribute(): ?string
+    {
+        return YoutubeIframe::embedSrcFromVideoId($this->getYoutubeVideoId(), true);
     }
 
     /**
@@ -165,12 +176,13 @@ class Lesson extends Model
                 return $this->video->hls_path;
             }
             if ($this->video->path) {
-                return asset('storage/' . ltrim($this->video->path, '/'));
+                return asset('storage/'.ltrim($this->video->path, '/'));
             }
         }
         if ($this->video_path) {
-            return asset('storage/' . ltrim($this->video_path, '/'));
+            return asset('storage/'.ltrim($this->video_path, '/'));
         }
+
         return null;
     }
 
@@ -182,6 +194,7 @@ class Lesson extends Model
         if ($isEnrolled) {
             return true;
         }
+
         return (bool) ($this->is_free ?? false) || (bool) ($this->is_free_preview ?? false);
     }
 
@@ -190,9 +203,9 @@ class Lesson extends Model
      */
     public function scopeFreePreview($query)
     {
-        return $query->where(fn($q) => $q->where('is_free', true)->orWhere('is_free_preview', true));
+        return $query->where(fn ($q) => $q->where('is_free', true)->orWhere('is_free_preview', true));
     }
-    
+
     /**
      * Get the course this lesson belongs to
      */

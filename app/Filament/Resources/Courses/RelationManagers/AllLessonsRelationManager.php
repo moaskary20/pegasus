@@ -8,14 +8,13 @@ use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
-use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Components\DateTimePicker;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
@@ -27,7 +26,7 @@ use Filament\Tables\Table;
 class AllLessonsRelationManager extends RelationManager
 {
     use \App\Filament\Resources\Courses\Traits\GeneratesQuestionsFromBank;
-    
+
     protected static string $relationship = 'lessons';
 
     protected static ?string $title = 'جميع الدروس';
@@ -38,8 +37,7 @@ class AllLessonsRelationManager extends RelationManager
             ->components([
                 Select::make('section_id')
                     ->label('القسم')
-                    ->relationship('section', 'title', fn ($query, $get) => 
-                        $query->where('course_id', $this->getOwnerRecord()->id)
+                    ->relationship('section', 'title', fn ($query, $get) => $query->where('course_id', $this->getOwnerRecord()->id)
                     )
                     ->required()
                     ->searchable()
@@ -79,7 +77,7 @@ class AllLessonsRelationManager extends RelationManager
                             $set('has_zoom_meeting', false);
                         }
                     }),
-                
+
                 // Zoom Meeting Fields - موضوعة هنا مباشرة بعد content_type
                 Toggle::make('has_zoom_meeting')
                     ->label('إضافة اجتماع Zoom')
@@ -87,13 +85,13 @@ class AllLessonsRelationManager extends RelationManager
                     ->reactive()
                     ->visible(fn ($get) => $get('content_type') === 'zoom')
                     ->helperText('فعّل هذا الخيار لإنشاء اجتماع Zoom مرتبط بهذا الدرس'),
-                
+
                 DateTimePicker::make('zoom_scheduled_time')
                     ->label('موعد الاجتماع')
                     ->visible(fn ($get) => $get('content_type') === 'zoom' && $get('has_zoom_meeting'))
                     ->required(fn ($get) => $get('content_type') === 'zoom')
                     ->helperText('حدد التاريخ والوقت لاجتماع Zoom'),
-                
+
                 TextInput::make('zoom_duration')
                     ->label('مدة الاجتماع (بالدقائق)')
                     ->numeric()
@@ -103,13 +101,13 @@ class AllLessonsRelationManager extends RelationManager
                     ->step(15)
                     ->visible(fn ($get) => $get('content_type') === 'zoom' && $get('has_zoom_meeting'))
                     ->helperText('مدة الاجتماع بالدقائق (الحد الأدنى 15، الحد الأقصى 480)'),
-                
+
                 TextInput::make('zoom_password')
                     ->label('كلمة مرور الاجتماع (اختياري)')
                     ->placeholder('سيتم توليد كلمة مرور تلقائياً إذا لم تحدد واحدة')
                     ->visible(fn ($get) => $get('content_type') === 'zoom' && $get('has_zoom_meeting'))
                     ->helperText('إذا تركت هذا الحقل فارغاً، سيتم توليد كلمة مرور عشوائية'),
-                
+
                 TextInput::make('zoom_link')
                     ->label('رابط اجتماع Zoom (يملأ تلقائياً)')
                     ->placeholder('https://zoom.us/j/...')
@@ -117,22 +115,40 @@ class AllLessonsRelationManager extends RelationManager
                     ->disabled()
                     ->visible(fn ($get) => $get('content_type') === 'zoom' && $get('has_zoom_meeting'))
                     ->helperText('سيملأ تلقائياً بعد الحفظ عند إنشاء الاجتماع في Zoom'),
-                
+
                 TextInput::make('youtube_url')
                     ->label('رابط فيديو يوتيوب')
                     ->placeholder('https://www.youtube.com/watch?v=... أو https://youtu.be/...')
                     ->url()
                     ->maxLength(500)
-                    ->visible(fn ($get) => in_array($get('content_type'), ['video', 'mixed']))
-                    ->helperText('أو ارفع ملف فيديو أدناه. إذا أدخلت رابط يوتيوب فلن يُستخدم الملف المرفوع.'),
+                    ->live(onBlur: true)
+                    ->visible(function ($get) {
+                        if (! in_array($get('content_type'), ['video', 'mixed'], true)) {
+                            return false;
+                        }
+                        $yt = filled(trim((string) ($get('youtube_url') ?? '')));
+                        $file = filled($get('video_path'));
+
+                        return ! $file || $yt;
+                    })
+                    ->helperText('عند إدخال رابط يوتيوب يُخفى رفع الملف. لإظهار الرفع امسح الرابط. في واجهة الطالب يُقلّل المشغّل عناصر قائمة اليوتيوب قدر الإمكان.'),
                 FileUpload::make('video_path')
                     ->label('فيديو الدرس (ملف)')
                     ->disk('public')
                     ->directory('lessons/videos')
                     ->acceptedFileTypes(['video/mp4', 'video/quicktime', 'video/webm'])
                     ->maxSize(102400) // 100MB
-                    ->visible(fn ($get) => in_array($get('content_type'), ['video', 'mixed']))
-                    ->helperText('يمكن رفع ملفات فيديو بصيغة MP4, MOV, WebM'),
+                    ->live()
+                    ->visible(function ($get) {
+                        if (! in_array($get('content_type'), ['video', 'mixed'], true)) {
+                            return false;
+                        }
+                        $yt = filled(trim((string) ($get('youtube_url') ?? '')));
+                        $file = filled($get('video_path'));
+
+                        return ! $yt || $file;
+                    })
+                    ->helperText('عند وجود رابط يوتيوب فقط (بدون ملف) يُخفى هذا الحقل. امسح الرابط لرفع ملف.'),
                 FileUpload::make('image_path')
                     ->label('صورة الدرس')
                     ->disk('public')
@@ -202,7 +218,7 @@ class AllLessonsRelationManager extends RelationManager
                     ->sortable(),
                 TextColumn::make('duration_minutes')
                     ->label('المدة')
-                    ->formatStateUsing(fn ($state) => $state . ' دقيقة')
+                    ->formatStateUsing(fn ($state) => $state.' دقيقة')
                     ->sortable(),
                 TextColumn::make('has_quiz')
                     ->label('اختبار')
@@ -238,8 +254,7 @@ class AllLessonsRelationManager extends RelationManager
             ->filters([
                 SelectFilter::make('section_id')
                     ->label('القسم')
-                    ->relationship('section', 'title', fn ($query) => 
-                        $query->where('course_id', $this->getOwnerRecord()->id)
+                    ->relationship('section', 'title', fn ($query) => $query->where('course_id', $this->getOwnerRecord()->id)
                     )
                     ->searchable()
                     ->preload(),
@@ -248,14 +263,14 @@ class AllLessonsRelationManager extends RelationManager
                 CreateAction::make()
                     ->after(function ($record) {
                         $data = $this->form->getState();
-                        if (!empty($data['use_as_course_preview']) && $record && $record->section?->course_id) {
+                        if (! empty($data['use_as_course_preview']) && $record && $record->section?->course_id) {
                             \App\Models\Course::where('id', $record->section->course_id)->update(['preview_lesson_id' => $record->id]);
                         }
                         // إرسال إشعار للطلاب المشتركين عند إضافة محاضرة جديدة
                         if ($record->section && $record->section->course) {
                             $course = $record->section->course;
                             $enrollments = $course->enrollments()->with('user')->get();
-                            
+
                             foreach ($enrollments as $enrollment) {
                                 $enrollment->user->notify(new \App\Notifications\NewLessonAddedNotification($record));
                             }
@@ -266,7 +281,7 @@ class AllLessonsRelationManager extends RelationManager
                 EditAction::make()
                     ->after(function ($record) {
                         $data = $this->form->getState();
-                        if (!empty($data['use_as_course_preview']) && $record && $record->section?->course_id) {
+                        if (! empty($data['use_as_course_preview']) && $record && $record->section?->course_id) {
                             \App\Models\Course::where('id', $record->section->course_id)->update(['preview_lesson_id' => $record->id]);
                         } elseif (empty($data['use_as_course_preview']) && $record && $record->section?->course?->preview_lesson_id == $record->id) {
                             \App\Models\Course::where('id', $record->section->course_id)->update(['preview_lesson_id' => null]);
@@ -279,7 +294,7 @@ class AllLessonsRelationManager extends RelationManager
                     ->form(function ($record) {
                         $quiz = $record->quiz;
                         $courseId = $record->section->course_id;
-                        
+
                         return [
                             \Filament\Forms\Components\TextInput::make('title')
                                 ->label('عنوان الاختبار')
@@ -314,17 +329,17 @@ class AllLessonsRelationManager extends RelationManager
                             \Filament\Forms\Components\Select::make('question_bank_id')
                                 ->label('بنك الأسئلة')
                                 ->options(function () use ($courseId) {
-                                    return \App\Models\QuestionBank::where(function($q) use ($courseId) {
+                                    return \App\Models\QuestionBank::where(function ($q) use ($courseId) {
                                         $q->whereNull('course_id')
-                                          ->orWhere('course_id', $courseId);
+                                            ->orWhere('course_id', $courseId);
                                     })
-                                    ->where('is_active', true)
-                                    ->with('questions')
-                                    ->get()
-                                    ->mapWithKeys(fn ($bank) => [
-                                        $bank->id => $bank->title . ' (' . $bank->questions->count() . ' سؤال' . ($bank->course_id ? ' - خاص بالدورة' : ' - عام') . ')'
-                                    ])
-                                    ->toArray();
+                                        ->where('is_active', true)
+                                        ->with('questions')
+                                        ->get()
+                                        ->mapWithKeys(fn ($bank) => [
+                                            $bank->id => $bank->title.' ('.$bank->questions->count().' سؤال'.($bank->course_id ? ' - خاص بالدورة' : ' - عام').')',
+                                        ])
+                                        ->toArray();
                                 })
                                 ->searchable()
                                 ->preload()
@@ -349,27 +364,28 @@ class AllLessonsRelationManager extends RelationManager
                     ->fillForm(function ($record) {
                         $quiz = $record->quiz;
                         $data = $quiz ? $quiz->toArray() : [];
-                        $data['use_question_bank'] = !empty($quiz?->question_bank_id);
+                        $data['use_question_bank'] = ! empty($quiz?->question_bank_id);
+
                         return $data;
                     })
                     ->action(function ($record, array $data) {
                         $useQuestionBank = $data['use_question_bank'] ?? false;
                         unset($data['use_question_bank']);
-                        
+
                         if ($record->quiz) {
                             $record->quiz->update($data);
-                            
+
                             // If question bank changed, regenerate questions
-                            if ($useQuestionBank && isset($data['question_bank_id']) && 
+                            if ($useQuestionBank && isset($data['question_bank_id']) &&
                                 ($data['question_bank_id'] !== $record->quiz->question_bank_id ||
                                  $data['questions_count'] !== $record->quiz->questions_count ||
                                  $data['randomize_questions'] !== $record->quiz->randomize_questions)) {
                                 // Delete existing questions
                                 $record->quiz->questions()->delete();
-                                
+
                                 // Generate new questions from bank
                                 $this->generateQuestionsFromBank($record->quiz, $data);
-                            } elseif (!$useQuestionBank && $record->quiz->question_bank_id) {
+                            } elseif (! $useQuestionBank && $record->quiz->question_bank_id) {
                                 // If disabled question bank, clear it
                                 $record->quiz->update([
                                     'question_bank_id' => null,
@@ -379,7 +395,7 @@ class AllLessonsRelationManager extends RelationManager
                             }
                         } else {
                             $quiz = $record->quiz()->create($data);
-                            
+
                             // If using question bank, generate questions
                             if ($useQuestionBank && isset($data['question_bank_id'])) {
                                 $this->generateQuestionsFromBank($quiz, $data);
@@ -399,8 +415,7 @@ class AllLessonsRelationManager extends RelationManager
                     ->label('أسئلة الاختبار')
                     ->icon('heroicon-o-question-mark-circle')
                     ->color('info')
-                    ->url(fn ($record) => 
-                        $record->quiz 
+                    ->url(fn ($record) => $record->quiz
                             ? \App\Filament\Resources\Quizzes\QuizResource::getUrl('edit', ['record' => $record->quiz->id])
                             : null
                     )
@@ -411,6 +426,7 @@ class AllLessonsRelationManager extends RelationManager
                     ->color('success')
                     ->form(function ($record) {
                         $video = $record->video;
+
                         return [
                             \Filament\Forms\Components\FileUpload::make('path')
                                 ->label('ملف الفيديو')
@@ -484,7 +500,7 @@ class AllLessonsRelationManager extends RelationManager
                     ->action(function ($record, array $data) {
                         // Delete existing files
                         $record->files()->delete();
-                        
+
                         // Create new files
                         foreach ($data['files'] ?? [] as $fileData) {
                             $record->files()->create([
@@ -539,13 +555,13 @@ class AllLessonsRelationManager extends RelationManager
                     ->action(function ($record, array $data) {
                         // حفظ التعليقات الجديدة فقط
                         foreach ($data['comments'] ?? [] as $commentData) {
-                            if (!isset($commentData['id'])) {
+                            if (! isset($commentData['id'])) {
                                 // تعليق جديد
                                 $comment = $record->comments()->create([
                                     'user_id' => $commentData['user_id'],
                                     'body' => $commentData['body'],
                                 ]);
-                                
+
                                 // إرسال إشعار للمدرس
                                 if ($record->section && $record->section->course) {
                                     $instructor = $record->section->course->instructor;
@@ -555,13 +571,13 @@ class AllLessonsRelationManager extends RelationManager
                                 }
                             }
                         }
-                        
+
                         Notification::make()
                             ->title('تم إضافة التعليق')
                             ->success()
                             ->send();
                     })
-                    ->modalHeading(fn ($record) => 'التعليقات على الدرس: ' . $record->title)
+                    ->modalHeading(fn ($record) => 'التعليقات على الدرس: '.$record->title)
                     ->modalWidth('4xl'),
                 Action::make('manage_lesson_qa')
                     ->label('أسئلة الدرس (Q&A)')
@@ -583,11 +599,13 @@ class AllLessonsRelationManager extends RelationManager
                                             $userId = $get('user_id');
                                             if ($userId) {
                                                 $user = \App\Models\User::find($userId);
+
                                                 return $user ? $user->name : '';
                                             }
+
                                             return '';
                                         })
-                                        ->visible(fn ($get) => null !== $get('id')),
+                                        ->visible(fn ($get) => $get('id') !== null),
                                     \Filament\Forms\Components\Select::make('user_id')
                                         ->label('الطالب')
                                         ->options(function () {
@@ -595,24 +613,24 @@ class AllLessonsRelationManager extends RelationManager
                                             $studentUsers = \App\Models\User::whereHas('roles', function ($q) {
                                                 $q->where('name', 'student');
                                             })->get();
-                                            
+
                                             // إذا لم يكن هناك طلاب، عرض جميع المستخدمين
                                             if ($studentUsers->isEmpty()) {
                                                 $studentUsers = \App\Models\User::all();
                                             }
-                                            
+
                                             return $studentUsers->pluck('name', 'id')->toArray();
                                         })
                                         ->default(auth()->id())
                                         ->required()
                                         ->searchable()
                                         ->preload()
-                                        ->visible(fn ($get) => !$get('id')),
+                                        ->visible(fn ($get) => ! $get('id')),
                                     \Filament\Forms\Components\Textarea::make('question')
                                         ->label('السؤال')
                                         ->required()
                                         ->rows(3)
-                                        ->disabled(fn ($get) => null !== $get('id')),
+                                        ->disabled(fn ($get) => $get('id') !== null),
                                     \Filament\Forms\Components\Toggle::make('is_answered')
                                         ->label('تم الرد')
                                         ->default(false)
@@ -626,21 +644,23 @@ class AllLessonsRelationManager extends RelationManager
                                                 ->rows(3),
                                         ])
                                         ->defaultItems(0)
-                                        ->default(function ($get) use ($record) {
+                                        ->default(function ($get) {
                                             $questionId = $get('id');
                                             if ($questionId) {
                                                 $question = \App\Models\CourseQuestion::find($questionId);
+
                                                 return $question ? $question->answers->map(fn ($a) => [
                                                     'id' => $a->id,
                                                     'answer' => $a->answer,
                                                 ])->toArray() : [];
                                             }
+
                                             return [];
                                         })
                                         ->addable(true)
                                         ->deletable(true)
                                         ->reorderable(false)
-                                        ->visible(fn ($get) => null !== $get('id')),
+                                        ->visible(fn ($get) => $get('id') !== null),
                                 ])
                                 ->defaultItems(0)
                                 ->default($record->questions()->with('user')->get()->map(fn ($q) => [
@@ -672,7 +692,7 @@ class AllLessonsRelationManager extends RelationManager
                     })
                     ->action(function ($record, array $data) {
                         foreach ($data['questions'] ?? [] as $questionData) {
-                            if (!isset($questionData['id'])) {
+                            if (! isset($questionData['id'])) {
                                 // سؤال جديد
                                 $question = \App\Models\CourseQuestion::create([
                                     'course_id' => $record->section->course_id,
@@ -681,7 +701,7 @@ class AllLessonsRelationManager extends RelationManager
                                     'question' => $questionData['question'],
                                     'is_answered' => false,
                                 ]);
-                                
+
                                 // إرسال إشعار للمدرس
                                 if ($record->section && $record->section->course) {
                                     $instructor = $record->section->course->instructor;
@@ -694,10 +714,10 @@ class AllLessonsRelationManager extends RelationManager
                                 $question = \App\Models\CourseQuestion::find($questionData['id']);
                                 if ($question && isset($questionData['answers'])) {
                                     $existingAnswerIds = collect($questionData['answers'])->pluck('id')->filter();
-                                    
+
                                     // حذف الردود المحذوفة
                                     $question->answers()->whereNotIn('id', $existingAnswerIds)->delete();
-                                    
+
                                     // إضافة/تحديث الردود
                                     foreach ($questionData['answers'] as $answerData) {
                                         if (isset($answerData['id'])) {
@@ -711,10 +731,10 @@ class AllLessonsRelationManager extends RelationManager
                                                 'user_id' => auth()->id(),
                                                 'answer' => $answerData['answer'],
                                             ]);
-                                            
+
                                             // تحديث حالة السؤال
                                             $question->update(['is_answered' => true]);
-                                            
+
                                             // إرسال إشعار للطالب
                                             if ($question->user_id !== auth()->id()) {
                                                 $question->user->notify(new \App\Notifications\CourseQuestionAnsweredNotification($question, 'answered'));
@@ -724,13 +744,13 @@ class AllLessonsRelationManager extends RelationManager
                                 }
                             }
                         }
-                        
+
                         Notification::make()
                             ->title('تم الحفظ')
                             ->success()
                             ->send();
                     })
-                    ->modalHeading(fn ($record) => 'أسئلة الدرس (Q&A): ' . $record->title)
+                    ->modalHeading(fn ($record) => 'أسئلة الدرس (Q&A): '.$record->title)
                     ->modalWidth('4xl'),
                 DeleteAction::make(),
             ])

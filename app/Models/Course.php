@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\YoutubeIframe;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -112,28 +113,28 @@ class Course extends Model
     {
         return $this->hasOne(InstructorEarning::class);
     }
-    
+
     /**
      * Scope to search courses by multiple fields
      */
     public function scopeSearch($query, string $search)
     {
         $search = trim($search);
-        
+
         if (strlen($search) < 2) {
             return $query;
         }
-        
+
         return $query->where(function ($q) use ($search) {
             $q->where('title', 'LIKE', "%{$search}%")
-              ->orWhere('description', 'LIKE', "%{$search}%")
-              ->orWhere('objectives', 'LIKE', "%{$search}%")
-              ->orWhereHas('instructor', fn($q) => $q->where('name', 'LIKE', "%{$search}%"))
-              ->orWhereHas('category', fn($q) => $q->where('name', 'LIKE', "%{$search}%"))
-              ->orWhereHas('lessons', fn($q) => $q->where('title', 'LIKE', "%{$search}%"));
+                ->orWhere('description', 'LIKE', "%{$search}%")
+                ->orWhere('objectives', 'LIKE', "%{$search}%")
+                ->orWhereHas('instructor', fn ($q) => $q->where('name', 'LIKE', "%{$search}%"))
+                ->orWhereHas('category', fn ($q) => $q->where('name', 'LIKE', "%{$search}%"))
+                ->orWhereHas('lessons', fn ($q) => $q->where('title', 'LIKE', "%{$search}%"));
         });
     }
-    
+
     /**
      * Scope to filter published courses only
      */
@@ -141,7 +142,7 @@ class Course extends Model
     {
         return $query->where('is_published', true);
     }
-    
+
     /**
      * Scope to filter by category
      */
@@ -149,7 +150,7 @@ class Course extends Model
     {
         return $query->where('category_id', $categoryId);
     }
-    
+
     /**
      * Scope to filter by level
      */
@@ -157,7 +158,7 @@ class Course extends Model
     {
         return $query->where('level', $level);
     }
-    
+
     /**
      * Scope to filter free courses
      */
@@ -165,7 +166,7 @@ class Course extends Model
     {
         return $query->where('price', 0);
     }
-    
+
     /**
      * Scope to filter paid courses
      */
@@ -173,7 +174,7 @@ class Course extends Model
     {
         return $query->where('price', '>', 0);
     }
-    
+
     /**
      * Scope to filter by minimum rating
      */
@@ -181,7 +182,7 @@ class Course extends Model
     {
         return $query->where('rating', '>=', $rating);
     }
-    
+
     /**
      * Get the full URL for cover image
      */
@@ -193,7 +194,8 @@ class Course extends Model
         if (str_starts_with($value, 'http')) {
             return $value;
         }
-        return asset('storage/' . ltrim($value, '/'));
+
+        return asset('storage/'.ltrim($value, '/'));
     }
 
     public function previewLesson(): \Illuminate\Database\Eloquent\Relations\BelongsTo
@@ -206,7 +208,7 @@ class Course extends Model
      */
     public function isPreviewYoutube(): bool
     {
-        return !empty($this->getPreviewYoutubeVideoId());
+        return ! empty($this->getPreviewYoutubeVideoId());
     }
 
     /**
@@ -224,6 +226,7 @@ class Course extends Model
         if (preg_match('/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/', $url, $m)) {
             return $m[1];
         }
+
         return null;
     }
 
@@ -233,7 +236,16 @@ class Course extends Model
     public function getPreviewYoutubeEmbedUrlAttribute(): ?string
     {
         $id = $this->getPreviewYoutubeVideoId();
-        return $id ? 'https://www.youtube.com/embed/' . $id : null;
+
+        return $id ? 'https://www.youtube.com/embed/'.$id : null;
+    }
+
+    /**
+     * رابط iframe معاملات مشغّل اليوتيوب (معاينة الدورة في الموقع).
+     */
+    public function getPreviewYoutubeIframePlayerSrcAttribute(): ?string
+    {
+        return YoutubeIframe::embedSrcFromVideoId($this->getPreviewYoutubeVideoId(), true);
     }
 
     /**
@@ -246,6 +258,7 @@ class Course extends Model
             if ($lesson->isYoutubeVideo()) {
                 return $lesson->youtube_embed_url;
             }
+
             return $lesson->video_url;
         }
         if ($this->isPreviewYoutube()) {
@@ -258,7 +271,8 @@ class Course extends Model
         if (str_starts_with($value, 'http')) {
             return $value;
         }
-        return asset('storage/' . ltrim($value, '/'));
+
+        return asset('storage/'.ltrim($value, '/'));
     }
 
     /**
@@ -270,6 +284,7 @@ class Course extends Model
         if ($lesson && $lesson->isYoutubeVideo()) {
             return true;
         }
+
         return $this->isPreviewYoutube();
     }
 
@@ -280,7 +295,7 @@ class Course extends Model
     {
         return $this->offer_price ?? $this->price;
     }
-    
+
     /**
      * Get the slug attribute, generating from title if missing
      */
@@ -289,9 +304,10 @@ class Course extends Model
         if (empty($this->attributes['slug'])) {
             return Str::slug($this->attributes['title'] ?? 'course');
         }
+
         return $this->attributes['slug'];
     }
-    
+
     /**
      * Get price for a specific subscription type
      */
@@ -304,7 +320,7 @@ class Course extends Model
             default => (float) ($this->price ?? 0),
         };
     }
-    
+
     /**
      * Get subscription type label
      */

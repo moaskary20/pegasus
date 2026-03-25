@@ -87,11 +87,11 @@
                             <div x-show="showVideo" x-cloak class="absolute inset-0 z-10 bg-black" style="display: none;">
                                 @if($course->isPreviewVideoYoutube())
                                 @php
-                                    $embedUrl = ($course->previewLesson && $course->previewLesson->isYoutubeVideo()) 
-                                        ? $course->previewLesson->youtube_embed_url 
-                                        : $course->preview_youtube_embed_url;
+                                    $embedUrl = ($course->previewLesson && $course->previewLesson->isYoutubeVideo())
+                                        ? $course->previewLesson->youtube_iframe_player_src
+                                        : $course->preview_youtube_iframe_player_src;
                                 @endphp
-                                <iframe class="w-full h-full" src="{{ $embedUrl }}?autoplay=1" title="معاينة الدورة" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope" allowfullscreen x-ref="previewVideo"></iframe>
+                                <iframe class="w-full h-full" src="{{ $embedUrl }}" title="معاينة الدورة" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" x-ref="previewVideo"></iframe>
                                 @else
                                 <video class="w-full h-full object-contain" controls autoplay controlsList="nodownload noplaybackrate nopictureinpicture" x-ref="previewVideo">
                                     <source src="{{ $course->preview_video_url }}" type="video/mp4">

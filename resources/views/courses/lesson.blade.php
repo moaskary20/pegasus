@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 {{-- الفيديو: يوتيوب أو ملف --}}
                 @if($lesson->isYoutubeVideo())
                     <div class="aspect-video bg-slate-900">
-                        <iframe id="lesson-video-player" class="w-full h-full" src="{{ $lesson->youtube_embed_url }}?autoplay=1" title="{{ $lesson->title }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope" allowfullscreen></iframe>
+                        <iframe id="lesson-video-player" class="w-full h-full" src="{{ $lesson->youtube_iframe_player_src }}" title="{{ $lesson->title }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
                     </div>
                 @elseif($lesson->video_url)
                     <div class="aspect-video bg-slate-900 relative">
