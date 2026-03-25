@@ -52,18 +52,16 @@
         </div>
     @endif
 
+    @include('partials.disable-context-menu')
+
     {{--
-        يحدّ من القائمة بالزر الأيمن وبعض اختصارات أدوات المطوّر.
-        لا يمكن منع Inspect فعلياً: المتصفح لا يعطي المواقع صلاحية إغلاق DevTools، ويمكن تجاوز هذا السكربت (تعطيل JS، قائمة المتصفح، إلخ).
-        الحماية الحقيقية للمحتوى تكون من السيرفر (صلاحيات، روابط موقّتة، إلخ).
+        اختصارات أدوات المطوّر وسحب الصور: معطّلة خارج بيئة local حتى لا يعيق التطوير.
+        لا يمكن منع Inspect فعلياً من المتصفح.
     --}}
     @unless(app()->environment('local'))
     <script>
         (function () {
             'use strict';
-            document.addEventListener('contextmenu', function (e) {
-                e.preventDefault();
-            }, { capture: true });
             document.addEventListener('dragstart', function (e) {
                 if (e.target instanceof HTMLImageElement) {
                     e.preventDefault();
