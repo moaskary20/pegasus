@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\Course;
+use App\Models\Enrollment;
 use App\Models\Lesson;
 use App\Models\PlatformSetting;
 use App\Models\User;
@@ -13,6 +15,27 @@ class LessonAccessService
      * Check if a user can access a lesson
      * Checks enrollment, prerequisite lessons, and unlock settings
      */
+    /**
+     * هل يُسمح ببث فيديو الدرس (مسجّل أو زائر لدرس مجاني/معاينة).
+     */
+    public function canStreamLessonVideo(?User $user, Course $course, Lesson $lesson): bool
+    {
+        if (! $lesson->section || (int) $lesson->section->course_id !== (int) $course->id) {
+            return false;
+        }
+
+        $isEnrolled = $user && Enrollment::query()
+            ->where('user_id', $user->id)
+            ->where('course_id', $course->id)
+            ->exists();
+
+        if ($isEnrolled) {
+            return $this->canAccessLesson($user, $lesson);
+        }
+
+        return (bool) ($lesson->is_free ?? false) || (bool) ($lesson->is_free_preview ?? false);
+    }
+
     public function canAccessLesson(User $user, Lesson $lesson): bool
     {
         // Check if user is enrolled in the course

@@ -72,6 +72,19 @@
         $userCertificate = $userCertificate ?? null;
         $nextSuggestedCourse = $nextSuggestedCourse ?? null;
         $courseUrl = url()->current();
+
+        $previewFileStreamUrl = null;
+        if ($course->preview_video_url && ! $course->isPreviewVideoYoutube()) {
+            $pl = $course->previewLesson;
+            if ($pl && ! $pl->isYoutubeVideo() && ($pl->video || $pl->video_path)) {
+                $previewFileStreamUrl = route('site.course.lesson.video.stream', [$course, $pl]);
+            } else {
+                $rawPreview = $course->getRawOriginal('preview_video_path');
+                if (filled($rawPreview) && ! str_starts_with((string) $rawPreview, 'http://') && ! str_starts_with((string) $rawPreview, 'https://')) {
+                    $previewFileStreamUrl = route('site.course.preview-video.stream', $course);
+                }
+            }
+        }
     @endphp
 
     {{-- عمود الصورة ثابت | تفاصيل الدورة تتمرر أسفله --}}
@@ -99,7 +112,7 @@
                                 />
                                 @else
                                 <video class="w-full h-full object-contain" controls autoplay controlsList="nodownload noplaybackrate nopictureinpicture" x-ref="previewVideo">
-                                    <source src="{{ $course->preview_video_url }}" type="video/mp4">
+                                    <source src="{{ $previewFileStreamUrl ?? $course->preview_video_url }}" type="video/mp4">
                                     متصفحك لا يدعم تشغيل الفيديو.
                                 </video>
                                 @endif

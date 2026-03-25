@@ -103,9 +103,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="aspect-video bg-slate-900 relative">
                         <video id="lesson-video-player" class="w-full h-full object-contain" controls autoplay controlsList="nodownload noplaybackrate nopictureinpicture">
                             @if($lesson->video && $lesson->video->hls_path)
+                                {{-- HLS: روابط المقاطع داخل ملف m3u8 قد تبقى مكشوفة ما لم يُبنَ بروكسي كامل --}}
                                 <source src="{{ $lesson->video->hls_path }}" type="application/x-mpegURL">
                             @else
-                                <source src="{{ $lesson->video_url }}" type="video/mp4">
+                                <source src="{{ route('site.course.lesson.video.stream', [$course, $lesson]) }}" type="video/mp4">
                             @endif
                             متصفحك لا يدعم تشغيل الفيديو.
                         </video>

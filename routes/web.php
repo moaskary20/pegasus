@@ -863,6 +863,12 @@ Route::get('/courses/{course:slug}/lessons/{lesson}', function (Course $course, 
     ]);
 })->name('site.course.lesson.show');
 
+Route::get('/courses/{course:slug}/lessons/{lesson}/video', \App\Http\Controllers\Site\LessonVideoStreamController::class)
+    ->name('site.course.lesson.video.stream');
+
+Route::get('/courses/{course:slug}/preview-video-file', \App\Http\Controllers\Site\CoursePreviewVideoStreamController::class)
+    ->name('site.course.preview-video.stream');
+
 Route::post('/courses/{course:slug}/lessons/{lesson}/questions', function (Request $request, Course $course, \App\Models\Lesson $lesson) {
     if (!auth()->check()) {
         return redirect()->route('site.auth');

@@ -1,7 +1,6 @@
 {{--
-    تضمين YouTube مع شريط تحكم افتراضي (تشغيل / صوت / تقدّم).
-    شريط علوي يحجب عنوان الفيديو وأيقونة القناة و Share / Watch later (لا يوجد معامل رسمي لإخفائها).
-    شعار YouTube في الزاوية السفلية يُقلّل عبر modestbranding في رابط الـ embed.
+    تضمين YouTube بدون شريط التحكم الافتراضي (معامل controls=0 في رابط الـ embed).
+    شريط علوي يحجب عنوان الفيديو وأيقونة القناة و Share / Watch later قدر الإمكان.
 --}}
 @props([
     'src',
@@ -28,7 +27,6 @@
         allowfullscreen
         referrerpolicy="strict-origin-when-cross-origin"
     ></iframe>
-    {{-- لا يغطي شريط التحكم السفلي داخل الـ iframe --}}
     <div
         class="pointer-events-auto absolute inset-x-0 top-0 z-[1] h-[5.75rem] bg-gradient-to-b from-black from-30% via-black/80 to-transparent sm:h-28"
         aria-hidden="true"
