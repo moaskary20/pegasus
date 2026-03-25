@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ app()->getLocale() }}" dir="rtl">
+<html lang="{{ app()->getLocale() }}" dir="rtl" @class(['site-content-protect' => ! app()->environment('local')])>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -52,78 +52,11 @@
         </div>
     @endif
 
-    @include('partials.disable-context-menu')
-
-    {{--
-        اختصارات أدوات المطوّر وسحب الصور: معطّلة خارج بيئة local حتى لا يعيق التطوير.
-        لا يمكن منع Inspect فعلياً من المتصفح.
-    --}}
+    {{-- في local: لا تثبيط (زر أيمن، نسخ، اختصارات). في الإنتاج: حزمة site-screen-deterrents --}}
     @unless(app()->environment('local'))
-    <script>
-        (function () {
-            'use strict';
-            document.addEventListener('dragstart', function (e) {
-                if (e.target instanceof HTMLImageElement) {
-                    e.preventDefault();
-                }
-            }, { capture: true });
-            document.addEventListener('keydown', function (e) {
-                if (e.key === 'F12') {
-                    e.preventDefault();
-                    return false;
-                }
-                if ((e.ctrlKey || e.metaKey) && e.shiftKey) {
-                    var k = e.key;
-                    if (k === 'I' || k === 'J' || k === 'C' || k === 'K') {
-                        e.preventDefault();
-                    }
-                }
-                if ((e.ctrlKey || e.metaKey) && (e.key === 'u' || e.key === 'U') && !e.shiftKey) {
-                    e.preventDefault();
-                }
-            }, { capture: true });
-        })();
-    </script>
-    @endunless
-
-    {{--
-        تقليل احتمال نسخ لقطة الشاشة إلى الحافظة + تنبيه عند مفتاح Print Screen (لا يعمل على كل الأنظمة/المتصفحات).
-        visibilitychange: يخفي وضوح الصفحة عند إخفاء التاب أو تصغير النافذة — ليس مرتبطاً حصرياً بلقطات الشاشة.
-    --}}
-    @unless(app()->environment('local'))
-    <script>
-        (function () {
-            'use strict';
-            function isPrintScreenKey(e) {
-                return e.key === 'PrintScreen' || e.code === 'PrintScreen';
-            }
-            function warnPrintScreen() {
-                try {
-                    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-                        navigator.clipboard.writeText('').catch(function () {});
-                    }
-                } catch (err) {}
-                alert('ممنوع تصوير الشاشة');
-            }
-            document.addEventListener('keyup', function (e) {
-                if (isPrintScreenKey(e)) {
-                    warnPrintScreen();
-                }
-            }, { capture: true });
-            document.addEventListener('keydown', function (e) {
-                if (isPrintScreenKey(e)) {
-                    e.preventDefault();
-                }
-            }, { capture: true });
-            document.addEventListener('visibilitychange', function () {
-                if (document.hidden) {
-                    document.body.style.filter = 'blur(20px)';
-                } else {
-                    document.body.style.filter = 'none';
-                }
-            });
-        })();
-    </script>
+        @include('partials.site-screen-deterrents')
+    @else
+        @include('partials.disable-context-menu')
     @endunless
 </body>
 </html>
