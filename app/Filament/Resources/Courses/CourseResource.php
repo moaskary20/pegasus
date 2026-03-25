@@ -26,11 +26,21 @@ class CourseResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedAcademicCap;
     
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 1;
     
     public static function getNavigationGroup(): ?string
     {
-        return 'إدارة الدورات التدريبية';
+        return 'إدارة الدورات';
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        $user = auth()->user();
+        if ($user?->hasRole('instructor') && ! $user->hasRole('admin')) {
+            return 'دوراتي';
+        }
+
+        return parent::getNavigationLabel();
     }
 
     public static function form(Schema $schema): Schema
