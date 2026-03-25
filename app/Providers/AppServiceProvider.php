@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Http\Responses\LogoutResponse;
+use App\Models\Course;
+use App\Policies\CoursePolicy;
 use App\Services\PlatformMailConfig;
 use Illuminate\Auth\Notifications\ResetPassword;
 use App\Models\CourseRating;
@@ -17,6 +19,7 @@ use App\Listeners\CompleteKashierOrder;
 use Asciisd\Kashier\Events\KashierResponseHandled;
 use Filament\Auth\Http\Responses\Contracts\LogoutResponse as LogoutResponseContract;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -35,6 +38,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::policy(Course::class, CoursePolicy::class);
+
         $this->app->booted(function () {
             PlatformMailConfig::apply();
         });

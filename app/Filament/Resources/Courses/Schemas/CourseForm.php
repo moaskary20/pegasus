@@ -20,9 +20,10 @@ class CourseForm
                 Select::make('user_id')
                     ->label('المدرس')
                     ->relationship('instructor', 'name')
-                    ->required()
+                    ->required(fn () => auth()->user()?->hasRole('admin'))
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->visible(fn () => auth()->user()?->hasRole('admin')),
                 FileUpload::make('preview_video_path')
                     ->label('فيديو معاينة الدورة')
                     ->disk('public')

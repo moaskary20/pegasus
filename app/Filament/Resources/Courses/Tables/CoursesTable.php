@@ -43,7 +43,8 @@ class CoursesTable
                     ->sortable()
                     ->badge()
                     ->color('info')
-                    ->icon('heroicon-o-user'),
+                    ->icon('heroicon-o-user')
+                    ->visible(fn () => auth()->user()?->hasRole('admin')),
                     
                 TextColumn::make('level')
                     ->label('المستوى')
@@ -113,7 +114,8 @@ class CoursesTable
                     ->label('المدرس')
                     ->relationship('instructor', 'name')
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->visible(fn () => auth()->user()?->hasRole('admin')),
                 \Filament\Tables\Filters\SelectFilter::make('level')
                     ->label('المستوى')
                     ->options([

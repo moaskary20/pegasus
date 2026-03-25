@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Users\Tables;
 
+use App\Models\User;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -34,20 +35,33 @@ class UsersTable
                     ->copyable()
                     ->icon('heroicon-o-envelope'),
                     
-                TextColumn::make('roles.name')
+                TextColumn::make('roles_labels')
                     ->label('الدور')
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'admin' => 'danger',
-                        'instructor' => 'warning',
-                        'student' => 'success',
-                        default => 'gray',
+                    ->getStateUsing(function (User $record): array {
+                        $roles = $record->roles;
+                        if ($roles->isEmpty()) {
+                            return [];
+                        }
+
+                        return $roles
+                            ->pluck('name')
+                            ->unique()
+                            ->map(fn (string $name): string => match ($name) {
+                                'admin' => 'مدير',
+                                'instructor' => 'مدرس',
+                                'student' => 'طالب',
+                                default => $name,
+                            })
+                            ->values()
+                            ->all();
                     })
-                    ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'admin' => 'مدير',
-                        'instructor' => 'مدرس',
-                        'student' => 'طالب',
-                        default => $state,
+                    ->badge()
+                    ->placeholder('—')
+                    ->color(fn (?string $state): string => match ($state) {
+                        'مدير' => 'danger',
+                        'مدرس' => 'warning',
+                        'طالب' => 'success',
+                        default => 'gray',
                     }),
                     
                 TextColumn::make('phone')
@@ -84,7 +98,13 @@ class UsersTable
                     ->label('الدور')
                     ->relationship('roles', 'name')
                     ->multiple()
-                    ->preload(),
+                    ->preload()
+                    ->getOptionLabelFromRecordUsing(fn (\Spatie\Permission\Models\Role $record): string => match ($record->name) {
+                        'admin' => 'مدير',
+                        'instructor' => 'مدرس',
+                        'student' => 'طالب',
+                        default => $record->name,
+                    }),
                 \Filament\Tables\Filters\TernaryFilter::make('email_verified_at')
                     ->label('البريد المؤكد')
                     ->placeholder('الكل')

@@ -70,7 +70,13 @@ class UserForm
                     ->multiple()
                     ->relationship('roles', 'name')
                     ->preload()
-                    ->searchable(),
+                    ->searchable()
+                    ->getOptionLabelFromRecordUsing(fn (\Spatie\Permission\Models\Role $record): string => match ($record->name) {
+                        'admin' => 'مدير',
+                        'instructor' => 'مدرس',
+                        'student' => 'طالب',
+                        default => $record->name,
+                    }),
                 DateTimePicker::make('email_verified_at')
                     ->label('تاريخ تأكيد البريد'),
                 DateTimePicker::make('phone_verified_at')
