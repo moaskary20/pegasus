@@ -11,6 +11,9 @@ class EditUser extends EditRecord
 {
     protected static string $resource = UserResource::class;
 
+    /** @var list<int|string> */
+    protected array $rolesToSync = [];
+
     protected function getHeaderActions(): array
     {
         return [
@@ -20,8 +23,14 @@ class EditUser extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        // Extract roles from data
-        $roles = $data['roles'] ?? [];
+        $raw = $data['roles'] ?? null;
+        if (is_array($raw)) {
+            $this->rolesToSync = array_values(array_filter($raw, fn ($id) => $id !== null && $id !== ''));
+        } elseif ($raw !== null && $raw !== '') {
+            $this->rolesToSync = [$raw];
+        } else {
+            $this->rolesToSync = [];
+        }
         unset($data['roles']);
 
         $data['phone'] = ! empty($data['phone'] ?? null)
@@ -33,9 +42,9 @@ class EditUser extends EditRecord
 
     protected function afterSave(): void
     {
-        // Sync roles after user is updated
-        $roles = $this->form->getState()['roles'] ?? [];
-        $this->record->syncRoles($roles);
+        $this->record->syncRoles($this->rolesToSync);
+        $this->record->unsetRelation('roles');
+        $this->rolesToSync = [];
     }
 
     protected function mutateFormDataBeforeFill(array $data): array

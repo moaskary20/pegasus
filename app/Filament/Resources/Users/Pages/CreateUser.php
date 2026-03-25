@@ -10,10 +10,19 @@ class CreateUser extends CreateRecord
 {
     protected static string $resource = UserResource::class;
 
+    /** @var list<int|string> */
+    protected array $rolesToSync = [];
+
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        // Extract roles from data
-        $roles = $data['roles'] ?? [];
+        $raw = $data['roles'] ?? null;
+        if (is_array($raw)) {
+            $this->rolesToSync = array_values(array_filter($raw, fn ($id) => $id !== null && $id !== ''));
+        } elseif ($raw !== null && $raw !== '') {
+            $this->rolesToSync = [$raw];
+        } else {
+            $this->rolesToSync = [];
+        }
         unset($data['roles']);
 
         $data['phone'] = ! empty($data['phone'] ?? null)
@@ -25,10 +34,10 @@ class CreateUser extends CreateRecord
 
     protected function afterCreate(): void
     {
-        // Assign roles after user is created
-        $roles = $this->form->getState()['roles'] ?? [];
-        if (! empty($roles)) {
-            $this->record->syncRoles($roles);
+        if ($this->rolesToSync !== []) {
+            $this->record->syncRoles($this->rolesToSync);
+            $this->record->unsetRelation('roles');
         }
+        $this->rolesToSync = [];
     }
 }
