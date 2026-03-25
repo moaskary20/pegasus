@@ -18,6 +18,9 @@ final class YoutubeIframe
         }
 
         $params = [
+            // إخفاء شريط تحكم اليوتيوب الافتراضي (يشمل أيقونات تؤدي لمشاركة / مشاهدة لاحقاً من داخل المشغّل)
+            'controls' => 0,
+            'fs' => 0,
             'modestbranding' => 1,
             'rel' => 0,
             'iv_load_policy' => 3,

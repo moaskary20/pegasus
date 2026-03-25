@@ -95,9 +95,12 @@ class _LessonPlayerScreenState extends State<LessonPlayerScreen> {
         flags: YoutubePlayerFlags(
           autoPlay: true,
           mute: false,
-          controlsVisibleAtStart: true,
+          hideControls: true,
+          controlsVisibleAtStart: false,
           enableCaption: false,
           startAt: initialPosition,
+          disableDragSeek: true,
+          hideThumbnail: false,
         ),
       );
     } else {
@@ -501,11 +504,7 @@ class _LessonPlayerScreenState extends State<LessonPlayerScreen> {
     }
 
     if (_isYoutube && _youtubeController != null) {
-      return YoutubePlayer(
-        controller: _youtubeController!,
-        showVideoProgressIndicator: true,
-        progressIndicatorColor: AppTheme.primary,
-      );
+      return _LessonYoutubeMinimalControls(controller: _youtubeController!);
     }
 
     if (_videoController != null) {
@@ -559,6 +558,147 @@ class _LessonPlayerScreenState extends State<LessonPlayerScreen> {
           icon: const Icon(Icons.open_in_new_rounded),
           label: const Text('فتح الفيديو'),
           style: OutlinedButton.styleFrom(foregroundColor: Colors.white),
+        ),
+      ],
+    );
+  }
+}
+
+/// شريط تحكم مبسّط: تشغيل/إيقاف ومستوى الصوت فقط.
+/// مع [hideControls] على المشغّل يُخفى شريط الحزمة (تقدّم، سرعة، ملء الشاشة) ولا يُضاف Share/Watch later من واجهة الحزمة.
+class _LessonYoutubeMinimalControls extends StatefulWidget {
+  const _LessonYoutubeMinimalControls({required this.controller});
+
+  final YoutubePlayerController controller;
+
+  @override
+  State<_LessonYoutubeMinimalControls> createState() => _LessonYoutubeMinimalControlsState();
+}
+
+class _LessonYoutubeMinimalControlsState extends State<_LessonYoutubeMinimalControls> {
+  late double _volumeSlider;
+
+  @override
+  void initState() {
+    super.initState();
+    _volumeSlider = (widget.controller.value.volume.clamp(0, 100)) / 100.0;
+    widget.controller.addListener(_onController);
+  }
+
+  void _onController() {
+    if (mounted) {
+      setState(() {
+        _volumeSlider = (widget.controller.value.volume.clamp(0, 100)) / 100.0;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onController);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = widget.controller;
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        YoutubePlayer(
+          controller: c,
+          showVideoProgressIndicator: false,
+        ),
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: ListenableBuilder(
+            listenable: c,
+            builder: (context, _) {
+              final v = c.value;
+              final muted = v.volume == 0 || _volumeSlider < 0.01;
+              return DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.78),
+                      Colors.black.withValues(alpha: 0.4),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(4, 12, 4, 4),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          iconSize: 44,
+                          color: Colors.white,
+                          icon: Icon(
+                            v.isPlaying ? Icons.pause_circle_filled_rounded : Icons.play_circle_filled_rounded,
+                          ),
+                          onPressed: () {
+                            if (v.isPlaying) {
+                              c.pause();
+                            } else {
+                              c.play();
+                            }
+                          },
+                        ),
+                        Expanded(
+                          child: SliderTheme(
+                            data: SliderTheme.of(context).copyWith(
+                              trackHeight: 3,
+                              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 5),
+                              overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
+                            ),
+                            child: Slider(
+                              value: _volumeSlider.clamp(0.0, 1.0),
+                              activeColor: Colors.white,
+                              inactiveColor: Colors.white30,
+                              onChanged: (x) {
+                                setState(() => _volumeSlider = x);
+                                final vol = (x * 100).round();
+                                c.setVolume(vol);
+                                if (vol > 0) {
+                                  c.unMute();
+                                } else {
+                                  c.mute();
+                                }
+                              },
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          color: Colors.white,
+                          tooltip: muted ? 'إلغاء كتم' : 'كتم',
+                          icon: Icon(
+                            muted ? Icons.volume_off_rounded : Icons.volume_up_rounded,
+                            size: 26,
+                          ),
+                          onPressed: () {
+                            if (muted) {
+                              c.setVolume(100);
+                              c.unMute();
+                              setState(() => _volumeSlider = 1.0);
+                            } else {
+                              c.mute();
+                              setState(() => _volumeSlider = 0);
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
         ),
       ],
     );
