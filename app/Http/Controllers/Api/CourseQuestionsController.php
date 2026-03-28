@@ -43,6 +43,8 @@ class CourseQuestionsController extends Controller
         $canAccess = false;
         if ($isEnrolled && $user) {
             $canAccess = $this->accessService->canAccessLesson($user, $lesson);
+        } elseif (! $user) {
+            $canAccess = $this->accessService->canAnonymousUserAccessLesson($lesson);
         } else {
             $canAccess = (bool) ($lesson->is_free ?? false) || (bool) ($lesson->is_free_preview ?? false);
         }

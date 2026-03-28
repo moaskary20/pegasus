@@ -83,6 +83,8 @@ class PlatformSettings extends Page
             
             $this->settings[$setting->key] = $value;
         }
+
+        $this->settings['allow_anonymous_lesson_preview'] = $this->settings['allow_anonymous_lesson_preview'] ?? false;
     }
     
     public function setActiveTab(string $tab): void
@@ -94,6 +96,7 @@ class PlatformSettings extends Page
     {
         $keys = [
             'max_devices_per_account', 'max_views_per_lesson', 'enforce_lesson_order',
+            'allow_anonymous_lesson_preview',
             'require_lesson_completion', 'enable_video_watermark', 'watermark_text',
             'prevent_video_download', 'prevent_screen_capture', 'enable_playback_speed',
             'default_video_quality', 'enable_video_resume'
@@ -288,7 +291,7 @@ class PlatformSettings extends Page
                 [
                     'value' => (string) $value,
                     'group' => $group,
-                    'type' => $existing?->type ?? (str_ends_with($key, '_enabled') ? 'boolean' : 'string'),
+                    'type' => $existing?->type ?? (str_ends_with($key, '_enabled') || $key === 'allow_anonymous_lesson_preview' ? 'boolean' : 'string'),
                     'description' => $existing?->description ?? '',
                 ]
             );

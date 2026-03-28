@@ -12,11 +12,19 @@ use App\Models\VideoProgress;
 class LessonAccessService
 {
     /**
-     * Check if a user can access a lesson
-     * Checks enrollment, prerequisite lessons, and unlock settings
+     * زائر بدون حساب: لا يُسمح بمشاهدة دروس المعاينة إلا إذا فُعّل إعداد المنصة allow_anonymous_lesson_preview.
      */
+    public function canAnonymousUserAccessLesson(Lesson $lesson): bool
+    {
+        if (! (bool) PlatformSetting::get('allow_anonymous_lesson_preview', false)) {
+            return false;
+        }
+
+        return (bool) ($lesson->is_free ?? false) || (bool) ($lesson->is_free_preview ?? false);
+    }
+
     /**
-     * هل يُسمح ببث فيديو الدرس (مسجّل أو زائر لدرس مجاني/معاينة).
+     * هل يُسمح ببث فيديو الدرس (مسجّل أو زائر عند تفعيل معاينة مجهولة).
      */
     public function canStreamLessonVideo(?User $user, Course $course, Lesson $lesson): bool
     {
@@ -31,6 +39,10 @@ class LessonAccessService
 
         if ($isEnrolled) {
             return $this->canAccessLesson($user, $lesson);
+        }
+
+        if (! $user) {
+            return $this->canAnonymousUserAccessLesson($lesson);
         }
 
         return (bool) ($lesson->is_free ?? false) || (bool) ($lesson->is_free_preview ?? false);

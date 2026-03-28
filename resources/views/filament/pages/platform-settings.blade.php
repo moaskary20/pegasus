@@ -495,6 +495,17 @@
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
+
+                    <div class="toggle-group">
+                        <div class="toggle-info">
+                            <span class="toggle-label">السماح بمشاهدة دروس «معاينة مجانية» دون تسجيل دخول</span>
+                            <span class="toggle-hint">عند الإيقاف (الافتراضي): أي زائر يُمنع من رابط الدرس حتى يسجّل ويشترك. عند التفعيل: الدروس المعلَّمة كمعاينة تُعرض للجميع.</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" wire:model="settings.allow_anonymous_lesson_preview">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
                     
                     <div class="toggle-group">
                         <div class="toggle-info">

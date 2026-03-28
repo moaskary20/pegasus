@@ -880,9 +880,14 @@ Route::get('/courses/{course:slug}/lessons/{lesson}', function (Course $course, 
         }
     }
 
-    if (!$isEnrolled) {
+    if (! auth()->check()) {
+        $canAccess = app(\App\Services\LessonAccessService::class)->canAnonymousUserAccessLesson($lesson);
+        if (! $canAccess) {
+            $accessMessage = 'يجب تسجيل الدخول والاشتراك في الدورة لمشاهدة هذا الدرس';
+        }
+    } elseif (! $isEnrolled) {
         $canAccess = (bool) ($lesson->is_free ?? false) || (bool) ($lesson->is_free_preview ?? false);
-        if (!$canAccess) {
+        if (! $canAccess) {
             $accessMessage = 'يجب الاشتراك في الدورة لمشاهدة هذا الدرس';
         }
     }
