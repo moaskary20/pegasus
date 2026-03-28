@@ -309,12 +309,24 @@ class Course extends Model
     }
 
     /**
+     * هل توجد خطط اشتراك إضافية (شهري / يومي)؟
+     * إن لم تُعرّف أسعاراً لها يُعامل الشراء كدفعة واحدة فقط (سعر العرض أو الافتراضي) دون نافذة اختيار الخطة.
+     */
+    public function offersSubscriptionPlanChoice(): bool
+    {
+        $monthly = $this->price_monthly !== null ? (float) $this->price_monthly : null;
+        $daily = $this->price_daily !== null ? (float) $this->price_daily : null;
+
+        return ($monthly !== null && $monthly > 0) || ($daily !== null && $daily > 0);
+    }
+
+    /**
      * Get price for a specific subscription type
      */
     public function getPriceForSubscriptionType(string $type): float
     {
         return match ($type) {
-            'once' => (float) ($this->price_once ?? $this->price ?? 0),
+            'once' => (float) ($this->offer_price ?? $this->price_once ?? $this->price ?? 0),
             'monthly' => (float) ($this->price_monthly ?? $this->price ?? 0),
             'daily' => (float) ($this->price_daily ?? $this->price ?? 0),
             default => (float) ($this->price ?? 0),

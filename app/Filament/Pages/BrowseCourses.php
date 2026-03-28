@@ -144,7 +144,10 @@ class BrowseCourses extends Page implements HasTable
                         if (!in_array($record->id, $cart)) {
                             $cart[] = $record->id;
                             Session::put('cart', $cart);
-                            
+                            $types = Session::get('cart_subscription_types', []);
+                            $types[(int) $record->id] = 'once';
+                            Session::put('cart_subscription_types', $types);
+
                             \Filament\Notifications\Notification::make()
                                 ->title('تمت الإضافة')
                                 ->body('تمت إضافة الدورة إلى السلة')

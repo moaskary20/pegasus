@@ -162,6 +162,7 @@ class CoursesController extends Controller
             'price_once' => $course->price_once !== null ? round((float) $course->price_once, 2) : null,
             'price_monthly' => $course->price_monthly !== null ? round((float) $course->price_monthly, 2) : null,
             'price_daily' => $course->price_daily !== null ? round((float) $course->price_daily, 2) : null,
+            'offers_subscription_plans' => $course->offersSubscriptionPlanChoice(),
             'rating' => round((float) ($course->rating ?? 0), 1),
             'reviews_count' => (int) ($course->reviews_count ?? 0),
             'students_count' => (int) ($course->students_count ?? 0),

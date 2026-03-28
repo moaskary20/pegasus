@@ -87,7 +87,8 @@
                         <div class="divide-y">
                             @foreach($courseCart as $c)
                                 @php
-                                    $coursePrice = $c->getPriceForSubscriptionType($subscriptionType);
+                                    $lineSubscriptionType = $cartSubscriptionTypes[(int) $c->id] ?? 'once';
+                                    $coursePrice = $c->getPriceForSubscriptionType($lineSubscriptionType);
                                 @endphp
                                 <div class="p-5 flex items-start gap-4">
                                     <a href="{{ route('site.course.show', $c) }}" class="w-28 h-20 rounded-2xl bg-slate-100 overflow-hidden shrink-0">
@@ -108,7 +109,7 @@
                                         <div class="mt-3 flex items-center justify-between gap-3">
                                             <div class="text-xs text-slate-500">⭐ {{ number_format((float) ($c->rating ?? 0), 1) }}</div>
                                             <div class="text-right">
-                                                <div class="text-xs text-slate-400">{{ getSubscriptionLabel($subscriptionType) }}</div>
+                                                <div class="text-xs text-slate-400">{{ getSubscriptionLabel($lineSubscriptionType) }}</div>
                                                 <div class="text-sm font-extrabold text-slate-900">
                                                     {{ $coursePrice > 0 ? number_format($coursePrice, 2) . ' ج.م' : 'مجاني' }}
                                                 </div>

@@ -293,8 +293,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> with SingleTick
   }
 
   void _showAddToCartModal(CourseDetailItem c) {
-    final hasMultiplePrices = (c.priceOnce != null && c.priceMonthly != null) || (c.priceDaily != null);
-    if (!hasMultiplePrices) {
+    final hasMonthly = c.priceMonthly != null && c.priceMonthly! > 0;
+    final hasDaily = c.priceDaily != null && c.priceDaily! > 0;
+    if (!hasMonthly && !hasDaily) {
       _addCourseToCart(c, 'once');
       return;
     }
@@ -568,7 +569,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> with SingleTick
                 ],
               ],
             ),
-            if (c.priceMonthly != null || c.priceDaily != null) ...[
+            if ((c.priceMonthly != null && c.priceMonthly! > 0) || (c.priceDaily != null && c.priceDaily! > 0)) ...[
               const SizedBox(height: 10),
               Wrap(
                 spacing: 12,
@@ -576,9 +577,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> with SingleTick
                 children: [
                   if (c.priceOnce != null)
                     _PriceChip(label: 'اشتراك واحد (120 يوم)', price: c.priceOnce!, isPrimary: true),
-                  if (c.priceMonthly != null)
+                  if (c.priceMonthly != null && c.priceMonthly! > 0)
                     _PriceChip(label: 'شهري', price: c.priceMonthly!, isPrimary: false),
-                  if (c.priceDaily != null)
+                  if (c.priceDaily != null && c.priceDaily! > 0)
                     _PriceChip(label: 'يومي (درس واحد)', price: c.priceDaily!, isPrimary: false),
                 ],
               ),
