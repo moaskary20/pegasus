@@ -52,6 +52,8 @@
         </div>
     @endif
 
+    @include('partials.print-screen-deterrent')
+
     {{-- في local: لا تثبيط (زر أيمن، نسخ، اختصارات). في الإنتاج: حزمة site-screen-deterrents --}}
     @unless(app()->environment('local'))
         @include('partials.site-screen-deterrents')

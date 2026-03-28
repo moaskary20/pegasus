@@ -55,19 +55,6 @@
             return !!target.closest('input, textarea, select, [contenteditable="true"]');
         }
 
-        function isPrintScreenKey(e) {
-            return e.key === 'PrintScreen' || e.code === 'PrintScreen';
-        }
-
-        function warnPrintScreen() {
-            try {
-                if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
-                    navigator.clipboard.writeText('').catch(function () {});
-                }
-            } catch (err) {}
-            alert('ممنوع تصوير الشاشة');
-        }
-
         document.addEventListener('contextmenu', function (e) {
             e.preventDefault();
         }, { capture: true });
@@ -112,15 +99,6 @@
             }
             if ((e.ctrlKey || e.metaKey) && (e.key === 'p' || e.key === 'P')) {
                 e.preventDefault();
-            }
-            if (isPrintScreenKey(e)) {
-                e.preventDefault();
-            }
-        }, { capture: true });
-
-        document.addEventListener('keyup', function (e) {
-            if (isPrintScreenKey(e)) {
-                warnPrintScreen();
             }
         }, { capture: true });
 
