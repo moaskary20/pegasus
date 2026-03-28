@@ -49,12 +49,12 @@ class CheckPaymentSettings extends Command
         $this->newLine();
         $this->info('طرق الدفع المفعّلة: ' . implode(', ', array_keys($methods) ?: ['لا يوجد']));
 
-        $ok = ! empty($settings['kashier_merchant_id'] ?? '') && ! empty($settings['kashier_encryption_key'] ?? '');
+        $ok = ! empty($settings['kashier_merchant_id'] ?? '') && ! empty($settings['kashier_api_key'] ?? '');
         $this->newLine();
         if ($ok && ($settings['kashier_enabled'] ?? false)) {
             $this->info('✓ إعدادات كاشير مكتملة وجاهزة للاستخدام.');
         } elseif ($settings['kashier_enabled'] ?? false) {
-            $this->warn('⚠ كاشير مفعّل لكن بيانات التاجر ناقصة (merchant_id أو encryption_key).');
+            $this->warn('⚠ كاشير مفعّل لكن بيانات التاجر ناقصة (merchant_id أو api_key).');
         } else {
             $this->comment('كاشير غير مفعّل في الإعدادات.');
         }

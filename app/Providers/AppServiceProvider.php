@@ -18,6 +18,7 @@ use App\Observers\OrderObserver;
 use App\Listeners\CompleteKashierOrder;
 use Asciisd\Kashier\Events\KashierResponseHandled;
 use Filament\Auth\Http\Responses\Contracts\LogoutResponse as LogoutResponseContract;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -63,5 +64,9 @@ class AppServiceProvider extends ServiceProvider
         Order::observe(OrderObserver::class);
 
         Event::listen(KashierResponseHandled::class, CompleteKashierOrder::class);
+
+        Event::listen(Login::class, function (Login $event): void {
+            $event->user->forceFill(['last_login_at' => now()])->saveQuietly();
+        });
     }
 }

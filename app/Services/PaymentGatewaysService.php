@@ -136,14 +136,15 @@ class PaymentGatewaysService
 
         $mid = trim((string) ($settings['kashier_merchant_id'] ?? ''));
         $apiKey = trim((string) ($settings['kashier_api_key'] ?? ''));
-        $encryptionKey = trim((string) ($settings['kashier_encryption_key'] ?? ''));
         $mode = (string) ($settings['kashier_mode'] ?? 'test');
 
-        if ($mid === '' || $encryptionKey === '') {
+        // توقيع صفحة الدفع واستجابة كاشير يعتمدان على API Key (سر التوقيع)، وليس مفتاح التشفير الاختياري.
+        // انظر: Asciisd\Kashier\KashierService::generateOrderHash و config('kashier.apikey').
+        if ($mid === '' || $apiKey === '') {
             self::$lastFailureReason = 'missing_credentials';
             Log::warning('Kashier: بيانات غير مكتملة في platform_settings', [
                 'has_mid' => $mid !== '',
-                'has_encryption_key' => $encryptionKey !== '',
+                'has_api_key' => $apiKey !== '',
                 'order_id' => $order->id,
                 'keys_from_db' => array_keys($settings),
             ]);
@@ -152,7 +153,7 @@ class PaymentGatewaysService
         }
 
         Config::set('kashier.mid', $mid);
-        Config::set('kashier.apikey', $encryptionKey);
+        Config::set('kashier.apikey', $apiKey);
         Config::set('kashier.secretKey', $apiKey);
         Config::set('kashier.mode', $mode);
         Config::set('kashier.currency', 'EGP');
@@ -175,7 +176,7 @@ class PaymentGatewaysService
             $orderId = $order->order_number ?: (string) $order->id;
             $currency = (string) config('kashier.currency');
             $path = "/?payment={$mid}.{$orderId}.{$amountStr}.{$currency}";
-            $hash = hash_hmac('sha256', $path, $encryptionKey, false);
+            $hash = hash_hmac('sha256', $path, $apiKey, false);
 
             $callbackUrl = URL::to('/kashier/response');
             $webhookUrl = URL::to('/kashier/webhook');

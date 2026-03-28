@@ -1425,12 +1425,12 @@
                             <div class="form-group full-width">
                                 <label>مفتاح API (API Key)</label>
                                 <input type="text" wire:model="settings.kashier_api_key" placeholder="أدخل API Key">
-                                <span class="hint">مفتاح الوصول للتكامل</span>
+                                <span class="hint">مطلوب: نفس مفتاح التوقيع في لوحة كاشير — يُستخدم لـ HMAC لصفحة الدفع واستجابة كاشير (حزمة asciisd/kashier).</span>
                             </div>
                             <div class="form-group full-width">
                                 <label>مفتاح التشفير (Encryption Key)</label>
-                                <input type="password" wire:model="settings.kashier_encryption_key" placeholder="أدخل Encryption Key">
-                                <span class="hint">المفتاح السري لـ HMAC - احتفظ به بأمان</span>
+                                <input type="password" wire:model="settings.kashier_encryption_key" placeholder="اختياري — إن وُجد في لوحة كاشير">
+                                <span class="hint">اختياري؛ التحقق من الدفع يعتمد على API Key أعلاه. احتفظه بأمان إن استخدمته لاحقاً.</span>
                             </div>
                         </div>
                     @endif
