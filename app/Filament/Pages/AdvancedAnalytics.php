@@ -11,6 +11,7 @@ use BackedEnum;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class AdvancedAnalytics extends Page
 {
@@ -43,7 +44,9 @@ class AdvancedAnalytics extends Page
             'total_courses' => Course::count(),
             'total_enrollments' => Enrollment::count(),
             'total_revenue' => Order::where('status', 'paid')->sum('total'),
-            'active_users_today' => User::whereDate('last_login_at', today())->count(),
+            'active_users_today' => Schema::hasColumn('users', 'last_login_at')
+                ? User::whereDate('last_login_at', today())->count()
+                : 0,
             'new_users_this_month' => User::whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->count(),
         ];
     }
