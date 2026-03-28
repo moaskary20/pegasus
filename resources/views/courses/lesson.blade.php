@@ -75,10 +75,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 </svg>
             </div>
             <h1 class="text-xl font-extrabold text-slate-900 mb-2">{{ $lesson->title }}</h1>
-            <p class="text-slate-700 mb-6">{{ $accessMessage }}</p>
-            <a href="{{ route('site.course.subscribe', $course) }}" class="inline-flex items-center justify-center px-6 py-3 rounded-2xl bg-[#3d195c] text-white font-extrabold hover:bg-[#3d195c]/95 transition">
-                اشترك في الدورة لمشاهدة الدرس
-            </a>
+            <p class="text-slate-700 mb-6">{{ $accessMessage ?? 'يجب الاشتراك في الدورة لمشاهدة هذا الدرس.' }}</p>
+            <div class="flex flex-col sm:flex-row gap-3 justify-center items-center">
+                @guest
+                    <a href="{{ route('site.auth') }}?intended={{ urlencode(route('site.course.subscribe', $course)) }}" class="inline-flex items-center justify-center px-6 py-3 rounded-2xl border-2 border-[#3d195c] text-[#3d195c] font-extrabold hover:bg-[#3d195c]/5 transition">
+                        تسجيل الدخول أولاً
+                    </a>
+                @endguest
+                <a href="{{ route('site.course.subscribe', $course) }}" class="inline-flex items-center justify-center px-6 py-3 rounded-2xl bg-[#3d195c] text-white font-extrabold hover:bg-[#3d195c]/95 transition">
+                    اشترك في الدورة لمشاهدة الدرس
+                </a>
+            </div>
         </div>
     @else
         {{-- محتوى الدرس --}}

@@ -89,6 +89,38 @@
 
     {{-- عمود الصورة ثابت | تفاصيل الدورة تتمرر أسفله --}}
     <div class="max-w-7xl mx-auto px-4 py-10" style="direction: rtl;">
+        @if(!auth()->check())
+            <div class="mb-8 rounded-2xl border-2 border-amber-400 bg-amber-50 px-4 py-4 sm:px-6 sm:py-5 shadow-sm">
+                <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div class="text-right min-w-0">
+                        <p class="text-sm font-extrabold text-amber-950">أنت غير مسجّل الدخول. للوصول إلى جميع الدروس والمحتوى يجب تسجيل الدخول ثم الاشتراك في الدورة.</p>
+                        <p class="mt-1 text-xs text-amber-900/90">لن يُفتح لك إلا الدروس المحددة كمعاينة مجانية حتى تُكمِل الاشتراك.</p>
+                    </div>
+                    <div class="flex flex-wrap shrink-0 gap-2 justify-end">
+                        <a href="{{ route('site.auth') }}?intended={{ urlencode(route('site.course.subscribe', $course)) }}" class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-[#3d195c] text-white text-sm font-extrabold hover:bg-[#3d195c]/95 transition">
+                            تسجيل الدخول
+                        </a>
+                        <a href="{{ route('site.course.subscribe', $course) }}" class="inline-flex items-center justify-center px-4 py-2.5 rounded-xl border-2 border-amber-800 bg-white text-amber-950 text-sm font-extrabold hover:bg-amber-100/80 transition">
+                            الاشتراك في الدورة
+                        </a>
+                    </div>
+                </div>
+            </div>
+        @elseif(!$isEnrolled)
+            <div class="mb-8 rounded-2xl border-2 border-amber-400 bg-amber-50 px-4 py-4 sm:px-6 sm:py-5 shadow-sm">
+                <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div class="text-right min-w-0">
+                        <p class="text-sm font-extrabold text-amber-950">أنت غير مشترك في هذه الدورة. اشترك للوصول إلى جميع الدروس والمحتوى.</p>
+                        <p class="mt-1 text-xs text-amber-900/90">ستُفتح لك الدروس فور إتمام الاشتراك.</p>
+                    </div>
+                    <div class="flex shrink-0 justify-end">
+                        <a href="{{ route('site.course.subscribe', $course) }}" class="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-[#3d195c] text-white text-sm font-extrabold hover:bg-[#3d195c]/95 transition">
+                            اشترك الآن
+                        </a>
+                    </div>
+                </div>
+            </div>
+        @endif
         <div class="grid lg:grid-cols-12 gap-8 items-start">
             {{-- عمود الصورة والسعر (ثابت عند التمرير) - فوق وأولاً على اليمين --}}
             <aside id="aside-price" class="lg:col-span-4 lg:order-1 order-2 lg:sticky lg:top-4 self-start">

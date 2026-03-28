@@ -16,11 +16,13 @@ use Illuminate\Validation\Rules\Password as PasswordRule;
 
 class AuthController extends Controller
 {
-    public function show()
+    public function show(Request $request)
     {
         if (Auth::check()) {
             return redirect()->intended(url('/admin'));
         }
+
+        $this->storeIntendedUrlIfValid($request->query('intended'));
 
         return view('pages.auth');
     }
@@ -39,7 +41,7 @@ class AuthController extends Controller
         ], (bool) ($validated['remember'] ?? false))) {
             $request->session()->regenerate();
 
-            return redirect(url('/'))->with('notice', [
+            return redirect()->intended(route('site.home'))->with('notice', [
                 'type' => 'success',
                 'message' => 'تم تسجيل الدخول بنجاح',
             ]);
@@ -177,5 +179,24 @@ class AuthController extends Controller
         return back()->withErrors([
             'email' => __($status),
         ])->withInput($request->only('email'));
+    }
+
+    /**
+     * حفظ عنوان العودة بعد تسجيل الدخول (نفس النطاق فقط — منع open redirect).
+     */
+    private function storeIntendedUrlIfValid(mixed $url): void
+    {
+        if (! is_string($url) || $url === '') {
+            return;
+        }
+        $url = urldecode($url);
+        if (! str_starts_with($url, 'http://') && ! str_starts_with($url, 'https://')) {
+            return;
+        }
+        $base = rtrim((string) config('app.url'), '/');
+        if ($url !== $base && ! str_starts_with($url, $base.'/')) {
+            return;
+        }
+        session(['url.intended' => $url]);
     }
 }
