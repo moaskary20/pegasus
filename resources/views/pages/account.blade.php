@@ -106,7 +106,9 @@
                         <label class="block text-sm font-semibold text-slate-700 mb-2">رقم الهاتف</label>
                         <input type="tel" name="phone" value="{{ old('phone', $user?->phone) }}"
                             class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-[#2c004d] focus:ring-2 focus:ring-[#2c004d]/20 outline-none transition"
-                            placeholder="أدخل رقم هاتفك">
+                            placeholder="01012345678"
+                            inputmode="numeric" autocomplete="tel">
+                        <p class="text-xs text-slate-500 mt-1">إن وُجد: 11 رقماً يبدأ بـ 010 أو 011 أو 012 أو 015</p>
                         @error('phone')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                     </div>
 

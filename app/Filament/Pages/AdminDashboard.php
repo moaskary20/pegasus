@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Concerns\DeniesPureInstructorAccess;
 use App\Models\Category;
 use App\Models\Course;
 use App\Models\Enrollment;
@@ -14,6 +15,8 @@ use Illuminate\Support\Facades\DB;
 
 class AdminDashboard extends Page
 {
+    use DeniesPureInstructorAccess;
+
     protected static ?string $navigationLabel = 'لوحة التحكم';
     
     protected static ?string $title = 'لوحة التحكم';
@@ -23,6 +26,11 @@ class AdminDashboard extends Page
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedHome;
 
     protected string $view = 'filament.pages.admin-dashboard';
+
+    public function mount(): void
+    {
+        abort_unless(static::canAccess(), 403);
+    }
     
     public function getStatsProperty(): array
     {

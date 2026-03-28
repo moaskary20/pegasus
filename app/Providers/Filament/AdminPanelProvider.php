@@ -2,6 +2,9 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\AdminDashboard;
+use App\Filament\Resources\Courses\CourseResource;
+use Filament\Facades\Filament;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -29,6 +32,14 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->homeUrl(function (): string {
+                $user = Filament::auth()->user();
+                if ($user && $user->hasRole('instructor') && ! $user->hasRole('admin')) {
+                    return CourseResource::getUrl();
+                }
+
+                return AdminDashboard::getUrl();
+            })
             ->brandName('Pegasus Academy - لوحة التحكم')
             ->colors([
                 'primary' => Color::Amber,
@@ -44,11 +55,25 @@ class AdminPanelProvider extends PanelProvider
             )
             ->renderHook(
                 PanelsRenderHook::TOPBAR_END,
-                fn () => view('filament.hooks.notifications-bell'),
+                function () {
+                    $user = Filament::auth()->user();
+                    if ($user && $user->hasRole('instructor') && ! $user->hasRole('admin')) {
+                        return null;
+                    }
+
+                    return view('filament.hooks.notifications-bell');
+                },
             )
             ->renderHook(
                 PanelsRenderHook::TOPBAR_END,
-                fn () => view('filament.hooks.reminders-bell'),
+                function () {
+                    $user = Filament::auth()->user();
+                    if ($user && $user->hasRole('instructor') && ! $user->hasRole('admin')) {
+                        return null;
+                    }
+
+                    return view('filament.hooks.reminders-bell');
+                },
             )
             ->renderHook(
                 PanelsRenderHook::BODY_END,

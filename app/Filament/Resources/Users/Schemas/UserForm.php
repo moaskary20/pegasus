@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Users\Schemas;
 
+use App\Rules\EgyptianMobilePhone;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
@@ -37,8 +38,10 @@ class UserForm
                     ->label('رقم الهاتف')
                     ->tel()
                     ->maxLength(20)
-                    ->placeholder('01xxxxxxxxx')
+                    ->placeholder('01012345678')
+                    ->rules([new EgyptianMobilePhone(allowEmpty: true)])
                     ->unique(ignoreRecord: true)
+                    ->helperText('11 رقماً يبدأ بـ 010 أو 011 أو 012 أو 015 (اتركه فارغاً إن لم يُحدَّد).')
                     ->validationMessages([
                         'unique' => 'هذا رقم الهاتف مسجّل مسبقاً.',
                     ]),

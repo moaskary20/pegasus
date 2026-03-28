@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\PlatformSetting;
 use App\Models\User;
+use App\Rules\EgyptianMobilePhone;
 use App\Rules\UniqueNormalizedPhone;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -112,7 +113,7 @@ class AuthController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'phone' => ['required', 'string', 'max:20', new UniqueNormalizedPhone],
+            'phone' => ['required', 'string', 'max:20', new EgyptianMobilePhone, new UniqueNormalizedPhone],
             'password' => ['required', 'string', 'confirmed', Password::defaults()],
             'user_type' => ['required', 'string', 'in:student,instructor'],
         ], [
@@ -201,7 +202,7 @@ class AuthController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$user->id],
-            'phone' => ['nullable', 'string', 'max:20', new UniqueNormalizedPhone($user->id)],
+            'phone' => ['nullable', 'string', 'max:20', new EgyptianMobilePhone(allowEmpty: true), new UniqueNormalizedPhone($user->id)],
             'city' => ['nullable', 'string', 'max:100'],
             'job' => ['nullable', 'string', 'max:100'],
             'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,gif,png', 'max:2048'],

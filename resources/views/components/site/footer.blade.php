@@ -19,7 +19,7 @@
         ])
         ->orderBy('sort_order')
         ->orderBy('name')
-        ->limit(8)
+        ->limit(4)
         ->get();
 @endphp
 

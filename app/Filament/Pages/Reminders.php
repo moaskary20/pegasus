@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Concerns\DeniesPureInstructorAccess;
 use App\Models\Reminder;
 use App\Models\ReminderSetting;
 use App\Services\ReminderService;
@@ -11,6 +12,8 @@ use Filament\Support\Icons\Heroicon;
 
 class Reminders extends Page
 {
+    use DeniesPureInstructorAccess;
+
     protected static ?string $navigationLabel = 'التذكيرات';
     
     protected static ?string $title = 'التذكيرات';
@@ -20,6 +23,11 @@ class Reminders extends Page
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedClock;
     
     protected string $view = 'filament.pages.reminders';
+
+    public function mount(): void
+    {
+        abort_unless(static::canAccess(), 403);
+    }
     
     public static function getNavigationGroup(): ?string
     {

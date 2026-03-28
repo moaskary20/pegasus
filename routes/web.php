@@ -13,6 +13,8 @@ use App\Models\Enrollment;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\User;
+use App\Rules\EgyptianMobilePhone;
+use App\Rules\UniqueNormalizedPhone;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -130,11 +132,18 @@ Route::put('/account/update', function (Request $request) {
     }
     
     $user = auth()->user();
+
+    $rawPhone = $request->input('phone');
+    $request->merge([
+        'phone' => ($rawPhone === null || trim((string) $rawPhone) === '')
+            ? null
+            : User::normalizePhone(trim((string) $rawPhone)),
+    ]);
     
     $validated = $request->validate([
         'name' => ['required', 'string', 'max:255'],
         'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
-        'phone' => ['nullable', 'string', 'max:20'],
+        'phone' => ['nullable', 'string', 'max:20', new EgyptianMobilePhone(allowEmpty: true), new UniqueNormalizedPhone($user->id)],
         'city' => ['nullable', 'string', 'max:100'],
         'job' => ['nullable', 'string', 'max:100'],
         'skills' => ['nullable', 'array'],

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Site;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Rules\EgyptianMobilePhone;
 use App\Rules\UniqueNormalizedPhone;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Http\Request;
@@ -64,7 +65,7 @@ class AuthController extends Controller
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'phone' => ['required', 'string', 'max:20', new UniqueNormalizedPhone],
+            'phone' => ['required', 'string', 'max:20', new EgyptianMobilePhone, new UniqueNormalizedPhone],
             'password' => ['required', 'string', 'confirmed', PasswordRule::defaults()],
             'user_type' => ['required', 'string', 'in:student,instructor'],
         ], [

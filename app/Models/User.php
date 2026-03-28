@@ -85,6 +85,14 @@ class User extends Authenticatable implements FilamentUser
     }
 
     /**
+     * رقم مصري محمول: 11 رقم يبدأ بـ 010 أو 011 أو 012 أو 015 (بعد التطبيع).
+     */
+    public static function isValidEgyptianMobile(string $normalizedDigits): bool
+    {
+        return (bool) preg_match('/^01[0125][0-9]{8}$/', $normalizedDigits);
+    }
+
+    /**
      * Check if user can access Filament panel
      */
     public function canAccessPanel(Panel $panel): bool

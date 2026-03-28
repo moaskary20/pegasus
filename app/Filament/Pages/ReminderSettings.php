@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Concerns\DeniesPureInstructorAccess;
 use App\Models\Reminder;
 use App\Models\ReminderSetting;
 use BackedEnum;
@@ -19,6 +20,11 @@ class ReminderSettings extends Page
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCog6Tooth;
 
     protected string $view = 'filament.pages.reminder-settings';
+
+    public function mount(): void
+    {
+        abort_unless(static::canAccess(), 403);
+    }
     
     public static function getNavigationGroup(): ?string
     {

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Concerns\DeniesPureInstructorAccess;
 use BackedEnum;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
@@ -10,6 +11,7 @@ use Livewire\WithPagination;
 
 class Notifications extends Page
 {
+    use DeniesPureInstructorAccess;
     use WithPagination;
     
     protected static ?string $navigationLabel = 'الإشعارات';
@@ -29,12 +31,7 @@ class Notifications extends Page
     
     public function mount(): void
     {
-        //
-    }
-    
-    public static function shouldRegisterNavigation(): bool
-    {
-        return true; // Show in navigation
+        abort_unless(static::canAccess(), 403);
     }
     
     public static function getNavigationGroup(): ?string
