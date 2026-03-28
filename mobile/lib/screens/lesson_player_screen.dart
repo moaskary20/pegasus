@@ -609,6 +609,51 @@ class _LessonYoutubeMinimalControlsState extends State<_LessonYoutubeMinimalCont
           controller: c,
           showVideoProgressIndicator: false,
         ),
+        // يخفى بصرياً زر المشاركة وعلامة YouTube داخل iframe (لا تدعمها معاملات المشغّل بالكامل).
+        Positioned(
+          top: 0,
+          right: 0,
+          child: IgnorePointer(
+            child: Container(
+              width: 140,
+              height: 72,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topRight,
+                  end: Alignment.bottomLeft,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.92),
+                    Colors.black.withValues(alpha: 0.45),
+                    Colors.transparent,
+                  ],
+                  stops: const [0.0, 0.4, 1.0],
+                ),
+              ),
+            ),
+          ),
+        ),
+        Positioned(
+          right: 0,
+          bottom: 0,
+          child: IgnorePointer(
+            child: Container(
+              width: 168,
+              height: 96,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.bottomRight,
+                  end: Alignment.topLeft,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.92),
+                    Colors.black.withValues(alpha: 0.5),
+                    Colors.transparent,
+                  ],
+                  stops: const [0.0, 0.45, 1.0],
+                ),
+              ),
+            ),
+          ),
+        ),
         Positioned(
           left: 0,
           right: 0,
