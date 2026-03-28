@@ -260,6 +260,28 @@
         .top-student-date { font-size: 11px; color: #9ca3af; }
         
         .pagination-wrapper { padding: 16px 20px; border-top: 1px solid #e5e7eb; }
+        /* Tailwind classes on Livewire pagination SVGs may not apply here — cap icon size */
+        .pagination-wrapper nav svg {
+            width: 1rem !important;
+            height: 1rem !important;
+            max-width: 1rem;
+            max-height: 1rem;
+            flex-shrink: 0;
+            vertical-align: middle;
+        }
+        .pagination-wrapper nav button:has(svg),
+        .pagination-wrapper nav span[aria-disabled] span:has(svg) {
+            padding: 0.375rem 0.5rem !important;
+            min-width: 2rem;
+            min-height: 2rem;
+            align-items: center;
+            justify-content: center;
+        }
+        .pagination-wrapper nav .flex.justify-between.flex-1 button,
+        .pagination-wrapper nav .flex.justify-between.flex-1 > span > span {
+            padding: 0.375rem 0.75rem !important;
+            font-size: 0.8125rem !important;
+        }
         
         .empty-state {
             text-align: center;
