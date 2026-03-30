@@ -115,14 +115,29 @@ class Conversation extends Model
     }
 
     /**
+     * محادثة يشارك فيها المستخدم فقط (لا يمكن لأي مستخدم آخر رؤيتها إلا إن كان مشاركاً).
+     */
+    public static function findForUser(int $conversationId, int $userId, array $with = []): ?self
+    {
+        $query = self::query()->forUser($userId);
+
+        if ($with !== []) {
+            $query->with($with);
+        }
+
+        return $query->find($conversationId);
+    }
+
+    /**
      * Get or create a private conversation between two users
      */
     public static function getOrCreatePrivate(int $userId1, int $userId2): self
     {
-        // Find existing private conversation
+        // محادثة خاصة بين شخصين فقط (لا تطابق محادثة جماعية خاطئة بنفس الزوج)
         $conversation = self::where('type', self::TYPE_PRIVATE)
-            ->whereHas('participants', fn($q) => $q->where('user_id', $userId1))
-            ->whereHas('participants', fn($q) => $q->where('user_id', $userId2))
+            ->has('participants', '=', 2)
+            ->whereHas('participants', fn ($q) => $q->where('user_id', $userId1))
+            ->whereHas('participants', fn ($q) => $q->where('user_id', $userId2))
             ->first();
         
         if ($conversation) {

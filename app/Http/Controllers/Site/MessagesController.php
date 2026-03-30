@@ -57,10 +57,9 @@ class MessagesController extends Controller
             return redirect(route('site.auth'));
         }
 
-        $conversation = Conversation::with(['users', 'participants'])->findOrFail($id);
-
-        if (!$conversation->hasParticipant(auth()->id())) {
-            abort(403);
+        $conversation = Conversation::findForUser($id, auth()->id(), ['users', 'participants']);
+        if (!$conversation) {
+            abort(404);
         }
 
         $this->markAsRead($conversation);
@@ -82,10 +81,9 @@ class MessagesController extends Controller
             return redirect(route('site.auth'));
         }
 
-        $conversation = Conversation::findOrFail($id);
-
-        if (!$conversation->hasParticipant(auth()->id())) {
-            abort(403);
+        $conversation = Conversation::findForUser($id, auth()->id());
+        if (!$conversation) {
+            abort(404);
         }
 
         $validated = $request->validate([

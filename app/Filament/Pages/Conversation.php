@@ -37,12 +37,9 @@ class Conversation extends Page
     public function mount(int $id): void
     {
         $this->conversationId = $id;
-        $this->conversation = ConversationModel::with(['users', 'participants'])
-            ->findOrFail($id);
-        
-        // Check if user is a participant
-        if (!$this->conversation->hasParticipant(auth()->id())) {
-            abort(403);
+        $this->conversation = ConversationModel::findForUser($id, auth()->id(), ['users', 'participants']);
+        if (!$this->conversation) {
+            abort(404);
         }
         
         $this->loadMessages();
@@ -85,7 +82,7 @@ class Conversation extends Page
         }
         
         $messageData = [
-            'conversation_id' => $this->conversationId,
+            'conversation_id' => $this->conversation->id,
             'user_id' => auth()->id(),
             'body' => trim($this->newMessage),
             'type' => Message::TYPE_TEXT,

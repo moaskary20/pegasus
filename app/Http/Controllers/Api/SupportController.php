@@ -102,6 +102,7 @@ class SupportController extends Controller
 
     /**
      * شكاوى واستفسارات المستخدم المسجل (للعرض في الموبايل).
+     * لا يُرجع إلا سجلات مرتبطة بهذا الحساب أو بطلبات ضيف بنفس البريد قبل التسجيل.
      */
     public function myComplaints(Request $request): JsonResponse
     {

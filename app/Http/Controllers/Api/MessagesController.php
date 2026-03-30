@@ -92,8 +92,8 @@ class MessagesController extends Controller
             return response()->json(['message' => 'Unauthenticated'], 401);
         }
 
-        $conversation = Conversation::with(['users', 'participants'])->find($id);
-        if (!$conversation || !$conversation->hasParticipant($user->id)) {
+        $conversation = Conversation::findForUser($id, $user->id, ['users', 'participants']);
+        if (!$conversation) {
             return response()->json(['message' => 'Conversation not found'], 404);
         }
 
@@ -155,8 +155,8 @@ class MessagesController extends Controller
             return response()->json(['message' => 'Unauthenticated'], 401);
         }
 
-        $conversation = Conversation::find($id);
-        if (!$conversation || !$conversation->hasParticipant($user->id)) {
+        $conversation = Conversation::findForUser($id, $user->id);
+        if (!$conversation) {
             return response()->json(['message' => 'Conversation not found'], 404);
         }
 
