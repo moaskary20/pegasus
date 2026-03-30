@@ -77,11 +77,6 @@
                     @if($courseCart->count() === 0)
                         <div class="p-10 text-center">
                             <div class="text-sm text-slate-600">سلة الدورات فارغة.</div>
-                            <div class="mt-5">
-                                <a href="{{ route('site.courses') }}" class="inline-flex items-center justify-center px-5 py-3 rounded-2xl bg-[#3d195c] text-white font-extrabold hover:bg-[#3d195c]/95 transition">
-                                    استكشف الدورات
-                                </a>
-                            </div>
                         </div>
                     @else
                         <div class="divide-y">
@@ -126,6 +121,11 @@
                             @endforeach
                         </div>
                     @endif
+                    <div class="px-6 py-5 border-t bg-slate-50 flex justify-center">
+                        <a href="{{ route('site.courses') }}" class="inline-flex items-center justify-center px-5 py-3 rounded-2xl bg-[#3d195c] text-white font-extrabold hover:bg-[#3d195c]/95 transition">
+                            استكشف الدورات
+                        </a>
+                    </div>
                 </div>
 
                 {{-- Store cart (read-only preview) --}}
@@ -135,7 +135,9 @@
                         <div class="text-xs text-slate-600 mt-1">{{ number_format((int) $storeCart->count()) }} منتج</div>
                     </div>
                     @if($storeCart->count() === 0)
-                        <div class="p-8 text-center text-sm text-slate-600">سلة المتجر فارغة.</div>
+                        <div class="p-10 text-center">
+                            <div class="text-sm text-slate-600">سلة المتجر فارغة.</div>
+                        </div>
                     @else
                         <div class="divide-y">
                             @foreach($storeCart as $i)
@@ -155,6 +157,11 @@
                             @endforeach
                         </div>
                     @endif
+                    <div class="px-6 py-5 border-t bg-slate-50 flex justify-center">
+                        <a href="{{ route('site.store') }}" class="inline-flex items-center justify-center px-5 py-3 rounded-2xl bg-[#3d195c] text-white font-extrabold hover:bg-[#3d195c]/95 transition">
+                            استكشف المتجر
+                        </a>
+                    </div>
                 </div>
             </div>
 

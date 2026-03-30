@@ -51,6 +51,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   void setLocale(Locale locale) {
+    if (locale.languageCode != 'ar') return;
     LocaleHelper.setLocale(locale.languageCode);
     setState(() => _locale = locale);
   }

@@ -10,7 +10,6 @@ import '../instructor_finances_screen.dart';
 import '../learning_progress_screen.dart';
 import '../../api/auth_api.dart';
 import '../../api/config.dart';
-import '../../app_locale.dart';
 import '../widgets/app_header.dart';
 
 const Color _primary = Color(0xFF2c004d);
@@ -171,7 +170,7 @@ class _AccountTabState extends State<AccountTab> {
               ),
             ],
             const SizedBox(height: 32),
-            _LanguageTile(),
+            const _LanguageInfoTile(),
             _AccountTile(
               icon: Icons.trending_up_rounded,
               title: 'تتبع التقدم',
@@ -259,14 +258,11 @@ class _AccountTabState extends State<AccountTab> {
   }
 }
 
-class _LanguageTile extends StatelessWidget {
-  const _LanguageTile();
+class _LanguageInfoTile extends StatelessWidget {
+  const _LanguageInfoTile();
 
   @override
   Widget build(BuildContext context) {
-    final scope = AppLocaleScope.of(context);
-    final isArabic = scope.locale.languageCode == 'ar';
-
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Material(
@@ -291,69 +287,25 @@ class _LanguageTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      isArabic ? 'اللغة' : 'Language',
+                      'اللغة',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: _primary,
                           ),
                       textDirection: TextDirection.rtl,
                     ),
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _LangChip(
-                          label: 'عربي',
-                          isSelected: isArabic,
-                          onTap: () => scope.setLocale(const Locale('ar')),
-                        ),
-                        const SizedBox(width: 8),
-                        _LangChip(
-                          label: 'English',
-                          isSelected: !isArabic,
-                          onTap: () => scope.setLocale(const Locale('en')),
-                        ),
-                      ],
+                    const SizedBox(height: 4),
+                    Text(
+                      'العربية',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.grey.shade600,
+                          ),
+                      textDirection: TextDirection.rtl,
                     ),
                   ],
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _LangChip extends StatelessWidget {
-  const _LangChip({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: isSelected ? _primary : Colors.grey.shade200,
-      borderRadius: BorderRadius.circular(20),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Text(
-            label,
-            style: TextStyle(
-              color: isSelected ? Colors.white : Colors.grey.shade700,
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-              fontSize: 14,
-            ),
           ),
         ),
       ),
