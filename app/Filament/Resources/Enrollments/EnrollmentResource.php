@@ -38,6 +38,11 @@ class EnrollmentResource extends Resource
         return auth()->user()?->hasRole('admin') ?? false;
     }
 
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->hasRole('admin') ?? false;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return EnrollmentForm::configure($schema);

@@ -169,6 +169,10 @@ class CoursesTable
                         ]);
                     })
                     ->modalActions(function ($record) {
+                        if (! auth()->user()?->hasRole('admin')) {
+                            return [];
+                        }
+
                         return [
                             Action::make('add_student')
                                 ->label('إضافة مشترك')
@@ -233,6 +237,16 @@ class CoursesTable
                                 ];
                             })
                             ->action(function (array $data) use ($record) {
+                                if (! auth()->user()?->hasRole('admin')) {
+                                    Notification::make()
+                                        ->title('غير مصرح')
+                                        ->body('إضافة المشتركين متاحة للمسؤولين فقط.')
+                                        ->danger()
+                                        ->send();
+
+                                    return;
+                                }
+
                                 // التحقق من عدم وجود اشتراك مسبق
                                 $existingEnrollment = \App\Models\Enrollment::where('user_id', $data['user_id'])
                                     ->where('course_id', $record->id)
