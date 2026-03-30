@@ -94,12 +94,11 @@ class User extends Authenticatable implements FilamentUser
     }
 
     /**
-     * Check if user can access Filament panel
+     * Check if user can access Filament panel (admin, instructor, or student — not unscoped users).
      */
     public function canAccessPanel(Panel $panel): bool
     {
-        // Allow all authenticated users to access the panel
-        return true;
+        return $this->hasAnyRole(['admin', 'instructor', 'student']);
     }
 
     public function enrollments(): \Illuminate\Database\Eloquent\Relations\HasMany

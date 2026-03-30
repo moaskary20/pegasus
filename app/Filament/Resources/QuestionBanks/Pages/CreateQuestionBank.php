@@ -11,11 +11,16 @@ class CreateQuestionBank extends CreateRecord
     
     protected function mutateFormDataBeforeCreate(array $data): array
     {
+        $user = auth()->user();
+        if ($user?->hasRole('instructor') && ! $user?->hasRole('admin')) {
+            $data['user_id'] = $user->id;
+        }
+
         // Convert tags repeater to JSON array
         if (isset($data['tags']) && is_array($data['tags'])) {
             $data['tags'] = array_column($data['tags'], 'tag');
         }
-        
+
         return $data;
     }
 }

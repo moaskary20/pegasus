@@ -31,7 +31,11 @@ class ViewAssignment extends Page
     
     public function mount(int|string $record): void
     {
-        $this->record = Assignment::with(['course', 'lesson', 'submissions.user', 'submissions.files'])->findOrFail($record);
+        $assignment = Assignment::with(['course', 'lesson', 'submissions.user', 'submissions.files'])->findOrFail($record);
+
+        abort_unless(AssignmentResource::canView($assignment), 403);
+
+        $this->record = $assignment;
     }
     
     public function getTitle(): string
@@ -60,7 +64,9 @@ class ViewAssignment extends Page
             return null;
         }
         
-        return AssignmentSubmission::with(['user', 'files', 'comments.user', 'grader'])
+        return AssignmentSubmission::query()
+            ->where('assignment_id', $this->record->id)
+            ->with(['user', 'files', 'comments.user', 'grader'])
             ->find($this->selectedSubmissionId);
     }
     
@@ -83,8 +89,10 @@ class ViewAssignment extends Page
             'gradeScore' => ['required', 'numeric', 'min:0', 'max:' . $this->record->max_score],
         ]);
         
-        $submission = AssignmentSubmission::find($this->selectedSubmissionId);
-        
+        $submission = AssignmentSubmission::query()
+            ->where('assignment_id', $this->record->id)
+            ->find($this->selectedSubmissionId);
+
         if ($submission) {
             $submission->update([
                 'score' => $this->gradeScore,
@@ -103,8 +111,10 @@ class ViewAssignment extends Page
     
     public function requestResubmission(): void
     {
-        $submission = AssignmentSubmission::find($this->selectedSubmissionId);
-        
+        $submission = AssignmentSubmission::query()
+            ->where('assignment_id', $this->record->id)
+            ->find($this->selectedSubmissionId);
+
         if ($submission) {
             $submission->update([
                 'status' => 'resubmit_requested',
@@ -123,9 +133,17 @@ class ViewAssignment extends Page
         $this->validate([
             'newComment' => 'required|min:2',
         ]);
-        
+
+        $submission = AssignmentSubmission::query()
+            ->where('assignment_id', $this->record->id)
+            ->find($this->selectedSubmissionId);
+
+        if (! $submission) {
+            return;
+        }
+
         AssignmentComment::create([
-            'submission_id' => $this->selectedSubmissionId,
+            'submission_id' => $submission->id,
             'user_id' => auth()->id(),
             'content' => $this->newComment,
         ]);
@@ -135,8 +153,11 @@ class ViewAssignment extends Page
     
     public function downloadFile(int $fileId): void
     {
-        $file = \App\Models\SubmissionFile::find($fileId);
-        
+        $file = \App\Models\SubmissionFile::query()
+            ->whereKey($fileId)
+            ->whereHas('submission', fn ($q) => $q->where('assignment_id', $this->record->id))
+            ->first();
+
         if ($file && Storage::exists($file->file_path)) {
             $this->redirect(Storage::url($file->file_path));
         }

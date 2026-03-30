@@ -32,7 +32,17 @@ class AssignmentForm
             
             Select::make('course_id')
                 ->label('الدورة')
-                ->options(Course::pluck('title', 'id'))
+                ->options(function () {
+                    $user = auth()->user();
+                    if ($user?->hasRole('instructor') && ! $user?->hasRole('admin')) {
+                        return Course::query()
+                            ->where('user_id', $user->id)
+                            ->orderBy('title')
+                            ->pluck('title', 'id');
+                    }
+
+                    return Course::query()->orderBy('title')->pluck('title', 'id');
+                })
                 ->searchable()
                 ->required()
                 ->live()

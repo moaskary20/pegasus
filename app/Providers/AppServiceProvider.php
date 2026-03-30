@@ -3,8 +3,16 @@
 namespace App\Providers;
 
 use App\Http\Responses\LogoutResponse;
+use App\Models\Assignment;
 use App\Models\Course;
+use App\Models\CourseQuestion;
+use App\Models\QuestionBank;
+use App\Models\Quiz;
+use App\Policies\AssignmentPolicy;
 use App\Policies\CoursePolicy;
+use App\Policies\CourseQuestionPolicy;
+use App\Policies\QuestionBankPolicy;
+use App\Policies\QuizPolicy;
 use App\Services\PlatformMailConfig;
 use Illuminate\Auth\Notifications\ResetPassword;
 use App\Models\CourseRating;
@@ -39,7 +47,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::policy(Assignment::class, AssignmentPolicy::class);
         Gate::policy(Course::class, CoursePolicy::class);
+        Gate::policy(CourseQuestion::class, CourseQuestionPolicy::class);
+        Gate::policy(QuestionBank::class, QuestionBankPolicy::class);
+        Gate::policy(Quiz::class, QuizPolicy::class);
 
         $this->app->booted(function () {
             PlatformMailConfig::apply();
