@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Certificate;
 use App\Models\Course;
+use App\Services\LessonAccessService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -123,13 +124,36 @@ class CoursesController extends Controller
             $previewUrl = 'https://www.youtube.com/watch?v=' . ltrim((string) $previewUrl, '/');
         }
 
-        $sections = $course->sections->map(function ($section) {
+        $user = $request->user('sanctum');
+        $isEnrolled = $user
+            ? $course->enrollments()->where('user_id', $user->id)->exists()
+            : false;
+        $accessService = app(LessonAccessService::class);
+
+        $sections = $course->sections->map(function ($section) use ($user, $isEnrolled, $accessService) {
             return [
                 'id' => $section->id,
                 'title' => $section->title ?? '',
                 'sort_order' => (int) ($section->sort_order ?? 0),
-                'lessons' => $section->lessons->map(function ($lesson) {
+                'lessons' => $section->lessons->map(function ($lesson) use ($user, $isEnrolled, $accessService) {
                     $zm = (bool) ($lesson->has_zoom_meeting ?? false) && $lesson->zoomMeeting ? $lesson->zoomMeeting : null;
+
+                    $canAccess = false;
+                    $lockMessage = null;
+                    if ($isEnrolled && $user) {
+                        $canAccess = $accessService->canAccessLesson($user, $lesson);
+                        if (! $canAccess) {
+                            $incomplete = $accessService->getFirstIncompleteLesson($user, $lesson);
+                            $lockMessage = $incomplete
+                                ? "يجب إكمال الدرس السابق: {$incomplete->title}"
+                                : 'يجب إكمال الدروس السابقة أولاً';
+                        }
+                    } elseif (! $user) {
+                        $canAccess = $accessService->canAnonymousUserAccessLesson($lesson);
+                    } else {
+                        $canAccess = (bool) ($lesson->is_free ?? false) || (bool) ($lesson->is_free_preview ?? false);
+                    }
+
                     return [
                         'id' => $lesson->id,
                         'title' => $lesson->title ?? '',
@@ -141,6 +165,8 @@ class CoursesController extends Controller
                         'zoom_join_url' => $zm?->join_url,
                         'zoom_scheduled_at' => $zm?->scheduled_start_time?->toIso8601String(),
                         'zoom_duration' => $zm ? (int) ($zm->duration ?? 0) : null,
+                        'can_access' => $canAccess,
+                        'lock_message' => $lockMessage,
                     ];
                 })->values()->all(),
             ];
@@ -178,10 +204,9 @@ class CoursesController extends Controller
             'sections' => $sections,
         ];
 
-        $user = $request->user('sanctum');
         if ($user) {
             $enrollment = $course->enrollments()->where('user_id', $user->id)->first();
-            $data['is_enrolled'] = $enrollment !== null;
+            $data['is_enrolled'] = $isEnrolled;
             $data['progress_percentage'] = $enrollment ? (float) ($enrollment->progress_percentage ?? 0) : 0;
             $data['completed_at'] = $enrollment?->completed_at?->toIso8601String();
             $hasCert = $enrollment?->completed_at
@@ -242,8 +267,13 @@ class CoursesController extends Controller
     {
         $path = $course->getRawOriginal('preview_video_path');
         if (is_string($path) && trim($path) !== '') {
-            return $this->absoluteUrl('storage/' . ltrim($path, '/'));
+            if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+                return $path;
+            }
+
+            return $this->absoluteUrl(route('site.course.preview-video.stream', $course, false));
         }
+
         return null;
     }
 

@@ -34,9 +34,13 @@ Route::get('/upload-limits', function () {
 
 // خدمة ملفات التخزين عبر Laravel (بديل عند فشل الرابط الرمزي أو 403)
 // إضافة CORS حتى تظهر الصور عند فتح التطبيق من Chrome (Flutter Web)
+// ملفات الفيديو للدروس ممنوعة هنا — تُبث فقط عبر مسارات lesson video stream
 Route::get('/storage/{path}', function (string $path) {
     $path = trim($path, '/');
     if ($path === '' || str_contains($path, '..')) {
+        abort(404);
+    }
+    if (\App\Services\LessonVideoStreamService::isVideoStoragePath($path)) {
         abort(404);
     }
     $fullPath = storage_path('app/public/' . $path);
@@ -44,6 +48,9 @@ Route::get('/storage/{path}', function (string $path) {
         abort(404);
     }
     $mime = mime_content_type($fullPath) ?: 'application/octet-stream';
+    if (is_string($mime) && str_starts_with(strtolower($mime), 'video/')) {
+        abort(404);
+    }
     $response = response()->file($fullPath, ['Content-Type' => $mime]);
     $response->headers->set('Access-Control-Allow-Origin', request()->header('Origin', '*'));
     $response->headers->set('Access-Control-Allow-Methods', 'GET, HEAD');
@@ -391,6 +398,10 @@ Route::get('/api/courses/{slug}', [\App\Http\Controllers\Api\CoursesController::
 Route::get('/api/courses/{courseSlug}/lessons/{lessonId}', [\App\Http\Controllers\Api\LessonController::class, 'show'])
     ->middleware(['throttle:60,1'])
     ->name('api.courses.lessons.show')
+    ->where(['lessonId' => '[0-9]+']);
+Route::get('/api/courses/{courseSlug}/lessons/{lessonId}/video', \App\Http\Controllers\Api\LessonVideoStreamController::class)
+    ->middleware(['throttle:120,1'])
+    ->name('api.courses.lessons.video.stream')
     ->where(['lessonId' => '[0-9]+']);
 Route::post('/api/courses/{courseSlug}/lessons/{lessonId}/save-progress', [\App\Http\Controllers\Api\LessonController::class, 'saveProgress'])
     ->middleware(['throttle:60,1', 'auth:sanctum'])
@@ -928,6 +939,9 @@ Route::get('/courses/{course:slug}/lessons/{lesson}', function (Course $course, 
 
 Route::get('/courses/{course:slug}/lessons/{lesson}/video', \App\Http\Controllers\Site\LessonVideoStreamController::class)
     ->name('site.course.lesson.video.stream');
+
+Route::get('/courses/{course:slug}/lessons/{lesson}/yt', \App\Http\Controllers\Site\LessonYoutubeEmbedController::class)
+    ->name('site.course.lesson.youtube.embed');
 
 Route::get('/courses/{course:slug}/preview-video-file', \App\Http\Controllers\Site\CoursePreviewVideoStreamController::class)
     ->name('site.course.preview-video.stream');

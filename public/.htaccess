@@ -33,6 +33,9 @@
 
     RewriteEngine On
 
+    # منع التحميل المباشر لملفات الفيديو من /storage (تُبث فقط عبر مسارات التطبيق)
+    RewriteRule ^storage/.*\.(mp4|webm|mov|m4v|mkv|avi|mpeg|mpg|m3u8|ts)$ - [F,L,NC]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]

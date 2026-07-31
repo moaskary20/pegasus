@@ -200,7 +200,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> with SingleTick
           controller: _tabController,
           children: [
             _AboutTab(course: _course!),
-            _LessonsTab(course: _course!),
+            _LessonsTab(course: _course!, onRefresh: _load),
             _ReviewsTab(course: _course!, onRatingSubmitted: _load),
           ],
         ),
@@ -261,6 +261,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> with SingleTick
     final sections = c.sections;
     for (final section in sections) {
       for (final lesson in section.lessons) {
+        if (!lesson.canAccess) continue;
         final progress = c.lessonProgressMap[lesson.id];
         if (progress == null || !progress.completed) {
           Navigator.of(context).push(
@@ -277,18 +278,22 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> with SingleTick
         }
       }
     }
-    if (sections.isNotEmpty && sections.first.lessons.isNotEmpty) {
-      final first = sections.first.lessons.first;
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => LessonPlayerScreen(
-            courseSlug: c.slug,
-            courseTitle: c.title,
-            lessonId: first.id,
-            lessonTitle: first.title,
+    // Prefer first accessible lesson if all completed
+    for (final section in sections) {
+      for (final lesson in section.lessons) {
+        if (!lesson.canAccess) continue;
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => LessonPlayerScreen(
+              courseSlug: c.slug,
+              courseTitle: c.title,
+              lessonId: lesson.id,
+              lessonTitle: lesson.title,
+            ),
           ),
-        ),
-      ).then((_) => _load());
+        ).then((_) => _load());
+        return;
+      }
     }
   }
 
@@ -1100,9 +1105,10 @@ class _OptionTile extends StatelessWidget {
 }
 
 class _LessonsTab extends StatelessWidget {
-  const _LessonsTab({required this.course});
+  const _LessonsTab({required this.course, this.onRefresh});
 
   final CourseDetailItem course;
+  final Future<void> Function()? onRefresh;
 
   @override
   Widget build(BuildContext context) {
@@ -1176,10 +1182,12 @@ class _LessonsTab extends StatelessWidget {
               ),
               ...section.lessons.asMap().entries.map((entry) {
                 final lesson = entry.value;
+                final isCompleted = course.lessonProgressMap[lesson.id]?.completed == true;
+                final isLocked = course.isEnrolled && !lesson.canAccess;
                 return Container(
                   margin: const EdgeInsets.only(right: 8),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isLocked ? Colors.grey.shade50 : Colors.white,
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: Colors.grey.shade200),
                     boxShadow: [
@@ -1194,11 +1202,19 @@ class _LessonsTab extends StatelessWidget {
                     color: Colors.transparent,
                     child: InkWell(
                       onTap: () {
-                        final canAccess = course.isEnrolled ||
-                            lesson.isFreePreview;
-                        if (!canAccess) {
+                        if (!course.isEnrolled && !lesson.isFreePreview) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('يجب الاشتراك في الدورة لمشاهدة هذا الدرس')),
+                          );
+                          return;
+                        }
+                        if (isLocked) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                lesson.lockMessage ?? 'يجب إكمال الدروس السابقة أولاً',
+                              ),
+                            ),
                           );
                           return;
                         }
@@ -1211,7 +1227,7 @@ class _LessonsTab extends StatelessWidget {
                               lessonTitle: lesson.title,
                             ),
                           ),
-                        );
+                        ).then((_) => onRefresh?.call());
                       },
                       borderRadius: BorderRadius.circular(14),
                       child: Padding(
@@ -1223,12 +1239,24 @@ class _LessonsTab extends StatelessWidget {
                               width: 40,
                               height: 40,
                               decoration: BoxDecoration(
-                                color: AppTheme.primary.withValues(alpha: 0.1),
+                                color: isLocked
+                                    ? Colors.grey.shade200
+                                    : AppTheme.primary.withValues(alpha: 0.1),
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
-                                lesson.isFreePreview ? Icons.play_circle_filled_rounded : Icons.play_circle_outline_rounded,
-                                color: AppTheme.primary,
+                                isLocked
+                                    ? Icons.lock_rounded
+                                    : isCompleted
+                                        ? Icons.check_circle_rounded
+                                        : lesson.isFreePreview
+                                            ? Icons.play_circle_filled_rounded
+                                            : Icons.play_circle_outline_rounded,
+                                color: isLocked
+                                    ? Colors.grey.shade600
+                                    : isCompleted
+                                        ? const Color(0xFF059669)
+                                        : AppTheme.primary,
                                 size: 24,
                               ),
                             ),
@@ -1239,16 +1267,25 @@ class _LessonsTab extends StatelessWidget {
                                 children: [
                                   Text(
                                     lesson.title.isEmpty ? 'الدرس ${entry.key + 1}' : lesson.title,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.w600,
                                       fontSize: 14,
-                                      color: Color(0xFF1A1A1A),
+                                      color: isLocked ? Colors.grey.shade600 : const Color(0xFF1A1A1A),
                                     ),
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
                                     textDirection: TextDirection.rtl,
                                   ),
-                                  if (lesson.durationMinutes > 0) ...[
+                                  if (isLocked && (lesson.lockMessage?.isNotEmpty ?? false)) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      lesson.lockMessage!,
+                                      style: TextStyle(fontSize: 11, color: Colors.orange.shade800),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      textDirection: TextDirection.rtl,
+                                    ),
+                                  ] else if (lesson.durationMinutes > 0) ...[
                                     const SizedBox(height: 4),
                                     Text(
                                       lesson.durationLabel,
@@ -1282,7 +1319,23 @@ class _LessonsTab extends StatelessWidget {
                                   ],
                                 ),
                               ),
-                            if (lesson.isFreePreview)
+                            if (isLocked)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  'مقفل',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.orange.shade800,
+                                  ),
+                                ),
+                              )
+                            else if (lesson.isFreePreview)
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                 decoration: BoxDecoration(
@@ -1299,7 +1352,10 @@ class _LessonsTab extends StatelessWidget {
                                 ),
                               ),
                             const SizedBox(width: 8),
-                            Icon(Icons.chevron_left_rounded, color: Colors.grey.shade400),
+                            Icon(
+                              isLocked ? Icons.lock_outline_rounded : Icons.chevron_left_rounded,
+                              color: Colors.grey.shade400,
+                            ),
                           ],
                         ),
                       ),

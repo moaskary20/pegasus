@@ -170,7 +170,6 @@ class _AccountTabState extends State<AccountTab> {
               ),
             ],
             const SizedBox(height: 32),
-            const _LanguageInfoTile(),
             _AccountTile(
               icon: Icons.trending_up_rounded,
               title: 'تتبع التقدم',
@@ -254,61 +253,6 @@ class _AccountTabState extends State<AccountTab> {
         shape: BoxShape.circle,
       ),
       child: Icon(Icons.person_rounded, size: 56, color: _primary),
-    );
-  }
-}
-
-class _LanguageInfoTile extends StatelessWidget {
-  const _LanguageInfoTile();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            textDirection: TextDirection.rtl,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: _primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(Icons.language_rounded, color: _primary, size: 24),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'اللغة',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: _primary,
-                          ),
-                      textDirection: TextDirection.rtl,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'العربية',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.grey.shade600,
-                          ),
-                      textDirection: TextDirection.rtl,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

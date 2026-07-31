@@ -59,17 +59,22 @@ class LessonAccessService
             return false;
         }
 
+        // Platform toggle off → enrolled users may open any lesson freely
         $enforceOrder = (bool) PlatformSetting::get('enforce_lesson_order', true);
-        if (!$enforceOrder && $lesson->can_unlock_without_completion) {
+        if (! $enforceOrder) {
             return true;
         }
-        
-        // If lesson is free, user can access it
+
+        // Per-lesson exception while order enforcement is on
+        if ($lesson->can_unlock_without_completion) {
+            return true;
+        }
+
+        // Free / preview lessons skip sequential lock for enrolled users
         if ($lesson->is_free || $lesson->is_free_preview) {
             return true;
         }
-        
-        // Check if previous lessons are completed
+
         return $this->areAllPreviousLessonsCompleted($user, $lesson);
     }
     

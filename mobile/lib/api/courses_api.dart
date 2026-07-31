@@ -327,6 +327,8 @@ class CourseLessonItem {
     this.zoomJoinUrl,
     this.zoomScheduledAt,
     this.zoomDuration,
+    this.canAccess = true,
+    this.lockMessage,
   });
 
   final int id;
@@ -338,6 +340,8 @@ class CourseLessonItem {
   final String? zoomJoinUrl;
   final String? zoomScheduledAt;
   final int? zoomDuration;
+  final bool canAccess;
+  final String? lockMessage;
 
   factory CourseLessonItem.fromJson(Map<String, dynamic> json) {
     return CourseLessonItem(
@@ -350,6 +354,8 @@ class CourseLessonItem {
       zoomJoinUrl: json['zoom_join_url']?.toString(),
       zoomScheduledAt: json['zoom_scheduled_at']?.toString(),
       zoomDuration: json['zoom_duration'] != null ? (json['zoom_duration'] as num).toInt() : null,
+      canAccess: (json['can_access'] as bool?) ?? true,
+      lockMessage: json['lock_message']?.toString(),
     );
   }
 

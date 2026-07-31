@@ -1,5 +1,5 @@
 <x-filament-panels::page>
-    @if($lesson && $video)
+    @if($lesson && ($video || $lesson->isYoutubeVideo() || filled($lesson->video_path)))
         <div class="space-y-6">
             <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-6">
                 <h2 class="text-xl font-bold mb-4">{{ $lesson->title }}</h2>
@@ -8,33 +8,34 @@
                     <p class="text-gray-600 dark:text-gray-400 mb-4">{{ $lesson->description }}</p>
                 @endif
 
-                <div class="bg-gray-900 rounded-lg aspect-video flex items-center justify-center mb-4">
-                    @if($video->hls_path)
+                <div class="bg-gray-900 rounded-lg aspect-video flex items-center justify-center mb-4 overflow-hidden relative">
+                    @php
+                        $courseModel = $lesson->section?->course;
+                        $streamUrl = $courseModel
+                            ? route('site.course.lesson.video.stream', [$courseModel, $lesson])
+                            : null;
+                    @endphp
+                    @if($lesson->isYoutubeVideo() && $courseModel)
+                        <iframe
+                            id="video-player"
+                            class="w-full h-full absolute inset-0"
+                            src="{{ route('site.course.lesson.youtube.embed', [$courseModel, $lesson]) }}"
+                            title="{{ $lesson->title }}"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowfullscreen
+                            referrerpolicy="strict-origin-when-cross-origin"
+                        ></iframe>
+                    @elseif($streamUrl && (($video && $video->path) || $lesson->video_path))
                         <video 
                             id="video-player"
                             class="w-full h-full"
                             controls
                             controlsList="nodownload noplaybackrate nopictureinpicture"
                             preload="metadata"
-                            data-hls-path="{{ $video->hls_path }}"
-                            data-duration="{{ $video->duration_seconds }}"
+                            data-duration="{{ $video->duration_seconds ?? 0 }}"
                             data-progress-id="{{ $progress->id ?? null }}"
                         >
-                            <source src="{{ $video->hls_path }}" type="application/x-mpegURL">
-                            متصفحك لا يدعم تشغيل الفيديو.
-                        </video>
-                    @elseif($video->path)
-                        <video 
-                            id="video-player"
-                            class="w-full h-full"
-                            controls
-                            controlsList="nodownload noplaybackrate nopictureinpicture"
-                            preload="metadata"
-                            data-path="{{ asset('storage/' . $video->path) }}"
-                            data-duration="{{ $video->duration_seconds }}"
-                            data-progress-id="{{ $progress->id ?? null }}"
-                        >
-                            <source src="{{ asset('storage/' . $video->path) }}" type="video/mp4">
+                            <source src="{{ $streamUrl }}" type="video/mp4">
                             متصفحك لا يدعم تشغيل الفيديو.
                         </video>
                     @else

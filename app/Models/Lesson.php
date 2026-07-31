@@ -163,27 +163,51 @@ class Lesson extends Model
     }
 
     /**
-     * Get the video URL for playback (from video relation or video_path)
-     * For YouTube use youtube_embed_url and isYoutubeVideo()
+     * رابط تشغيل آمن للعرض في الواجهة (بث التطبيق أو يوتيوب).
+     * لا يُرجع أبداً مسار /storage للملفات المرفوعة.
      */
     public function getVideoUrlAttribute(): ?string
     {
         if ($this->isYoutubeVideo()) {
             return $this->youtube_embed_url;
         }
-        if ($this->video) {
-            if ($this->video->hls_path) {
-                return $this->video->hls_path;
-            }
-            if ($this->video->path) {
-                return asset('storage/'.ltrim($this->video->path, '/'));
-            }
+
+        $this->loadMissing(['video', 'section.course']);
+
+        if ($this->video && $this->video->hls_path) {
+            // HLS ما زال يحتاج بروكسي كامل؛ لا نُرجع الرابط الخام من الـ accessor للواجهات العامة
+            return null;
         }
-        if ($this->video_path) {
-            return asset('storage/'.ltrim($this->video_path, '/'));
+
+        $course = $this->section?->course;
+        if ($course && app(\App\Services\LessonVideoStreamService::class)->hasStreamableFile($this)) {
+            return route('site.course.lesson.video.stream', [$course, $this]);
+        }
+
+        if ($this->video?->path || $this->video_path) {
+            // يوجد ملف لكن بلا سياق دورة — إشارة وجود بدون كشف المسار
+            return null;
         }
 
         return null;
+    }
+
+    /**
+     * هل للدرس ملف فيديو مرفوع (غير يوتيوب)؟
+     */
+    public function hasUploadedVideoFile(): bool
+    {
+        $this->loadMissing('video');
+
+        if ($this->isYoutubeVideo()) {
+            return false;
+        }
+
+        if ($this->video && (! empty($this->video->path) || ! empty($this->video->hls_path))) {
+            return true;
+        }
+
+        return ! empty($this->video_path);
     }
 
     /**

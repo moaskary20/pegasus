@@ -1,6 +1,5 @@
-<IfModule mod_authz_core.c>
-    Require all granted
-</IfModule>
-<IfModule mod_autoindex.c>
-    Options -Indexes +FollowSymLinks
-</IfModule>
+# منع فهرسة وفتح ملفات الفيديو مباشرة من مجلد التخزين العام.
+# التشغيل يتم عبر مسارات البث في التطبيق فقط.
+<FilesMatch "\.(mp4|webm|mov|m4v|mkv|avi|mpeg|mpg|m3u8|ts|MP4|WEBM|MOV|M4V|MKV|AVI|MPEG|MPG|M3U8|TS)$">
+    Require all denied
+</FilesMatch>

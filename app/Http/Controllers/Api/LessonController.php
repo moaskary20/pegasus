@@ -54,7 +54,19 @@ class LessonController extends Controller
         }
 
         if (!$canAccess) {
-            return response()->json(['message' => 'Access denied'], 403);
+            $message = 'Access denied';
+            if ($isEnrolled && $user) {
+                $incomplete = $this->accessService->getFirstIncompleteLesson($user, $lesson);
+                $message = $incomplete
+                    ? "يجب إكمال الدرس السابق: {$incomplete->title}"
+                    : 'يجب إكمال الدروس السابقة أولاً';
+            } elseif (! $user) {
+                $message = 'يجب تسجيل الدخول والاشتراك في الدورة لمشاهدة هذا الدرس';
+            } else {
+                $message = 'يجب الاشتراك في الدورة لمشاهدة هذا الدرس';
+            }
+
+            return response()->json(['message' => $message], 403);
         }
 
         if ($user && $isEnrolled) {
@@ -90,21 +102,25 @@ class LessonController extends Controller
             $nextLesson = ['id' => $next->id, 'title' => $next->title ?? ''];
         }
 
-        $videoUrl = $lesson->video_url;
+        $streamService = app(\App\Services\LessonVideoStreamService::class);
+        $videoUrl = null;
+        $videoType = null;
+
         if ($lesson->isYoutubeVideo()) {
-            $videoUrl = $lesson->youtube_embed_url;
-        } elseif ($lesson->video) {
-            if ($lesson->video->hls_path) {
-                $videoUrl = $lesson->video->hls_path;
-            } elseif ($lesson->video->path) {
-                $videoUrl = asset('storage/' . ltrim($lesson->video->path, '/'));
-            }
-        } elseif ($lesson->video_path) {
-            $videoUrl = asset('storage/' . ltrim($lesson->video_path, '/'));
+            // لا نُرجع رابط youtube.com — المعرف فقط لمشغّل الموبايل
+            $videoType = 'youtube';
+            $videoUrl = $lesson->getYoutubeVideoId();
+        } elseif ($streamService->hasStreamableFile($lesson)) {
+            $videoType = 'file';
+            $videoUrl = $streamService->temporaryApiStreamUrl($course, $lesson);
+        } elseif ($streamService->hasHls($lesson)) {
+            // HLS خارجي: لا نكشف الرابط في JSON؛ التشغيل عبر بث التطبيق غير مدعوم بالكامل بعد
+            $videoType = 'hls';
+            $videoUrl = null;
         }
 
         $baseUrl = rtrim(config('app.url', request()->getSchemeAndHttpHost()), '/');
-        if ($videoUrl && !str_starts_with($videoUrl, 'http')) {
+        if ($videoUrl && $videoType === 'file' && ! str_starts_with($videoUrl, 'http')) {
             $videoUrl = $baseUrl . '/' . ltrim($videoUrl, '/');
         }
 
@@ -157,6 +173,7 @@ class LessonController extends Controller
             'id' => $lesson->id,
             'title' => $lesson->title ?? '',
             'video_url' => $videoUrl,
+            'video_type' => $videoType,
             'duration_minutes' => (int) ($lesson->duration_minutes ?? 0),
             'is_free_preview' => (bool) ($lesson->is_free_preview ?? false),
             'prev_lesson' => $prevLesson,

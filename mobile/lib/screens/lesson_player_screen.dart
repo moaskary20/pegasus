@@ -66,12 +66,17 @@ class _LessonPlayerScreenState extends State<LessonPlayerScreen> {
       _loading = true;
       _error = null;
     });
-    final lesson = await LessonsApi.getLesson(widget.courseSlug, widget.lessonId);
+    String? apiError;
+    final lesson = await LessonsApi.getLesson(
+      widget.courseSlug,
+      widget.lessonId,
+      onError: (msg) => apiError = msg,
+    );
     if (!mounted) return;
     if (lesson == null) {
       setState(() {
         _loading = false;
-        _error = 'تعذر تحميل الدرس أو لا يوجد صلاحية';
+        _error = apiError ?? 'تعذر تحميل الدرس أو لا يوجد صلاحية';
       });
       return;
     }
@@ -87,7 +92,13 @@ class _LessonPlayerScreenState extends State<LessonPlayerScreen> {
     final lesson = _lesson!;
     final initialPosition = lesson.lastPositionSeconds;
 
-    final videoId = YoutubePlayer.convertUrlToId(url);
+    final isYoutube = lesson.videoType == 'youtube' ||
+        YoutubePlayer.convertUrlToId(url) != null ||
+        (url.length == 11 && !url.contains('/') && !url.contains('http'));
+    final videoId = isYoutube
+        ? (YoutubePlayer.convertUrlToId(url) ?? (url.length == 11 ? url : null))
+        : null;
+
     if (videoId != null) {
       _isYoutube = true;
       _youtubeController = YoutubePlayerController(
@@ -106,7 +117,14 @@ class _LessonPlayerScreenState extends State<LessonPlayerScreen> {
     } else {
       _isYoutube = false;
       final fullUrl = _fullUrl(url);
-      _videoController = VideoPlayerController.networkUrl(Uri.parse(fullUrl))
+      final headers = <String, String>{};
+      if (AuthApi.token != null) {
+        headers['Authorization'] = 'Bearer ${AuthApi.token}';
+      }
+      _videoController = VideoPlayerController.networkUrl(
+        Uri.parse(fullUrl),
+        httpHeaders: headers,
+      )
         ..initialize().then((_) {
           if (mounted && _videoController != null) {
             if (initialPosition > 0) {

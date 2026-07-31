@@ -132,16 +132,24 @@
                             <div x-show="showVideo" x-cloak class="absolute inset-0 z-10 bg-black" style="display: none;">
                                 @if($course->isPreviewVideoYoutube())
                                 @php
-                                    $embedUrl = ($course->previewLesson && $course->previewLesson->isYoutubeVideo())
-                                        ? $course->previewLesson->youtube_iframe_player_src
-                                        : $course->preview_youtube_iframe_player_src;
+                                    $previewYtSrc = null;
+                                    if ($course->previewLesson && $course->previewLesson->isYoutubeVideo()) {
+                                        $previewYtSrc = route('site.course.lesson.youtube.embed', [$course, $course->previewLesson]);
+                                    } else {
+                                        $previewYtSrc = $course->preview_youtube_iframe_player_src;
+                                    }
                                 @endphp
-                                <x-site.youtube-embed
-                                    fill-container
-                                    alpine-iframe-ref="previewVideo"
-                                    :src="$embedUrl"
+                                @if($previewYtSrc)
+                                <iframe
+                                    x-ref="previewVideo"
+                                    src="{{ $previewYtSrc }}"
                                     title="معاينة الدورة"
-                                />
+                                    class="absolute inset-0 h-full w-full border-0"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowfullscreen
+                                    referrerpolicy="strict-origin-when-cross-origin"
+                                ></iframe>
+                                @endif
                                 @else
                                 <video class="w-full h-full object-contain" controls autoplay controlsList="nodownload noplaybackrate nopictureinpicture" x-ref="previewVideo">
                                     <source src="{{ $previewFileStreamUrl ?? $course->preview_video_url }}" type="video/mp4">
@@ -537,7 +545,7 @@
                                                 $isPreview = (bool) ($lesson->is_free ?? false) || (bool) ($lesson->is_free_preview ?? false);
                                                 $canWatch = $isEnrolled || $isPreview;
                                                 $isCompleted = ($lessonProgressMap[$lesson->id] ?? [])['completed'] ?? false;
-                                                $hasVideo = !empty($lesson->video_url);
+                                                $hasVideo = $lesson->isYoutubeVideo() || $lesson->hasUploadedVideoFile();
                                                 $hasQuiz = $lesson->quiz !== null;
                                                 $hasFiles = $lesson->relationLoaded('files') ? $lesson->files->count() > 0 : false;
                                             @endphp

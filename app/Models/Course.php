@@ -249,17 +249,18 @@ class Course extends Model
     }
 
     /**
-     * Get the full URL for preview video (preview lesson, youtube, or file)
+     * هل توجد معاينة فيديو (درس معاينة / يوتيوب / ملف) — بدون كشف مسار التخزين.
      */
     public function getPreviewVideoUrlAttribute(): ?string
     {
         $lesson = $this->previewLesson ?? $this->previewLesson()->first();
-        if ($lesson && ($lesson->video_url || $lesson->youtube_url)) {
+        if ($lesson) {
             if ($lesson->isYoutubeVideo()) {
                 return $lesson->youtube_embed_url;
             }
-
-            return $lesson->video_url;
+            if ($lesson->hasUploadedVideoFile()) {
+                return route('site.course.lesson.video.stream', [$this, $lesson]);
+            }
         }
         if ($this->isPreviewYoutube()) {
             return $this->preview_youtube_embed_url;
@@ -272,7 +273,7 @@ class Course extends Model
             return $value;
         }
 
-        return asset('storage/'.ltrim($value, '/'));
+        return route('site.course.preview-video.stream', $this);
     }
 
     /**

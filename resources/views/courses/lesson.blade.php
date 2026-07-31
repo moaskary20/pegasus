@@ -1,7 +1,7 @@
 @extends('layouts.site')
 
 @push('head_scripts')
-@if($canAccess && !$lesson->isYoutubeVideo() && $lesson->video_url && $progress)
+@if($canAccess && !$lesson->isYoutubeVideo() && $lesson->hasUploadedVideoFile() && $progress)
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const video = document.getElementById('lesson-video-player');
@@ -99,23 +99,26 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 @endif
 
-                {{-- الفيديو: يوتيوب أو ملف --}}
+                {{-- الفيديو: يوتيوب عبر بروكسي التطبيق أو ملف عبر مسار البث --}}
                 @if($lesson->isYoutubeVideo())
-                    <x-site.youtube-embed
-                        :src="$lesson->youtube_iframe_player_src"
-                        :title="$lesson->title"
-                        iframe-id="lesson-video-player"
-                        :watermark-user="auth()->check() ? trim((string) (auth()->user()->name ?? '')) ?: auth()->user()->email : null"
-                    />
-                @elseif($lesson->video_url)
+                    <div class="aspect-video bg-slate-900 relative overflow-hidden">
+                        <iframe
+                            id="lesson-video-player"
+                            src="{{ route('site.course.lesson.youtube.embed', [$course, $lesson]) }}"
+                            title="{{ $lesson->title }}"
+                            class="absolute inset-0 h-full w-full border-0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowfullscreen
+                            referrerpolicy="strict-origin-when-cross-origin"
+                        ></iframe>
+                        @auth
+                            <x-site.video-user-watermark :name="trim((string) (auth()->user()->name ?? '')) ?: auth()->user()->email" />
+                        @endauth
+                    </div>
+                @elseif($lesson->hasUploadedVideoFile())
                     <div class="aspect-video bg-slate-900 relative">
                         <video id="lesson-video-player" class="w-full h-full object-contain" controls autoplay controlsList="nodownload noplaybackrate nopictureinpicture">
-                            @if($lesson->video && $lesson->video->hls_path)
-                                {{-- HLS: روابط المقاطع داخل ملف m3u8 قد تبقى مكشوفة ما لم يُبنَ بروكسي كامل --}}
-                                <source src="{{ $lesson->video->hls_path }}" type="application/x-mpegURL">
-                            @else
-                                <source src="{{ route('site.course.lesson.video.stream', [$course, $lesson]) }}" type="video/mp4">
-                            @endif
+                            <source src="{{ route('site.course.lesson.video.stream', [$course, $lesson]) }}" type="video/mp4">
                             متصفحك لا يدعم تشغيل الفيديو.
                         </video>
                         @auth

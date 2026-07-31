@@ -12,8 +12,12 @@ class LessonsApi {
     return h;
   }
 
-  /// جلب تفاصيل الدرس
-  static Future<LessonDetailItem?> getLesson(String courseSlug, int lessonId) async {
+  /// جلب تفاصيل الدرس. عند الفشل يعيد null ويضع رسالة الخطأ في [errorOut] إن وُجدت.
+  static Future<LessonDetailItem?> getLesson(
+    String courseSlug,
+    int lessonId, {
+    void Function(String message)? onError,
+  }) async {
     try {
       final uri = Uri.parse('$apiBaseUrl/api/courses/$courseSlug/lessons/$lessonId');
       final res = await http.get(uri, headers: _headers);
@@ -21,6 +25,11 @@ class LessonsApi {
         final data = jsonDecode(res.body.toString()) as Map<String, dynamic>? ?? {};
         return LessonDetailItem.fromJson(data);
       }
+      try {
+        final data = jsonDecode(res.body.toString()) as Map<String, dynamic>?;
+        final msg = data?['message']?.toString();
+        if (msg != null && msg.isNotEmpty) onError?.call(msg);
+      } catch (_) {}
       return null;
     } catch (_) {
       return null;
@@ -46,6 +55,7 @@ class LessonDetailItem {
     required this.id,
     required this.title,
     this.videoUrl,
+    this.videoType,
     required this.durationMinutes,
     required this.isFreePreview,
     this.prevLesson,
@@ -66,6 +76,8 @@ class LessonDetailItem {
   final int id;
   final String title;
   final String? videoUrl;
+  /// youtube | file | hls | null
+  final String? videoType;
   final int durationMinutes;
   final bool isFreePreview;
   final PrevNextLesson? prevLesson;
@@ -81,6 +93,10 @@ class LessonDetailItem {
   final bool enablePlaybackSpeed;
   final bool enableVideoWatermark;
   final String? watermarkText;
+
+  bool get isYoutube =>
+      videoType == 'youtube' ||
+      (videoUrl != null && YoutubeIdHelper.looksLikeYoutube(videoUrl!));
 
   factory LessonDetailItem.fromJson(Map<String, dynamic> json) {
     PrevNextLesson? prev;
@@ -103,6 +119,7 @@ class LessonDetailItem {
       id: (json['id'] as num?)?.toInt() ?? 0,
       title: (json['title'] ?? '').toString(),
       videoUrl: json['video_url']?.toString(),
+      videoType: json['video_type']?.toString(),
       durationMinutes: (json['duration_minutes'] as num?)?.toInt() ?? 0,
       isFreePreview: (json['is_free_preview'] as bool?) ?? false,
       prevLesson: prev,
@@ -119,6 +136,15 @@ class LessonDetailItem {
       enableVideoWatermark: (json['enable_video_watermark'] as bool?) ?? false,
       watermarkText: json['watermark_text']?.toString(),
     );
+  }
+}
+
+/// مساعد خفيف لتمييز معرّف يوتيوب دون الاعتماد على روابط youtube.com
+class YoutubeIdHelper {
+  static bool looksLikeYoutube(String value) {
+    final v = value.trim();
+    if (v.length == 11 && !v.contains('/') && !v.contains('http')) return true;
+    return v.contains('youtu');
   }
 }
 
